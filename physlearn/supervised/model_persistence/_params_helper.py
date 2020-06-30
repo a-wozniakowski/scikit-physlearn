@@ -8,18 +8,6 @@ from scipy.stats import randint, uniform
 from ..utils._model_checks import _prepare_best_params_filename
 
 
-def load_best_params_filename(model_choice):
-    root = os.getcwd()
-    if re.search('C:', root):
-        folder = root + '\\python-package\\physlearn\\supervised\\utils\\model_persistence\\params_storage\\'
-        filename = _prepare_best_params_filename(folder=folder, model_choice=model_choice)
-    else:
-        folder = root + '/python-package/physlearn/supervised/utils/model_persistence/params_storage/'
-        filename = _prepare_best_params_filename(folder=folder, model_choice=model_choice)
-
-    return filename
-
-
 one_hidden_layer_sizes = [(i, ) for i in range(2, 15)]
 two_hidden_layers_sizes = [(i, j, ) for i in range(2, 7) for j in range(2, 9)]
 mlp_hidden_layers_sizes = one_hidden_layer_sizes + two_hidden_layers_sizes
@@ -118,12 +106,12 @@ mlxtendstacking_bayesiansearch_pbounds = {'lgbmregressor__n_estimators': (30, 30
                                           'meta_regressor__alpha': (2.0, 24.0),
                                           'meta_regressor__max_iter': (500, 5000)}
 
-search_params = {'lgbmregressor_gridsearchcv': lgb_grid_search_params,
-                 'mlpregressor_gridsearchcv': mlp_grid_search_params,
-                 'mlpregressor_randomizedsearchcv': mlp_random_search_params,
-                 'mlpregressor_bayesianoptimization': mlp_bayesian_search_pbounds,
-                 'stackingregressor_gridsearchcv': stacking_gridsearchcv_params,
-                 'mlxtendstackingregressor_gridsearchcv': mlxtendstacking_gridsearchcv_params,
-                 'stackingregressor_randomizedsearchcv': stacking_randomizedsearchcv_params,
-                 'mlxtendstackingregressor_randomizedsearchcv': mlxtendstacking_randomizedsearchcv_params,
-                 'mlxtendstackingregressor_bayesianoptimization': mlxtendstacking_bayesiansearch_pbounds}
+search_params = {'lgbm_gridsearchcv': lgb_grid_search_params,
+                 'mlp_gridsearchcv': mlp_grid_search_params,
+                 'mlp_randomizedsearchcv': mlp_random_search_params,
+                 'mlp_bayesianoptimization': mlp_bayesian_search_pbounds,
+                 'sklearn_stacking_gridsearchcv': stacking_gridsearchcv_params,
+                 'sklearn_stacking_randomizedsearchcv': stacking_randomizedsearchcv_params,
+                 'mlxtend_stacking_gridsearchcv': mlxtendstacking_gridsearchcv_params,
+                 'mlxtend_stacking_randomizedsearchcv': mlxtendstacking_randomizedsearchcv_params,
+                 'mlxtend_stacking_bayesianoptimization': mlxtendstacking_bayesiansearch_pbounds}

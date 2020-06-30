@@ -21,7 +21,7 @@ class AdditionalRegressorMixin(ABC):
         pass
 
     @abstractmethod
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y, sample_weight=None):
         pass
     
     @abstractmethod
