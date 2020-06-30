@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 NAME = 'physlearn'
 DESCRIPTION = 'A multi-target regression suite with a regressor dictionary.'
-with open('README.rst', 'r') as f:
+with open('README.md', 'r') as f:
         LONG_DESCRIPTION = f.read()
 MAINTAINER = 'Alex Wozniakowski'
 MAINTAINER_EMAIL = 'wozn0001@e.ntu.edu.sg'
