@@ -27,7 +27,8 @@ def setup_package():
                     url=URL,
                     version=VERSION,
                     license=LICENSE,
-                    packages=PACKAGES)
+                    packages=PACKAGES,
+                    package_data={'': ['*.json']})
 
     setup(**metadata)
 

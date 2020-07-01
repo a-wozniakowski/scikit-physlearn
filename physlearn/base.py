@@ -1,5 +1,5 @@
 """
-Base class for main regressor object.
+Base class for the model dictionary and a regressor mixin class.
 """
 
 # Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
@@ -7,9 +7,19 @@ Base class for main regressor object.
 from abc import ABC, abstractmethod
 
 
+class AbstractModelDictionaryInterface(ABC):
+    """
+    Abstract base class for the model dictionary interface.
+    """
+
+    @abstractmethod
+    def set_params(self, params):
+        pass
+
+
 class AdditionalRegressorMixin(ABC):
     """
-    Mixin class for main regressor object.
+    Mixin class for regressor object.
     """
 
     @abstractmethod

@@ -86,7 +86,7 @@ _PIPELINE_TRANSFORM_CHOICE = ['standard_scaler', 'box_cox', 'yeo_johnson',
 
 
 _MODEL_SEARCH_STYLE = ['gridsearchcv', 'randomizedsearchcv',
-                       'bayesianoptimization']
+                       'bayesopt']
 
 
 _MODEL_SEARCH_METHOD = ['parallel', 'sequential']

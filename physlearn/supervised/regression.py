@@ -27,26 +27,24 @@ from ..base import AdditionalRegressorMixin
 from ..loss import LOSS_FUNCTIONS
 from ..pipeline import _make_modified_pipeline
 
-from .hypothesis_class import RegressionModel
-from .model_selection.search import (_helper_grid_search_cv, _helper_randomized_search_cv,
-                                     _bayesian_opt_search_cv)
+from .interface import RegressorDictionaryInterface
+from .model_selection.search import (_helper_gridsearchcv, _helper_randomizedsearchcv,
+                                     _helper_bayesianoptimizationcv)
 from .utils._data_checks import _n_features, _n_targets, _n_samples, _validate_data
-from .utils._data_transformations import _exp_transform, _log_transform
 from .utils._definition import (_MODEL_DICT, _MODEL_SEARCH_METHOD, _PIPELINE_TRANSFORM_CHOICE,
                                 _SCORE_CHOICE)
-from .utils._model_checks import (_check_bayesian_opt_parameter_type,
-                                  _check_model_choice, _check_model_search_style,
-                                  _check_stacking_layer, _convert_filename_to_csv_path,
-                                  _parallel_model_search_preprocessing,
+from .utils._model_checks import (_check_bayesianoptimization_parameter_type, _check_model_choice,
+                                  _check_model_search_style, _check_stacking_layer,
+                                  _convert_filename_to_csv_path, _parallel_model_search_preprocessing,
                                   _sequential_model_search_preprocessing)
 
 
 class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, AdditionalRegressorMixin):
     """
-    Base class for all regressors.
+    Base class for main regressor object.
     """
 
-    def __init__(self, model_choice='ridge', cv=5, random_state=0,
+    def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
                  verbose=0, n_jobs=-1, score_multioutput='raw_values',
                  search_scoring='neg_mean_absolute_error',
                  return_train_score=True, pipeline_transform=None,
@@ -58,7 +56,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                  line_search_regularization=None,
                  line_search_options=None):
     
-        assert isinstance(model_choice, str)
+        assert isinstance(regressor_choice, str)
         assert isinstance(cv, int) and cv > 1
         assert isinstance(random_state, int) and random_state >= 0
         assert isinstance(verbose, int) and verbose >= 0
@@ -72,7 +70,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         assert isinstance(stacking_meta_features, bool)
 
         if pipeline_transform is not None:
-            assert any(transform_feature == transform for transform in _PIPELINE_TRANSFORM_CHOICE), (
+            assert any(pipeline_transform == transform for transform in _PIPELINE_TRANSFORM_CHOICE), (
                 'Choose from ' f'{_PIPELINE_TRANSFORM_CHOICE}')
 
         if pipeline_memory is not None:
@@ -100,8 +98,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         if line_search_options is not None:
             assert isinstance(line_search_options, dict)
 
-        self.model_choice = _check_model_choice(model_choice=model_choice,
-                                                model_type='regression')
+        self.regressor_choice = _check_model_choice(model_choice=regressor_choice,
+                                                    model_type='regression')
         self.cv = cv
         self.random_state = random_state
         self.verbose = verbose
@@ -124,19 +122,19 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         self.line_search_regularization = line_search_regularization
         self.line_search_options = line_search_options
 
-        # Prepare regression model
-        model = RegressionModel(model_choice=self.model_choice,
-                                params=params,
-                                stacking_layer=self.stacking_layer)
+        # Prepare regressor
+        _regressor = RegressorDictionaryInterface(regressor_choice=self.regressor_choice,
+                                                  params=params,
+                                                  stacking_layer=self.stacking_layer)
 
-        self.model, self.params = model.set_params(cv=self.cv,
-                                                   verbose=self.verbose,
-                                                   random_state=self.random_state,
-                                                   n_jobs=self.n_jobs,
-                                                   shuffle=self.stacking_cv_shuffle,
-                                                   refit=self.stacking_cv_refit,
-                                                   passthrough=self.stacking_passthrough,
-                                                   meta_features=self.stacking_meta_features)
+        self._regressor, self.params = _regressor.set_params(cv=self.cv,
+                                                             verbose=self.verbose,
+                                                             random_state=self.random_state,
+                                                             n_jobs=self.n_jobs,
+                                                             shuffle=self.stacking_cv_shuffle,
+                                                             refit=self.stacking_cv_refit,
+                                                             passthrough=self.stacking_passthrough,
+                                                             meta_features=self.stacking_meta_features)
 
     def get_params(self, deep=True):
         """Retrieve parameters."""
@@ -159,7 +157,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
     def get_pipeline(self, y):
         """Create pipe attribute for downstream tasks."""
 
-        self.pipe =  _make_modified_pipeline(estimator=self.model,
+        self.pipe =  _make_modified_pipeline(estimator=self._regressor,
                                              transform=self.pipeline_transform,
                                              n_targets=_n_targets(y),
                                              random_state=self.random_state,
@@ -413,18 +411,17 @@ class Regressor(BaseRegressor):
     Important methods are fit, baseboostcv, predict, and search.
     """
 
-    def __init__(self, model_choice='ridge', cv=5, random_state=0,
+    def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
                  verbose=1, n_jobs=-1, score_multioutput='raw_values',
-                 search_refit=True, search_randomized_n_iter=20,
-                 search_bayesopt_init_points=2, search_bayesopt_n_iter=20,
-                 search_scoring='neg_mean_absolute_error',
-                 return_train_score=True, pipeline_transform='quantile_normal',
-                 pipeline_memory=None, params=None, chain_order=None,
-                 stacking_layer=None, target_index=None, n_regressors=None,
-                 boosting_loss=None, line_search_regularization=None,
-                 line_search_options=None):
+                 search_scoring='neg_mean_absolute_error', search_refit=True,
+                 search_randomizedcv_n_iter=20, search_bayesianoptimization_init_points=2,
+                 search_bayesianoptimization_n_iter=20, return_train_score=True,
+                 pipeline_transform='quantile_normal', pipeline_memory=None,
+                 params=None, chain_order=None, stacking_layer=None,
+                 target_index=None, n_regressors=None, boosting_loss=None,
+                 line_search_regularization=None, line_search_options=None):
 
-        super().__init__(model_choice=model_choice,
+        super().__init__(regressor_choice=regressor_choice,
                          cv=cv,
                          random_state=random_state,
                          verbose=verbose,
@@ -444,14 +441,14 @@ class Regressor(BaseRegressor):
                          line_search_options=line_search_options)
 
         assert isinstance(search_refit, bool)
-        assert isinstance(search_randomized_n_iter, int)
-        assert isinstance(search_bayesopt_init_points, int)
-        assert isinstance(search_bayesopt_n_iter, int)
+        assert isinstance(search_randomizedcv_n_iter, int)
+        assert isinstance(search_bayesianoptimization_init_points, int)
+        assert isinstance(search_bayesianoptimization_n_iter, int)
 
-        self.refit = search_refit
-        self.search_randomized_n_iter = search_randomized_n_iter
-        self.search_bayesopt_init_points = search_bayesopt_init_points
-        self.search_bayesopt_n_iter = search_bayesopt_n_iter
+        self.search_refit = search_refit
+        self.search_randomizedcv_n_iter = search_randomizedcv_n_iter
+        self.search_bayesianoptimization_init_points = search_bayesianoptimization_init_points
+        self.search_bayesianoptimization_n_iter = search_bayesianoptimization_n_iter
 
     def get_params(self, deep=True):
         """Retrieve parameters."""
@@ -582,43 +579,43 @@ class Regressor(BaseRegressor):
         self.get_pipeline(y=y)
 
         if search_style == 'gridsearchcv':
-            self.model_search = _helper_grid_search_cv(estimator=self.pipe,
-                                                       param_grid=search_params,
-                                                       search_scoring=self.search_scoring,
-                                                       refit=self.refit,
-                                                       n_jobs=self.n_jobs,
-                                                       cv=self.cv,
-                                                       verbose=self.verbose,
-                                                       pre_dispatch='2*n_jobs',
-                                                       error_score=np.nan,
-                                                       return_train_score=self.return_train_score)
+            self.model_search = _helper_gridsearchcv(estimator=self.pipe,
+                                                     param_grid=search_params,
+                                                     search_scoring=self.search_scoring,
+                                                     refit=self.search_refit,
+                                                     n_jobs=self.n_jobs,
+                                                     cv=self.cv,
+                                                     verbose=self.verbose,
+                                                     pre_dispatch='2*n_jobs',
+                                                     error_score=np.nan,
+                                                     return_train_score=self.return_train_score)
         elif search_style == 'randomizedsearchcv':
-            self.model_search = _helper_randomized_search_cv(estimator=self.pipe,
-                                                             param_distributions=search_params,
-                                                             n_iter=self.search_randomized_n_iter,
-                                                             search_scoring=self.search_scoring,
-                                                             n_jobs=self.n_jobs,
-                                                             refit=self.refit,
-                                                             cv=self.cv,
-                                                             verbose=self.verbose,
-                                                             pre_dispatch='2*n_jobs',
-                                                             error_score=np.nan,
-                                                             return_train_score=self.return_train_score)
+            self.model_search = _helper_randomizedsearchcv(estimator=self.pipe,
+                                                           param_distributions=search_params,
+                                                           n_iter=self.search_randomizedcv_n_iter,
+                                                           search_scoring=self.search_scoring,
+                                                           n_jobs=self.n_jobs,
+                                                           refit=self.search_refit,
+                                                           cv=self.cv,
+                                                           verbose=self.verbose,
+                                                           pre_dispatch='2*n_jobs',
+                                                           error_score=np.nan,
+                                                           return_train_score=self.return_train_score)
         elif search_style == 'bayesianoptimization':
-            self.optimization = _bayesian_opt_search_cv(X=X, y=y,
-                                                        estimator=self.pipe,
-                                                        search_params=search_params,
-                                                        cv=self.cv,
-                                                        scoring=self.search_scoring,
-                                                        n_jobs=self.n_jobs,
-                                                        verbose=self.verbose,
-                                                        random_state=self.random_state,
-                                                        init_points=self.search_bayesopt_init_points,
-                                                        n_iter=self.search_bayesopt_n_iter)
+            self.optimization = _helper_bayesianoptimizationcv(X=X, y=y,
+                                                               estimator=self.pipe,
+                                                               search_params=search_params,
+                                                               cv=self.cv,
+                                                               scoring=self.search_scoring,
+                                                               n_jobs=self.n_jobs,
+                                                               verbose=self.verbose,
+                                                               random_state=self.random_state,
+                                                               init_points=self.search_bayesianoptimization_init_points,
+                                                               n_iter=self.search_bayesianoptimization_n_iter)
 
-            if self.refit:
+            if self.search_refit:
                 max_params = self.optimization.max['params']
-                get_best_params_ = _check_bayesian_opt_parameter_type(max_params)
+                get_best_params_ = _check_bayesianoptimization_parameter_type(max_params)
                 self.model_search = self.pipe.set_params(**get_best_params_)
         
     def subsample(self, X, y, subsample_proportion=None):

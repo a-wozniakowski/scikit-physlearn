@@ -87,9 +87,25 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                  boosting_loss=None, regularization=None,
                  line_search_options=None):
 
-        self.steps = steps
-        self.memory = memory
-        self.verbose = verbose
+        super().__init__(steps=steps,
+                         memory=memory,
+                         verbose=verbose)
+
+        if n_estimators is not None:
+            assert isinstance(n_estimators, int)
+
+        if target_index is not None:
+            assert isinstance(target_index, int)
+
+        if boosting_loss is not None:
+            assert isinstance(boosting_loss, str)
+
+        if regularization is not None:
+            assert isinstance(regularization, (float, int))
+
+        if line_search_options is not None:
+            assert isinstance(line_search_options, dict)
+
         self.n_estimators = n_estimators
         self.target_index = target_index
         self.boosting_loss = boosting_loss

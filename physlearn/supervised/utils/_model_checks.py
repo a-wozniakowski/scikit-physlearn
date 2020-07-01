@@ -54,7 +54,7 @@ def _check_stacking_layer(stacking_layer, model_type):
         return stacking_layer
 
 
-def _check_bayesian_opt_parameter_type(params): 
+def _check_bayesianoptimization_parameter_type(params): 
     assert isinstance(params, dict)
 
     for key, param in params.items():
@@ -80,8 +80,8 @@ def _sequential_model_search_preprocessing(raw_pbounds):
     assert isinstance(raw_pbounds, (dict))
     pbounds = {}
     for raw_pbound, value in raw_pbounds.items():
-        bayesian_search_key = 'reg__' + raw_pbound
-        pbounds[bayesian_search_key] = value
+        bayesopt_search_key = 'reg__' + raw_pbound
+        pbounds[bayesopt_search_key] = value
     return pbounds
 
 

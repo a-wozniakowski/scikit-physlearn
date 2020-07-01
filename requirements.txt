@@ -1,3 +1,4 @@
+bayesian-optimization==1.2.0
 catboost==0.23.2
 cycler==0.10.0
 graphviz==0.14
@@ -8,7 +9,6 @@ matplotlib==3.2.2
 mlxtend==0.17.2
 numpy==1.19.0
 pandas==1.0.5
-physlearn==0.1
 plotly==4.8.2
 pyparsing==2.4.7
 python-dateutil==2.8.1

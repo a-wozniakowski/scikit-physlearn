@@ -15,22 +15,22 @@ from bayes_opt import BayesianOptimization
 from itertools import product
 from joblib import Parallel, delayed
 
-from ..utils._model_checks import _check_bayesian_opt_parameter_type
+from ..utils._model_checks import _check_bayesianoptimization_parameter_type
 
 
-def _bayesian_opt_search_cv(X, y, estimator, search_params, cv,
-                            scoring, n_jobs, verbose, random_state,
-                            init_points, n_iter):
+def _helper_bayesianoptimizationcv(X, y, estimator, search_params, cv,
+                                   scoring, n_jobs, verbose, random_state,
+                                   init_points, n_iter):
 
-    def estimator_cross_val_mean(**pbounds):
-        pbounds = _check_bayesian_opt_parameter_type(pbounds)
+    def regressor_cross_val_mean(**pbounds):
+        pbounds = _check_bayesianoptimization_parameter_type(pbounds)
         estimator.set_params(**pbounds)
         cross_val = sklearn.model_selection.cross_val_score(estimator=estimator, X=X, y=y,
                                                             scoring=scoring, cv=cv,
                                                             n_jobs=n_jobs)
         return cross_val.mean()
 
-    search = BayesianOptimization(f=estimator_cross_val_mean, pbounds=search_params,
+    search = BayesianOptimization(f=regressor_cross_val_mean, pbounds=search_params,
                                   verbose=verbose, random_state=random_state)
     search.maximize(init_points=init_points, n_iter=n_iter)
 
@@ -214,9 +214,9 @@ class RandomizedSearchCV(ModifiedBaseSearchCV):
                                                              n_iter=self.n_iter, random_state=self.random_state))
 
 
-def _helper_grid_search_cv(estimator, param_grid, search_scoring, refit,
-                           n_jobs, cv, verbose, pre_dispatch, error_score,
-                           return_train_score):
+def _helper_gridsearchcv(estimator, param_grid, search_scoring, refit,
+                         n_jobs, cv, verbose, pre_dispatch, error_score,
+                         return_train_score):
 
     search = GridSearchCV(estimator=estimator, param_grid=param_grid,
                           search_scoring=search_scoring, refit=refit,
@@ -227,10 +227,10 @@ def _helper_grid_search_cv(estimator, param_grid, search_scoring, refit,
     return search
 
 
-def _helper_randomized_search_cv(estimator, param_distributions, n_iter,
-                                 search_scoring, n_jobs, refit, cv,
-                                 verbose, pre_dispatch, error_score,
-                                 return_train_score):
+def _helper_randomizedsearchcv(estimator, param_distributions, n_iter,
+                               search_scoring, n_jobs, refit, cv,
+                               verbose, pre_dispatch, error_score,
+                               return_train_score):
 
     search = RandomizedSearchCV(estimator=estimator, param_distributions=param_distributions,
                                 n_iter=n_iter, search_scoring=search_scoring, n_jobs=n_jobs,
