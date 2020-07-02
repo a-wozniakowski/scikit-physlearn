@@ -271,6 +271,11 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             possible_multioutputs = ['raw_values', 'uniform_average']
             assert any(multioutput for output in possible_multioutputs)
 
+        if self.target_index is not None and \
+        sklearn.utils.multiclass.type_of_target(y_true) == 'continuous-multioutput':
+            # Selects a particular single-target
+            y_true = y_true.iloc[:, self.target_index]
+
         if scoring == 'mae':
             score = sklearn.metrics.mean_absolute_error(y_true=y_true, y_pred=y_pred,
                                                         multioutput=multioutput)
@@ -498,6 +503,9 @@ class Regressor(BaseRegressor):
 
         score_summary_df = pd.DataFrame(score_summary).dropna(how='any', axis=1)
         score_summary_df.index.name = 'target'
+        if self.target_index is not None:
+            score_summary_df.index = pd.RangeIndex(start=self.target_index + 1,
+                                                   stop=self.target_index + 2, step=1)
 
         if filename is not None:
             path = _convert_filename_to_csv_path(filename=filename)

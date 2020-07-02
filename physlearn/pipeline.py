@@ -169,7 +169,6 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         self.estimators_ = self._estimators
         self.coefs_ = self._coefs
-        print(self.coefs_)
 
     def fit(self, X, y, **fit_params):
         fit_params_steps = self._check_fit_params(**fit_params)
