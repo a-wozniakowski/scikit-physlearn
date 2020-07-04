@@ -4,14 +4,9 @@ Single-target and multi-target regression.
 
 # Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 
-import copy
-import inspect
 import joblib
-import warnings
-
 import numpy as np
 import pandas as pd
-
 import scipy.linalg
 
 import sklearn.base
@@ -20,6 +15,7 @@ import sklearn.metrics._scorer
 import sklearn.model_selection._split
 import sklearn.model_selection._validation
 import sklearn.utils
+import sklearn.utils.estimator_checks
 import sklearn.utils.multiclass
 import sklearn.utils.validation
 
@@ -37,6 +33,9 @@ from .utils._model_checks import (_check_bayesianoptimization_parameter_type, _c
                                   _check_model_search_style, _check_stacking_layer,
                                   _convert_filename_to_csv_path, _parallel_model_search_preprocessing,
                                   _sequential_model_search_preprocessing)
+
+
+_MODEL_DICT = _MODEL_DICT['regression']
 
 
 class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, AdditionalRegressorMixin):
@@ -135,6 +134,12 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                                                              refit=self.stacking_cv_refit,
                                                              passthrough=self.stacking_passthrough,
                                                              meta_features=self.stacking_meta_features)
+
+    @property
+    def check_regressor(self):
+        """Check if regressor adheres to scikit-learn conventions."""
+
+        return sklearn.utils.estimator_checks.check_estimator(self._regressor)
 
     def get_params(self, deep=True):
         """Retrieve parameters."""
@@ -454,6 +459,18 @@ class Regressor(BaseRegressor):
         self.search_randomizedcv_n_iter = search_randomizedcv_n_iter
         self.search_bayesianoptimization_init_points = search_bayesianoptimization_init_points
         self.search_bayesianoptimization_n_iter = search_bayesianoptimization_n_iter
+
+    @property
+    def check_regressor(self):
+        """Check if regressor adheres to scikit-learn conventions."""
+
+        # sklearn and mlxtend stacking regressors, as well as 
+        # LightGBM, XGBoost, and CatBoost regressor 
+        # do not adhere to the convention.
+        try:
+            super().check_regressor
+        except:
+            print(f'{_MODEL_DICT[self.regressor_choice]} does not adhere to sklearn conventions.')
 
     def get_params(self, deep=True):
         """Retrieve parameters."""

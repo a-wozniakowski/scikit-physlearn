@@ -87,12 +87,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                  boosting_loss=None, regularization=None,
                  line_search_options=None):
 
-        super().__init__(steps=steps,
-                         memory=memory,
-                         verbose=verbose)
-
         if n_estimators is not None:
-            assert isinstance(n_estimators, int)
+            assert isinstance(n_estimators, int) and n_estimators > 0
 
         if target_index is not None:
             assert isinstance(target_index, int)
@@ -106,6 +102,9 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         if line_search_options is not None:
             assert isinstance(line_search_options, dict)
 
+        self.steps = steps
+        self.memory = memory
+        self.verbose = verbose
         self.n_estimators = n_estimators
         self.target_index = target_index
         self.boosting_loss = boosting_loss
@@ -183,9 +182,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             if self._final_estimator != 'passthrough':
                 fit_params_last_step = fit_params_steps[self.steps[-1][0]]
 
-                # Base boosting requires a positive
-                # number of estimators 
-                if self.n_estimators > 0:
+                # Start checks for base boosting 
+                if self.n_estimators is not None:
                     if self.target_index is not None and \
                     sklearn.utils.multiclass.type_of_target(y) == 'continuous':
                         raw_predictions = X.iloc[:, self.target_index]
