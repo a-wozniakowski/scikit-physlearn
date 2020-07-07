@@ -1,5 +1,5 @@
 """
-Base class for the model dictionary and a regressor mixin class.
+Abstract base class for the model dictionary and a mixin class for regression.
 """
 
 # Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
@@ -15,7 +15,7 @@ class AbstractModelDictionaryInterface(ABC):
 
     @abstractmethod
     def set_params(self, params):
-        pass
+        """Set parameters of model choice."""
 
 
 class AdditionalRegressorMixin(ABC):
@@ -25,16 +25,16 @@ class AdditionalRegressorMixin(ABC):
 
     @abstractmethod
     def dump(self, value, filename):
-        pass
+        """Save a file."""
 
     @abstractmethod
     def load(self, filename):
-        pass
+        """Load a file."""
 
     @abstractmethod
     def fit(self, X, y, sample_weight=None):
-        pass
+        """Fit model in supervised fashion."""
     
     @abstractmethod
     def predict(self, X):
-        pass
+        """Generate predictions."""
