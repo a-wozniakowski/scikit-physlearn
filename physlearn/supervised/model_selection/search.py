@@ -18,16 +18,16 @@ from joblib import Parallel, delayed
 from ..utils._model_checks import _check_bayesianoptimization_parameter_type
 
 
-def _helper_bayesianoptimizationcv(X, y, estimator, search_params, cv,
-                                   scoring, n_jobs, verbose, random_state,
-                                   init_points, n_iter):
+def _bayesianoptimizationcv(X, y, estimator, search_params, cv,
+                            scoring, n_jobs, verbose, random_state,
+                            init_points, n_iter):
 
     def regressor_cross_val_mean(**pbounds):
         pbounds = _check_bayesianoptimization_parameter_type(pbounds)
         estimator.set_params(**pbounds)
-        cross_val = sklearn.model_selection.cross_val_score(estimator=estimator, X=X, y=y,
-                                                            scoring=scoring, cv=cv,
-                                                            n_jobs=n_jobs)
+        cross_val = sklearn.model_selection.cross_val_score(estimator=estimator,
+                                                            X=X, y=y, scoring=scoring,
+                                                            cv=cv, n_jobs=n_jobs)
         return cross_val.mean()
 
     search = BayesianOptimization(f=regressor_cross_val_mean, pbounds=search_params,
@@ -51,11 +51,12 @@ class ModifiedBaseSearchCV(sklearn.model_selection._search.BaseSearchCV):
 
     def fit(self, X, y=None, groups=None, **fit_params):
 
-        cv = sklearn.model_selection._split.check_cv(
-            cv=self.cv, y=y, classifier=sklearn.base.is_classifier(estimator)
-        )
+        cv = sklearn.model_selection._split.check_cv(cv=self.cv, y=y,
+                                                     classifier=sklearn.base.is_classifier(estimator))
 
-        scorers, self.multimetric_ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self, scoring=self.scoring)
+        scorers, self.multimetric_ = sklearn.metrics._scorer._check_multimetric_scoring(
+            estimator=self, scoring=self.scoring
+        )
 
         if self.multimetric_:
             if self.refit is not False and (
@@ -152,7 +153,8 @@ class ModifiedBaseSearchCV(sklearn.model_selection._search.BaseSearchCV):
             self.best_params_ = results['params'][self.best_index_]
 
         if self.refit:
-            self.best_estimator_ = sklearn.base.clone(sklearn.base.clone(estimator).set_params(**self.best_params_))
+            self.best_estimator_ = sklearn.base.clone(
+                sklearn.base.clone(estimator).set_params(**self.best_params_))
             refit_start_time = time.time()
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
@@ -175,12 +177,18 @@ class GridSearchCV(ModifiedBaseSearchCV):
     _required_parameters = ['estimator', 'param_grid']
 
     def __init__(self, estimator, param_grid, search_scoring=None,
-                 refit=True, n_jobs=-1, cv=5, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=True):
+                 refit=True, n_jobs=-1, cv=5, verbose=0,
+                 pre_dispatch='2*n_jobs', error_score=np.nan,
+                 return_train_score=True):
 
-        super().__init__(estimator=estimator, search_scoring=search_scoring,
-                         n_jobs=n_jobs, refit=refit, cv=cv, verbose=verbose,
-                         pre_dispatch=pre_dispatch, error_score=error_score,
+        super().__init__(estimator=estimator,
+                         search_scoring=search_scoring,
+                         n_jobs=n_jobs,
+                         refit=refit,
+                         cv=cv,
+                         verbose=verbose,
+                         pre_dispatch=pre_dispatch,
+                         error_score=error_score,
                          return_train_score=return_train_score)
 
         self.param_grid = param_grid
@@ -211,12 +219,13 @@ class RandomizedSearchCV(ModifiedBaseSearchCV):
     def _run_search(self, evaluate_candidates):
         evaluate_candidates(
             sklearn.model_selection._search.ParameterSampler(param_distributions=self.param_distributions,
-                                                             n_iter=self.n_iter, random_state=self.random_state))
+                                                             n_iter=self.n_iter,
+                                                             random_state=self.random_state))
 
 
-def _helper_gridsearchcv(estimator, param_grid, search_scoring, refit,
-                         n_jobs, cv, verbose, pre_dispatch, error_score,
-                         return_train_score):
+def _gridsearchcv(estimator, param_grid, search_scoring, refit,
+                  n_jobs, cv, verbose, pre_dispatch, error_score,
+                  return_train_score):
 
     search = GridSearchCV(estimator=estimator, param_grid=param_grid,
                           search_scoring=search_scoring, refit=refit,
@@ -227,10 +236,10 @@ def _helper_gridsearchcv(estimator, param_grid, search_scoring, refit,
     return search
 
 
-def _helper_randomizedsearchcv(estimator, param_distributions, n_iter,
-                               search_scoring, n_jobs, refit, cv,
-                               verbose, pre_dispatch, error_score,
-                               return_train_score):
+def _randomizedsearchcv(estimator, param_distributions, n_iter,
+                        search_scoring, n_jobs, refit, cv,
+                        verbose, pre_dispatch, error_score,
+                        return_train_score):
 
     search = RandomizedSearchCV(estimator=estimator, param_distributions=param_distributions,
                                 n_iter=n_iter, search_scoring=search_scoring, n_jobs=n_jobs,

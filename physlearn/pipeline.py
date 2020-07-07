@@ -23,12 +23,12 @@ from .loss import LOSS_FUNCTIONS
 from .supervised.utils._data_checks import _n_targets
 
 
-def _make_modified_pipeline(estimator, transform, n_targets, 
-                            random_state, verbose, n_jobs=-1,
-                            cv=5, memory=None, n_quantiles=None,
-                            chain_order=None, n_estimators=None,
-                            target_index=None, boosting_loss=None,
-                            regularization=None, line_search_options=None):
+def _make_pipeline(estimator, transform, n_targets,
+                   random_state, verbose, n_jobs=-1,
+                   cv=5, memory=None, n_quantiles=None,
+                   chain_order=None, n_estimators=None,
+                   target_index=None, boosting_loss=None,
+                   regularization=None, line_search_options=None):
 
     # Feature transformation options
     if transform == 'standard_scaler':
