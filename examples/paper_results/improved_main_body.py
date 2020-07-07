@@ -12,7 +12,7 @@ X_test, y_test = data['X_test'].iloc[:, -n_qubits:], data['y_test'].iloc[:, :n_q
 
 model = 'stackingregressor'
 n_regressors = 1
-boosting_loss = 'ls'
+boosting_loss = 'huber'
 line_search_regularization = 0.1
 line_search_options = dict(init_guess=1, opt_method='minimize',
                            alg='Nelder-Mead', tol=1e-7,
@@ -39,3 +39,5 @@ print('Finished building the scoring DataFrame.')
 print(test_error)
 print('Finished computing the multi-target scores.')
 print(test_error.mean().round(decimals=2))
+print('To gain the improvement, we computed the negative gradient of the Huber loss function',
+      'instead of the negative gradient of the least squares loss function.', sep='\n')

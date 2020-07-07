@@ -1,9 +1,13 @@
-import os
-import re
-import pandas as pd
+"""
+Learning from Google calibration data experiment.
+
+Calibration data was collected by Benjamin Chiaro during his
+time as a graduate student at UC Santa Barbara.
+"""
+
+# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 
 from .base import BaseDataFrame
-
 from .utils._dataset_helper_functions import (_df_shuffle, _iqr_outlier_mask,
                                               _train_test_split, _json_dump,
                                               _json_load, _path_google_data,
@@ -11,6 +15,7 @@ from .utils._dataset_helper_functions import (_df_shuffle, _iqr_outlier_mask,
 
 
 class GoogleDataFrame(BaseDataFrame):
+    """Supervised DataFrame object for Google calibration data."""
 
     def __init__(self, n_qubits, path):
         assert isinstance(n_qubits, int) and n_qubits > 0
@@ -21,10 +26,13 @@ class GoogleDataFrame(BaseDataFrame):
         super().__init__(path=path)
         
     def get_df_with_correct_columns(self):
+        """Split DataFrame into train and test split."""
+
+        # Load the DataFrame
         df = self.get_df()
-        
+
         if self.n_qubits == 3:
-            #select every third row, and select the relevant columns
+            # Select every third row, and select the relevant columns
             df = df.iloc[1::3, :].loc[:, 'qubit_voltages':' .10']
 
             df.columns = ['qvolt7','qvolt8','qvolt9',
@@ -37,7 +45,7 @@ class GoogleDataFrame(BaseDataFrame):
             df = df.drop(['cvolt6'], axis=1)
             
         elif self.n_qubits == 5:
-            #select every fifth row, and select the relevant columns
+            # Select every fifth row, and select the relevant columns
             df = df.iloc[1::5, :].loc[:, 'qubit_voltages':' .29']
 
             df.columns = ['qvolt5', 'qvolt6', 'qvolt7', 'qvolt8', 'qvolt9',
@@ -55,6 +63,7 @@ class GoogleDataFrame(BaseDataFrame):
 
 
 class GoogleData(GoogleDataFrame):
+    """Supervised object for Google calibration data experiment."""
 
     def __init__(self, n_qubits=5, test_split=0.3, random_state=0,
                  remove_outliers=False, shuffle=True):
@@ -70,14 +79,18 @@ class GoogleData(GoogleDataFrame):
         self.remove_outliers = remove_outliers
         self.shuffle = shuffle
 
-        super().__init__(n_qubits=n_qubits, path=_path_google_data(n_qubits=n_qubits))
+        super().__init__(n_qubits=n_qubits,
+                         path=_path_google_data(n_qubits=n_qubits))
 
     def _get_train_test_data_split(self):
+        """Split DataFrame into train and test split."""
+
         df = self.get_df_with_correct_columns()
+
         if self.shuffle:
             df = _df_shuffle(df)
 
-        #computer interquartile range for outlier removal
+        # Compute interquartile range for outlier removal.
         if self.remove_outliers:
             mask = _iqr_outlier_mask(df)
             df = df[~mask]
@@ -105,16 +118,25 @@ class GoogleData(GoogleDataFrame):
         X = df[feature]
         y = df[target]
 
-        train_test_data = _train_test_split(X, y, test_size=self.test_split, random_state=self.random_state)
-
-        return train_test_data
+        return _train_test_split(X, y, test_size=self.test_split,
+                                 random_state=self.random_state)
 
     def save_train_test_data_split_json(self):
-        train_test_data = self._get_train_test_data_split()
-        folder = _path_google_json_folder()
+        """Save Google benchmark dataset in json file format."""
 
-        _json_dump(train_test_data=train_test_data, folder=folder, n_qubits=self.n_qubits)
+        _json_dump(train_test_data=self._get_train_test_data_split(),
+                   folder=_path_google_json_folder(),
+                   n_qubits=self.n_qubits)
 
+    @property    
     def load_benchmark(self):
-        folder = _path_google_json_folder()
-        return _json_load(folder=folder, n_qubits=self.n_qubits)
+        """Load Google benchmark dataset in json file format."""
+
+        return _json_load(folder=_path_google_json_folder(),
+                          n_qubits=self.n_qubits)
+
+
+def load_benchmark():
+    """Load and return Google benchmark dataset (multi-target regression)."""
+
+    return GoogleData(n_qubits=5).load_benchmark

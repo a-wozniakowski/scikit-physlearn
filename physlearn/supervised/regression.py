@@ -19,6 +19,8 @@ import sklearn.utils.estimator_checks
 import sklearn.utils.multiclass
 import sklearn.utils.validation
 
+from collections import defaultdict
+
 from ..base import AdditionalRegressorMixin
 from ..loss import LOSS_FUNCTIONS
 from ..pipeline import _make_modified_pipeline
@@ -146,6 +148,34 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
 
         # Override method in BaseEstimator
         return self.params
+
+    def set_params(self, **params):
+        """Set parameters of regressor choice."""
+
+        if not params:
+            # Simple optimization to gain speed (inspect is slow)
+            return self
+        valid_params = self.get_params(deep=True)
+
+        nested_params = defaultdict(dict)  # grouped by prefix
+        for key, value in params.items():
+            key, delim, sub_key = key.partition('__')
+            if key not in valid_params:
+                raise ValueError('Invalid parameter %s for estimator %s. '
+                                 'Check the list of available parameters '
+                                 'with `estimator.get_params().keys()`.' %
+                                 (key, self))
+
+            if delim:
+                nested_params[key][sub_key] = value
+            else:
+                setattr(self._regressor, key, value)
+                valid_params[key] = value
+
+        for key, sub_params in nested_params.items():
+            valid_params[key].set_params(**sub_params)
+
+        return self
 
     def dump(self, value, filename):
         """Save a file in joblib format."""
@@ -298,6 +328,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                                                              multioutput=multioutput)
         elif scoring == 'msle':
             if any(y_true < 0) or any(y_pred < 0):
+                # sklearn will raise a ValueError if
+                # either statement is true, so we circumvent 
+                # this error and score with a NaN
                 score = np.nan
             else:
                 score = sklearn.metrics.mean_squared_log_error(y_true=y_true, y_pred=y_pred,
@@ -476,6 +509,11 @@ class Regressor(BaseRegressor):
         """Retrieve parameters."""
 
         return super().get_params(deep=deep)
+
+    def set_params(self, **params):
+        """Set parameters of regressor choice."""
+
+        return super().set_params(**params)
 
     def dump(self, value, filename):
         """Save a file in joblib format."""

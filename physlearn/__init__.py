@@ -8,7 +8,7 @@ Machine learning package for Python
 from __future__ import absolute_import
 
 try:
-    from physlearn.supervised.regression import Regressor
+    from .supervised.regression import Regressor
 except ImportError:
     pass
 

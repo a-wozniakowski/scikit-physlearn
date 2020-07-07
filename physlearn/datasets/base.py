@@ -1,3 +1,10 @@
+"""
+Base class for the supervised DataFrame.
+"""
+
+# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+
+
 from abc import ABC, abstractmethod
 
 import re
@@ -5,22 +12,27 @@ import pandas as pd
 
 
 class AbstractDataFrame(ABC):
-
-    def __init__(self):
-        pass
+    """
+    Abstract base class for the supervised DataFrame.
+    """
 
     @abstractmethod
     def get_df(self):
-        pass
+        """Load DataFrame."""
 
 
 class BaseDataFrame(AbstractDataFrame):
+    """
+    Supervised DataFrame object.
+    """
 
     def __init__(self, path):
         assert(isinstance(path, str))
         self.path = path
 
     def get_df(self):
+        """Load DataFrame with csv or xlsx file format."""
+
         csv_file = '\.csv'
         excel_file = '\.xlsx'
 
