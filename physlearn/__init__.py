@@ -1,9 +1,10 @@
 """
-Machine learning package for Python
+Machine learning package for Python.
 ==================================
 
 # Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 """
+
 
 from __future__ import absolute_import
 
@@ -26,4 +27,5 @@ except ImportError:
 
 
 __all__ = ['Regressor', 'ModifiedPipeline',
-           'LeastSquaresError', 'LeastAbsoluteError', 'HuberLossFunction', 'QuantileLossFunction']
+           'LeastSquaresError', 'LeastAbsoluteError', 'HuberLossFunction',
+           'QuantileLossFunction']

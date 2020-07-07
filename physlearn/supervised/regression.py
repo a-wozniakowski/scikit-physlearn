@@ -5,8 +5,10 @@ Single-target and multi-target regression.
 # Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 
 import joblib
+
 import numpy as np
 import pandas as pd
+
 import scipy.linalg
 
 import sklearn.base

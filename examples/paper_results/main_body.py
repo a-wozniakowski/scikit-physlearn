@@ -2,7 +2,7 @@ import pandas as pd
 
 from physlearn import Regressor
 from physlearn.datasets import load_benchmark
-from physlearn.supervised.model_persistence._paper_params import paper_params
+from physlearn.supervised import paper_params
 
 
 n_qubits = 5

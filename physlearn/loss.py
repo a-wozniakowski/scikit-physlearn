@@ -1,10 +1,11 @@
 """
-Loss functions for base boosting.
+Loss functions built for multi-target regression.
 """
 
 # Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 
 import numpy as np
+
 import sklearn.ensemble
 import sklearn.metrics
 

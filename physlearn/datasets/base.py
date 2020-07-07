@@ -16,6 +16,7 @@ class AbstractDataFrame(ABC):
     Abstract base class for the supervised DataFrame.
     """
 
+    @property    
     @abstractmethod
     def get_df(self):
         """Load DataFrame."""
@@ -30,6 +31,7 @@ class BaseDataFrame(AbstractDataFrame):
         assert(isinstance(path, str))
         self.path = path
 
+    @property    
     def get_df(self):
         """Load DataFrame with csv or xlsx file format."""
 

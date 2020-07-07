@@ -28,7 +28,7 @@ def setup_package():
                     version=VERSION,
                     license=LICENSE,
                     packages=PACKAGES,
-                    package_data={'': ['*.json']})
+                    package_data={'': ['*.json', '*.csv']})
 
     setup(**metadata)
 

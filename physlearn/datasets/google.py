@@ -25,11 +25,12 @@ class GoogleDataFrame(BaseDataFrame):
 
         super().__init__(path=path)
         
+    @property    
     def get_df_with_correct_columns(self):
         """Split DataFrame into train and test split."""
 
         # Load the DataFrame
-        df = self.get_df()
+        df = self.get_df
 
         if self.n_qubits == 3:
             # Select every third row, and select the relevant columns
@@ -85,7 +86,7 @@ class GoogleData(GoogleDataFrame):
     def _get_train_test_data_split(self):
         """Split DataFrame into train and test split."""
 
-        df = self.get_df_with_correct_columns()
+        df = self.get_df_with_correct_columns
 
         if self.shuffle:
             df = _df_shuffle(df)
