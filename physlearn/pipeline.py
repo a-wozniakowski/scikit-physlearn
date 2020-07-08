@@ -181,7 +181,6 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                                                self._log_message(len(self.steps) - 1)):
             if self._final_estimator != 'passthrough':
                 fit_params_last_step = fit_params_steps[self.steps[-1][0]]
-
                 # Start checks for base boosting 
                 if self.n_estimators is not None:
                     if self.target_index is not None and \
@@ -198,33 +197,22 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
     @sklearn.utils.metaestimators.if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X, **predict_params):
         Xt = X
-        for _, _, transform in self._iter(with_final=False):
+        for _, name, transform in self._iter(with_final=False):
             if Xt.ndim == 1:
                 Xt = pd.DataFrame(transform.transform(X=Xt.values.reshape(-1, 1)), index=Xt.index)
             else:
                 Xt = pd.DataFrame(transform.transform(X=Xt), index=Xt.index)
                 
-            if hasattr(self, 'coefs_') and hasattr(self, 'estimators_'):
-                if self.target_index is not None:
-                    y_pred = X.iloc[:, self.target_index]
-                else:
-                    y_pred = X
-                for coef, estimator in zip(self.coefs_, self.estimators_):
-                    _y_pred = coef * estimator.steps[-1][-1].predict(X=Xt, **predict_params)
-                    n_targets = _n_targets(y_pred)
-                    if n_targets > 1:
-                        _y_pred = pd.DataFrame(_y_pred, index=y_pred.index)
-                    else:
-                        _y_pred = pd.Series(_y_pred, index=y_pred.index)
-                    if n_targets > 1:
-                        _y_pred.columns = y_pred.columns
-                    y_pred = y_pred.add(_y_pred.values)
+        if hasattr(self, 'coefs_') and hasattr(self, 'estimators_'):
+            # Generate predictions with base boosting model
+            if self.target_index is not None:
+                y_pred = X.iloc[:, self.target_index]
             else:
-                y_pred = self.steps[-1][-1].predict(Xt, **predict_params)
-                n_targets = _n_targets(y_pred)
-                if n_targets > 1:
-                    y_pred = pd.DataFrame(y_pred, index=Xt.index)
-                else:
-                    y_pred = pd.Series(y_pred, index=Xt.index)
+                y_pred = X
+            for coef, estimator in zip(self.coefs_, self.estimators_):
+                y_pred = y_pred.add(coef * estimator.steps[-1][-1].predict(X=Xt, **predict_params))
+        else:
+            # Generate predictions without base boosting model
+            y_pred = pd.DataFrame(self.steps[-1][-1].predict(Xt, **predict_params), index=Xt.index)
 
         return y_pred

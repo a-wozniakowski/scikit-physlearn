@@ -290,10 +290,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         else:
             y_pred = self.pipe.predict(X=X)
 
-        if _n_targets(y_pred) > 1:
-            return pd.DataFrame(y_pred, index=X.index)
-        else:
-            return pd.Series(y_pred, index=X.index)
+        return y_pred
 
     def score(self, y_true, y_pred, scoring, multioutput):
         """Compute score in supervised fashion."""
@@ -329,18 +326,18 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             score = sklearn.metrics.explained_variance_score(y_true=y_true, y_pred=y_pred,
                                                              multioutput=multioutput)
         elif scoring == 'msle':
-            if any(y_true < 0) or any(y_pred < 0):
-                # sklearn will raise a ValueError if
-                # either statement is true, so we circumvent 
-                # this error and score with a NaN
-                score = np.nan
-            else:
+            try:
                 score = sklearn.metrics.mean_squared_log_error(y_true=y_true, y_pred=y_pred,
                                                                multioutput=multioutput)
+            except ValueError:
+                # sklearn will raise a ValueError if
+                # either statement is true, so we circumvent
+                # this error and score with a NaN
+                score = np.nan
 
         return score
 
-    def _process_search_params(self, y, search_params, search_method='parallel'):
+    def _process_search_params(self, search_params, search_method='parallel'):
         """Search parameter helper function."""
 
         assert search_method in _MODEL_SEARCH_METHOD
@@ -595,8 +592,7 @@ class Regressor(BaseRegressor):
         if self.target_index is not None:
             y = y.iloc[:, self.target_index]
 
-        self._helper_model_search(X=X, y=y, search_params=search_params,
-                                  search_style=search_style)
+        self._search(X=X, y=y, search_params=search_params, search_style=search_style)
         try:
             self.model_search.fit(X=X, y=y)
         except AttributeError:
@@ -631,7 +627,7 @@ class Regressor(BaseRegressor):
             path = _convert_filename_to_csv_path(filename=filename)
             self.search_summary_.to_csv(path_or_buf=path, header=True)
 
-    def _helper_model_search(self, X, y, search_params, search_style='gridsearchcv'):
+    def _search(self, X, y, search_params, search_style='gridsearchcv'):
         """Prepare model search attribute according to search_style."""
 
         # The returned search method is either
@@ -640,7 +636,7 @@ class Regressor(BaseRegressor):
         # the latter identifies grid or randomized
         # search by sklearn. 
         search_style, search_method = _check_model_search_style(search_style)
-        search_params = super()._process_search_params(X=X, y=y, search_params=search_params,
+        search_params = super()._process_search_params(search_params=search_params,
                                                        search_method=search_method)
 
         self.get_pipeline(y=y)

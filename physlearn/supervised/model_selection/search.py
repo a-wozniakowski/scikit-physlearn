@@ -52,10 +52,10 @@ class ModifiedBaseSearchCV(sklearn.model_selection._search.BaseSearchCV):
     def fit(self, X, y=None, groups=None, **fit_params):
 
         cv = sklearn.model_selection._split.check_cv(cv=self.cv, y=y,
-                                                     classifier=sklearn.base.is_classifier(estimator))
+                                                     classifier=sklearn.base.is_classifier(self.estimator))
 
         scorers, self.multimetric_ = sklearn.metrics._scorer._check_multimetric_scoring(
-            estimator=self, scoring=self.scoring
+            estimator=self.estimator, scoring=self.scoring
         )
 
         if self.multimetric_:
