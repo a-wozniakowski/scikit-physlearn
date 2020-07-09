@@ -54,7 +54,7 @@ def _check_stacking_layer(stacking_layer, model_type):
         return stacking_layer
 
 
-def _check_bayesianoptimization_parameter_type(params): 
+def _check_bayesopt_parameter_type(params): 
     assert isinstance(params, dict)
 
     for key, param in params.items():
@@ -67,7 +67,7 @@ def _check_bayesianoptimization_parameter_type(params):
     return params
 
 
-def _parallel_model_search_preprocessing(raw_params):
+def _parallel_search_preprocessing(raw_params):
     assert isinstance(raw_params, (dict))
     params = {}
     for raw_param, value in raw_params.items():
@@ -76,7 +76,7 @@ def _parallel_model_search_preprocessing(raw_params):
     return params
 
 
-def _sequential_model_search_preprocessing(raw_pbounds):
+def _sequential_search_preprocessing(raw_pbounds):
     assert isinstance(raw_pbounds, (dict))
     pbounds = {}
     for raw_pbound, value in raw_pbounds.items():
@@ -85,7 +85,7 @@ def _sequential_model_search_preprocessing(raw_pbounds):
     return pbounds
 
 
-def _check_model_search_style(search_style):
+def _check_search_style(search_style):
     assert isinstance(search_style, str)
     assert search_style in _MODEL_SEARCH_STYLE
 

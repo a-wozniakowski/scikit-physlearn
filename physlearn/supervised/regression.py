@@ -14,6 +14,7 @@ import scipy.linalg
 import sklearn.base
 import sklearn.metrics
 import sklearn.metrics._scorer
+import sklearn.model_selection._search
 import sklearn.model_selection._split
 import sklearn.model_selection._validation
 import sklearn.utils
@@ -28,15 +29,14 @@ from ..loss import LOSS_FUNCTIONS
 from ..pipeline import _make_pipeline
 
 from .interface import RegressorDictionaryInterface
-from .model_selection.search import (_gridsearchcv, _randomizedsearchcv,
-                                     _bayesianoptimizationcv)
+from .model_selection.bayesian_search import _bayesoptcv
 from .utils._data_checks import _n_features, _n_targets, _n_samples, _validate_data
 from .utils._definition import (_MODEL_DICT, _MODEL_SEARCH_METHOD, _PIPELINE_TRANSFORM_CHOICE,
                                 _SCORE_CHOICE)
-from .utils._model_checks import (_check_bayesianoptimization_parameter_type, _check_model_choice,
-                                  _check_model_search_style, _check_stacking_layer,
-                                  _convert_filename_to_csv_path, _parallel_model_search_preprocessing,
-                                  _sequential_model_search_preprocessing)
+from .utils._model_checks import (_check_bayesopt_parameter_type, _check_model_choice,
+                                  _check_search_style, _check_stacking_layer,
+                                  _convert_filename_to_csv_path, _parallel_search_preprocessing,
+                                  _sequential_search_preprocessing)
 
 
 _MODEL_DICT = _MODEL_DICT['regression']
@@ -49,14 +49,13 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
 
     def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
                  verbose=0, n_jobs=-1, score_multioutput='raw_values',
-                 search_scoring='neg_mean_absolute_error',
-                 return_train_score=True, pipeline_transform=None,
-                 pipeline_memory=None, params=None, chain_order=None,
-                 stacking_layer=None, stacking_cv_shuffle=True,
-                 stacking_cv_refit=True, stacking_passthrough=True,
-                 stacking_meta_features=True, target_index=None,
-                 n_regressors=None, boosting_loss=None,
-                 line_search_regularization=None,
+                 scoring='neg_mean_absolute_error', return_train_score=True,
+                 pipeline_transform=None, pipeline_memory=None,
+                 params=None, chain_order=None, stacking_layer=None,
+                 stacking_cv_shuffle=True, stacking_cv_refit=True,
+                 stacking_passthrough=True, stacking_meta_features=True,
+                 target_index=None, n_regressors=None,
+                 boosting_loss=None, line_search_regularization=None,
                  line_search_options=None):
     
         assert isinstance(regressor_choice, str)
@@ -65,7 +64,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         assert isinstance(verbose, int) and verbose >= 0
         assert isinstance(n_jobs, int)
         assert isinstance(score_multioutput, str)
-        assert isinstance(search_scoring, str)
+        assert isinstance(scoring, str)
         assert isinstance(return_train_score, bool)
         assert isinstance(stacking_cv_shuffle, bool)
         assert isinstance(stacking_cv_refit, bool)
@@ -108,7 +107,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.score_multioutput = score_multioutput
-        self.search_scoring = search_scoring
+        self.scoring = scoring
         self.return_train_score = return_train_score
         self.pipeline_transform = pipeline_transform
         self.pipeline_memory = pipeline_memory
@@ -344,22 +343,22 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                 score = sklearn.metrics.mean_squared_log_error(y_true=y_true, y_pred=y_pred,
                                                                multioutput=multioutput)
             except ValueError:
-                # sklearn will raise a ValueError if
+                # Sklearn will raise a ValueError if
                 # either statement is true, so we circumvent
                 # this error and score with a NaN
                 score = np.nan
 
         return score
 
-    def _process_search_params(self, search_params, search_method='parallel'):
+    def _preprocess_search_params(self, search_params, search_method='parallel'):
         """Search parameter helper function."""
 
         assert search_method in _MODEL_SEARCH_METHOD
 
         if search_method == 'parallel':
-            search_params = _parallel_model_search_preprocessing(raw_params=search_params)
+            search_params = _parallel_search_preprocessing(raw_params=search_params)
         elif search_method == 'sequential':
-            search_params = _sequential_model_search_preprocessing(raw_pbounds=search_params)
+            search_params = _sequential_search_preprocessing(raw_pbounds=search_params)
 
         return search_params
 
@@ -383,7 +382,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
 
         scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
-                                                                        scoring=self.search_scoring)
+                                                                        scoring=self.scoring)
 
         parallel = joblib.Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                    pre_dispatch='2*n_jobs')
@@ -407,9 +406,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                 y_true=y.loc[test], y_pred=y_pred.loc[test])
                 for _, test in cv.split(X, y, groups))
 
-            if self.search_scoring == 'neg_mean_absolute_error':
+            if self.scoring == 'neg_mean_absolute_error':
                 incumbent_test_score = [score['mae'].values[0] for score in incumbent_test_score]
-            elif self.search_scoring == 'neg_mean_squared_error':
+            elif self.scoring == 'neg_mean_squared_error':
                 incumbent_test_score = [score['mse'].values[0] for score in incumbent_test_score]
 
         zipped_scores = list(zip(*scores))
@@ -446,9 +445,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         scores_dict = self._modified_cross_validate(X=X, y=y,
                                                     return_incumbent_score=return_incumbent_score)
 
-        # sklearn returns negative MAE and MSE scores,
+        # Sklearn returns negative MAE and MSE scores,
         # so we restore nonnegativity
-        if self.search_scoring in ['neg_mean_absolute_error', 'neg_mean_squared_error']:
+        if self.scoring in ['neg_mean_absolute_error', 'neg_mean_squared_error']:
             scores_dict['train_score'] = np.array([np.abs(score) for score in scores_dict['train_score']])
             scores_dict['test_score'] = np.array([np.abs(score) for score in scores_dict['test_score']])
 
@@ -476,9 +475,9 @@ class Regressor(BaseRegressor):
 
     def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
                  verbose=1, n_jobs=-1, score_multioutput='raw_values',
-                 search_scoring='neg_mean_absolute_error', search_refit=True,
-                 search_randomizedcv_n_iter=20, search_bayesianopt_init_points=2,
-                 search_bayesianopt_n_iter=20, return_train_score=True,
+                 scoring='neg_mean_absolute_error', refit=True,
+                 randomizedcv_n_iter=20, bayesopt_init_points=2,
+                 bayesopt_n_iter=20, return_train_score=True,
                  pipeline_transform='quantile_normal', pipeline_memory=None,
                  params=None, chain_order=None, stacking_layer=None,
                  target_index=None, n_regressors=None, boosting_loss=None,
@@ -490,7 +489,7 @@ class Regressor(BaseRegressor):
                          verbose=verbose,
                          n_jobs=n_jobs,
                          score_multioutput=score_multioutput,
-                         search_scoring=search_scoring,
+                         scoring=scoring,
                          return_train_score=return_train_score,
                          pipeline_transform=pipeline_transform,
                          pipeline_memory=pipeline_memory,
@@ -503,21 +502,21 @@ class Regressor(BaseRegressor):
                          line_search_regularization=line_search_regularization,
                          line_search_options=line_search_options)
 
-        assert isinstance(search_refit, bool)
-        assert isinstance(search_randomizedcv_n_iter, int)
-        assert isinstance(search_bayesianopt_init_points, int)
-        assert isinstance(search_bayesianopt_n_iter, int)
+        assert isinstance(refit, bool)
+        assert isinstance(randomizedcv_n_iter, int)
+        assert isinstance(bayesopt_init_points, int)
+        assert isinstance(bayesopt_n_iter, int)
 
-        self.search_refit = search_refit
-        self.search_randomizedcv_n_iter = search_randomizedcv_n_iter
-        self.search_bayesianopt_init_points = search_bayesianopt_init_points
-        self.search_bayesianopt_n_iter = search_bayesianopt_n_iter
+        self.refit = refit
+        self.randomizedcv_n_iter = randomizedcv_n_iter
+        self.bayesopt_init_points = bayesopt_init_points
+        self.bayesopt_n_iter = bayesopt_n_iter
 
     @property
     def check_regressor(self):
         """Check if regressor adheres to scikit-learn conventions."""
 
-        # sklearn and mlxtend stacking regressors, as well as 
+        # Sklearn and Mlxtend stacking regressors, as well as 
         # LightGBM, XGBoost, and CatBoost regressor 
         # do not adhere to the convention.
         try:
@@ -602,50 +601,6 @@ class Regressor(BaseRegressor):
         return super().cross_val_score(X=X, y=y,
                                        return_incumbent_score=return_incumbent_score)
 
-    def search(self, X, y, search_params, search_style='gridsearchcv', filename=None):
-        """(Hyper)parameter search method."""
-
-        if filename is not None:
-            assert isinstance(filename, str)
-
-        if self.target_index is not None:
-            y = y.iloc[:, self.target_index]
-
-        self._search(X=X, y=y, search_params=search_params, search_style=search_style)
-        try:
-            self.model_search.fit(X=X, y=y)
-        except AttributeError:
-            print('fit method requires model_search attribute')
-
-        if search_style in ['gridsearchcv', 'randomizedsearchcv']:
-            self.best_params_ = pd.Series(self.model_search.best_params_)
-            self.best_score_ = pd.Series({'best_score': self.model_search.best_score_})
-        elif search_style == 'bayesianoptimization':
-            try:
-                self.best_params_ = pd.Series(self.optimization.max['params'])
-                self.best_score_ = pd.Series({'best_score': self.optimization.max['target']})
-            except AttributeError:
-                print('best_params_ and best_score_ require optimization attribute')
-
-        # Avert negative mae or mse
-        # returned by sklearn and bayes-opt
-        if len(self.search_scoring) > 3 and self.search_scoring[:3] == 'neg':
-            self.best_score_.loc['best_score'] *= -1.0
-
-        self.search_summary_ = pd.concat([self.best_score_, self.best_params_], axis=0)
-
-        # Filter based on sklearn model search attributes
-        _sklearn_list = ['best_estimator_', 'cv_results_', 'refit_time_']
-        if all(hasattr(self.model_search, attr) for attr in _sklearn_list):
-            self.best_regressor_ = self.model_search.best_estimator_
-            self.cv_results_ = pd.DataFrame(self.model_search.cv_results_)
-            self.refit_time_ = pd.Series({'refit_time':self.model_search.refit_time_})
-            self.search_summary_ = pd.concat([self.search_summary_, self.refit_time_], axis=0)
-
-        if filename is not None:
-            path = _convert_filename_to_csv_path(filename=filename)
-            self.search_summary_.to_csv(path_or_buf=path, header=True)
-
     def _search(self, X, y, search_params, search_style='gridsearchcv'):
         """Prepare model search attribute according to search_style."""
 
@@ -653,52 +608,93 @@ class Regressor(BaseRegressor):
         # sequential or parallell. The former
         # identifies Bayesian optimization, while
         # the latter identifies grid or randomized
-        # search by sklearn. 
-        search_style, search_method = _check_model_search_style(search_style)
-        search_params = super()._process_search_params(search_params=search_params,
-                                                       search_method=search_method)
+        # search by Sklearn. 
+        search_style, search_method = _check_search_style(search_style)
+        search_params = super()._preprocess_search_params(search_params=search_params,
+                                                          search_method=search_method)
 
-        self.get_pipeline(y=y)
+        if not hasattr(self, 'pipe'):
+            n_samples = _n_samples(y)
+            fold_size =  np.full(shape=n_samples, fill_value=n_samples // self.cv,
+                                 dtype=np.int)
+            estimate_fold_size = n_samples - np.max(fold_size)
+            self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
 
         if search_style == 'gridsearchcv':
-            self.model_search = _gridsearchcv(estimator=self.pipe,
-                                              param_grid=search_params,
-                                              search_scoring=self.search_scoring,
-                                              refit=self.search_refit,
-                                              n_jobs=self.n_jobs,
-                                              cv=self.cv,
-                                              verbose=self.verbose,
-                                              pre_dispatch='2*n_jobs',
-                                              error_score=np.nan,
-                                              return_train_score=self.return_train_score)
+            self._regressor_search = sklearn.model_selection._search.GridSearchCV(
+                estimator=self.pipe, param_grid=search_params,
+                scoring=self.scoring, refit=self.refit, n_jobs=self.n_jobs,
+                cv=self.cv, verbose=self.verbose, pre_dispatch='2*n_jobs',
+                error_score=np.nan, return_train_score=self.return_train_score)
         elif search_style == 'randomizedsearchcv':
-            self.model_search = _randomizedsearchcv(estimator=self.pipe,
-                                                    param_distributions=search_params,
-                                                    n_iter=self.search_randomizedcv_n_iter,
-                                                    search_scoring=self.search_scoring,
-                                                    n_jobs=self.n_jobs,
-                                                    refit=self.search_refit,
-                                                    cv=self.cv,
-                                                    verbose=self.verbose,
-                                                    pre_dispatch='2*n_jobs',
-                                                    error_score=np.nan,
-                                                    return_train_score=self.return_train_score)
+            self._regressor_search = sklearn.model_selection._search.RandomizedSearchCV(
+                estimator=self.pipe, param_distributions=search_params,
+                n_iter=self.randomizedcv_n_iter, scoring=self.scoring,
+                n_jobs=self.n_jobs, refit=self.refit, cv=self.cv,
+                verbose=self.verbose, pre_dispatch='2*n_jobs',
+                error_score=np.nan, return_train_score=self.return_train_score)
         elif search_style == 'bayesianoptimization':
-            self.optimization = _bayesianoptimizationcv(X=X, y=y,
-                                                        estimator=self.pipe,
-                                                        search_params=search_params,
-                                                        cv=self.cv,
-                                                        scoring=self.search_scoring,
-                                                        n_jobs=self.n_jobs,
-                                                        verbose=self.verbose,
-                                                        random_state=self.random_state,
-                                                        init_points=self.search_bayesianopt_init_points,
-                                                        n_iter=self.search_bayesianopt_n_iter)
+            self.optimization = _bayesoptcv(X=X, y=y, estimator=self.pipe,
+                                            search_params=search_params,
+                                            cv=self.cv,
+                                            scoring=self.scoring,
+                                            n_jobs=self.n_jobs,
+                                            verbose=self.verbose,
+                                            random_state=self.random_state,
+                                            init_points=self.bayesopt_init_points,
+                                            n_iter=self.bayesopt_n_iter)
 
-            if self.search_refit:
+            if self.refit:
                 max_params = self.optimization.max['params']
-                get_best_params_ = _check_bayesianoptimization_parameter_type(max_params)
-                self.model_search = self.pipe.set_params(**get_best_params_)
+                get_best_params_ = _check_bayesopt_parameter_type(max_params)
+                self._regressor_search = self.pipe.set_params(**get_best_params_)
+
+    def search(self, X, y, search_params, search_style='gridsearchcv', filename=None):
+        """(Hyper)parameter search method."""
+
+        if filename is not None:
+            assert isinstance(filename, str)
+
+        if self.target_index is not None and \
+        sklearn.utils.multiclass.type_of_target(y) == 'continuous-multioutput':
+            # Selects a particular single-target
+            y = y.iloc[:, self.target_index]
+
+        self._search(X=X, y=y, search_params=search_params, search_style=search_style)
+
+        try:
+            self._regressor_search.fit(X=X, y=y)
+        except AttributeError:
+            print('Fit method requires _regressor_search attribute')
+
+        if search_style in ['gridsearchcv', 'randomizedsearchcv']:
+            self.best_params_ = pd.Series(self._regressor_search.best_params_)
+            self.best_score_ = pd.Series({'best_score': self._regressor_search.best_score_})
+        elif search_style == 'bayesianoptimization':
+            try:
+                self.best_params_ = pd.Series(self.optimization.max['params'])
+                self.best_score_ = pd.Series({'best_score': self.optimization.max['target']})
+            except AttributeError:
+                print('best_params_ and best_score_ require optimization attribute')
+
+        # Sklearn and bayes-opt return negative MAE and MSE scores,
+        # so we restore nonnegativity
+        if len(self.scoring) > 3 and self.scoring[:3] == 'neg':
+            self.best_score_.loc['best_score'] *= -1.0
+
+        self.search_summary_ = pd.concat([self.best_score_, self.best_params_], axis=0)
+
+        # Filter based on sklearn model search attributes
+        _sklearn_list = ['best_estimator_', 'cv_results_', 'refit_time_']
+        if all(hasattr(self._regressor_search, attr) for attr in _sklearn_list):
+            self.best_regressor_ = self._regressor_search.best_estimator_
+            self.cv_results_ = pd.DataFrame(self._regressor_search.cv_results_)
+            self.refit_time_ = pd.Series({'refit_time':self._regressor_search.refit_time_})
+            self.search_summary_ = pd.concat([self.search_summary_, self.refit_time_], axis=0)
+
+        if filename is not None:
+            path = _convert_filename_to_csv_path(filename=filename)
+            self.search_summary_.to_csv(path_or_buf=path, header=True)
         
     def subsample(self, X, y, subsample_proportion=None):
         """Generate subsamples from data X, y."""
@@ -713,28 +709,3 @@ class Regressor(BaseRegressor):
                                           n_samples=len(X), random_state=self.random_state)
 
         return X, y
-
-    def diagonalize_tridiagonal(self, y_true, y_pred, sort=True):
-        """Retrieve eigenvalues from tridiagonal matrix."""
-
-        assert isinstance(sort, bool)
-        test_size = y_pred.shape[0]
-        n_nonzero_entries = y_pred.shape[-1]
-        n_diag_entries = int(np.ceil(y_pred.shape[-1] / 2))
-
-        get_eigs = []
-        for i in range(test_size):
-            # Constructs tridiagonal matrix entries
-            # then diagonalizes the matrix
-            diag = [y_pred.iloc[i, j] for j in range(n_diag_entries)]
-            off_diag = [y_pred.iloc[i, j] for j in range(n_diag_entries, n_nonzero_entries)]
-            pos_eigs, _ = scipy.linalg.eigh_tridiagonal(diag, off_diag)
-            get_eigs.append(pos_eigs)
-        eigs = pd.DataFrame(get_eigs)
-
-        # Sorts eigenvalues according to
-        # Google's quantum lab convention
-        if sort:
-            return eigs.apply(lambda eig: -1*eig).sort_values(by=eigs.index.values[0], axis=1)
-        else:
-            return eigs.apply(lambda eig: -1*eig)
