@@ -5,10 +5,7 @@ from physlearn.datasets import load_benchmark
 from physlearn.supervised import paper_params
 
 
-n_qubits = 5
-data = load_benchmark()
-X_train, y_train = data['X_train'].iloc[:, -n_qubits:], data['y_train'].iloc[:, :n_qubits]
-X_test, y_test = data['X_test'].iloc[:, -n_qubits:], data['y_test'].iloc[:, :n_qubits]
+X_train, X_test, y_train, y_test = load_benchmark(return_split=True)
 
 model = 'stackingregressor'
 n_regressors = 1
@@ -30,7 +27,7 @@ for index in range(5):
                     line_search_options=line_search_options, stacking_layer=stack,
                     params=paper_params(index), target_index=index)
 
-    y_pred = reg.fit(X_train, y_train).predict(X_test)
+    y_pred = reg.baseboostcv(X_train, y_train).predict(X_test)
     score = reg.score(y_test, y_pred)
     test_error.append(score)
 

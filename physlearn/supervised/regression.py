@@ -189,8 +189,11 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         assert isinstance(filename, str)        
         return joblib.load(filename=filename)
     
-    def get_pipeline(self, y):
+    def get_pipeline(self, y, n_quantiles=None):
         """Create pipe attribute for downstream tasks."""
+
+        if n_quantiles is None:
+            n_quantiles = _n_samples(y)
 
         self.pipe =  _make_pipeline(estimator=self._regressor,
                                     transform=self.pipeline_transform,
@@ -200,7 +203,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                                     n_jobs=self.n_jobs,
                                     cv=self.cv,
                                     memory=self.pipeline_memory,
-                                    n_quantiles=_n_samples(y),
+                                    n_quantiles=n_quantiles,
                                     chain_order=self.chain_order,
                                     n_estimators=self.n_regressors,
                                     target_index=self.target_index,
@@ -238,14 +241,17 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
     def fit(self, X, y, sample_weight=None):
         """Fit regressor."""
 
-        X, y = _validate_data(X=X, y=y)
+        if not hasattr(self, '_baseboostcv'):
+            X, y = _validate_data(X=X, y=y)
 
         if self.target_index is not None and \
         sklearn.utils.multiclass.type_of_target(y) == 'continuous-multioutput':
             # Selects a particular single-target
             y = y.iloc[:, self.target_index]
 
-        self.get_pipeline(y=y)
+        if not hasattr(self, 'pipe'):
+            self.get_pipeline(y=y)
+
         self._fit(regressor=self.pipe, X=X, y=y,
                   sample_weight=sample_weight)
 
@@ -265,6 +271,14 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
     def baseboostcv(self, X, y, sample_weight=None):
         """Base boosting with inbuilt cross-validation"""
 
+        X, y = _validate_data(X=X, y=y)
+
+        if self.target_index is not None and \
+        sklearn.utils.multiclass.type_of_target(y) == 'continuous-multioutput':
+            # Selects a particular single-target
+            y = y.iloc[:, self.target_index]
+
+        self._baseboostcv = True
         self._inbuilt_model_selection_step(X=X, y=y)
         if not hasattr(self, 'return_incumbent_'):
             # Base boosting improves performance,
@@ -354,15 +368,20 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         """Perform cross-validation for regressor
            and incumbent, if return_incumbent_score is True."""
 
-        if self.target_index is not None and y.ndim > 1:
-            y = y.iloc[:, self.target_index]
+        # Base boosting has already validated the data
+        if not hasattr(self, '_baseboostcv'):
+            X, y = _validate_data(X=X, y=y)
 
-        X, y = _validate_data(X=X, y=y)
         X, y, groups = sklearn.utils.validation.indexable(X, y, None)
-        
         cv = sklearn.model_selection._split.check_cv(cv=self.cv, y=y, classifier=False)
-        
-        self.get_pipeline(y=y)
+
+        if not hasattr(self, 'pipe'):
+            n_samples = _n_samples(y)
+            fold_size =  np.full(shape=n_samples, fill_value=n_samples // self.cv,
+                                 dtype=np.int)
+            estimate_fold_size = n_samples - np.max(fold_size)
+            self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
+
         scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
                                                                         scoring=self.search_scoring)
 

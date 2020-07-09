@@ -137,7 +137,13 @@ class GoogleData(GoogleDataFrame):
                           n_qubits=self.n_qubits)
 
 
-def load_benchmark():
+def load_benchmark(return_split=False):
     """Load and return Google benchmark dataset (multi-target regression)."""
 
-    return GoogleData(n_qubits=5).load_benchmark
+    data = GoogleData(n_qubits=5).load_benchmark
+    if return_split:
+        X_train, X_test = data['X_train'].iloc[:, -5:], data['X_test'].iloc[:, -5:]
+        y_train, y_test = data['y_train'].iloc[:, :5], data['y_test'].iloc[:, :5]
+        return X_train, X_test, y_train, y_test
+    else:
+        return data
