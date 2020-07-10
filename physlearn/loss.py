@@ -104,7 +104,7 @@ class QuantileLossFunction(sklearn.ensemble._gb_losses.QuantileLossFunction):
         return (self.alpha*mask) - ((1-self.alpha)*~mask)
 
 
-LOSS_FUNCTIONS = {'ls': LeastSquaresError,
-                  'lad': LeastAbsoluteError,
-                  'huber': HuberLossFunction,
-                  'quantile': QuantileLossFunction}
+LOSS_FUNCTIONS = dict(ls=LeastSquaresError,
+                      lad=LeastAbsoluteError,
+                      huber=HuberLossFunction,
+                      quantile=QuantileLossFunction)
