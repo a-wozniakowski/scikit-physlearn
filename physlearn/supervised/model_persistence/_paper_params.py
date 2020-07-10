@@ -112,13 +112,13 @@ mlp_params_3.update(dict(hidden_layer_sizes=(10, ),
                          alpha=13.0, max_iter=5780))
 
 # Target 4
-mlp_params_1 = copy.deepcopy(mlp_param_template)
-mlp_params_1.update(dict(hidden_layer_sizes=(10, ),
+mlp_params_4 = copy.deepcopy(mlp_param_template)
+mlp_params_4.update(dict(hidden_layer_sizes=(10, ),
                          alpha=19.0, max_iter=4160))
 
 # Target 5
-mlp_params_1 = copy.deepcopy(mlp_param_template)
-mlp_params_1.update(dict(hidden_layer_sizes=(8, ),
+mlp_params_5 = copy.deepcopy(mlp_param_template)
+mlp_params_5.update(dict(hidden_layer_sizes=(8, ),
                          alpha=19.0, max_iter=5240))
 
 

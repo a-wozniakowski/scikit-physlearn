@@ -5,11 +5,11 @@ from physlearn.datasets import load_benchmark
 from physlearn.supervised import supplementary_params
 
 
-n_qubits = 5
 n_features = 9
+n_targets = 5
 data = load_benchmark()
-X_train, y_train = data['X_train'].iloc[:, :n_features], data['y_train'].iloc[:, :n_qubits]
-X_test, y_test = data['X_test'].iloc[:, :n_features], data['y_test'].iloc[:, :n_qubits]
+X_train, X_test = data['X_train'].iloc[:, :n_features], data['X_test'].iloc[:, :n_features]
+y_train, y_test = data['y_train'].iloc[:, :n_targets], data['y_test'].iloc[:, :n_targets]
 
 model = 'mlpregressor'
 

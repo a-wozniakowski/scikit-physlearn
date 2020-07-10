@@ -5,8 +5,6 @@ import numpy as np
 
 from scipy.stats import randint, uniform
 
-from ..utils._model_checks import _prepare_best_params_filename
-
 
 one_hidden_layer_sizes = [(i, ) for i in range(2, 15)]
 two_hidden_layers_sizes = [(i, j, ) for i in range(2, 7) for j in range(2, 9)]
