@@ -9,8 +9,8 @@ It is designed to amalgamate regressors in
 [CatBoost](https://catboost.ai/),
 and [Mlxtend](http://rasbt.github.io/mlxtend/)
 through a unified ```Regressor``` object that follows the scikit-learn API and pandas data representations.
-Further, it supports base boosting as introduced in the paper:
-[*Boosting on the shoulders of giants in quantum device calibration*.](https://arxiv.org/abs/2005.06194)
+It also supports base boosting, as introduced in the paper:
+[*Boosting on the shoulders of giants in quantum device calibration*](https://arxiv.org/abs/2005.06194).
 
 The repository was started by Alex Wozniakowski during his graduate studies at Nanyang Technological University.
 
@@ -18,7 +18,7 @@ Reference Paper
 ----------------
 If you use this code, please consider adding the corresponding citation:
 ```
-@article{wozniakowski2020boosting,
+@article{wozniakowski_2020_boosting,
   title={Boosting on the shoulders of giants in quantum device calibration},
   author={Wozniakowski, Alex and Thompson, Jayne and Gu, Mile and Binder, Felix},
   journal={arXiv preprint arXiv:2005.06194},
@@ -38,12 +38,16 @@ examples
     |   supplementary.py
 ```
 
-The results in ```main_body.py``` use a
+To obtain the results in ```main_body.py```, we use
 [StackingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.StackingRegressor.html)
-for each single-target subtask, and the pseudo-residuals are the negative gradient of the squared error loss function.
-The results in ```improved_main_body.py``` use a
-[Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html) regressor for the third single-target subtask,
-and for each single-target subtask the pseudo-residuals are the negative gradient of the Huber loss function.
-The results in ```supplementary.py``` use an
+as the basis function in each single-target regression subtask. Moreover, we compute the pseudo-residuals
+by taking the negative gradient of the squared error loss function.
+
+To obtain the results in ```improved_main_body.py```, we modify the aforementioned procedure. Namely, we use
+[Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html)
+as the basis function in the third single-target regression subtask. Moreover, we compute the pseudo-residuals
+by taking the negative gradient of the Huber loss function in each single-target regression subtask. 
+
+To obtain the results in ```supplementary.py```, we use
 [MLPRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html)
-for each single-target subtask, and the regressor uses the raw control voltage features as input.
+for each single-target regression subtask, where the features are the raw control voltage features.
