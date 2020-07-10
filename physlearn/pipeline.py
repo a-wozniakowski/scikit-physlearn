@@ -11,6 +11,7 @@ import pandas as pd
 
 import scipy.optimize
 
+import sklearn.dummy
 import sklearn.metrics
 import sklearn.multioutput
 import sklearn.pipeline
@@ -21,6 +22,9 @@ import sklearn.utils.multiclass
 
 from .loss import LOSS_FUNCTIONS
 from .supervised.utils._data_checks import _n_targets
+
+
+_CHAIN_FLAG = sklearn.multioutput.RegressorChain(base_estimator=sklearn.dummy.DummyRegressor()).__class__
 
 
 def _make_pipeline(estimator, transform, n_targets,
@@ -190,7 +194,11 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                         raw_predictions = X
                     self._fit_stages(X=Xt, y=y, raw_predictions=raw_predictions, **fit_params_last_step)
                 else:
-                    self._final_estimator.fit(X=Xt, y=y, **fit_params_last_step)
+                    if self._final_estimator.__class__ == _CHAIN_FLAG:
+                        # RegressorChain capitilizes the target
+                        self._final_estimator.fit(X=Xt, Y=y, **fit_params_last_step)
+                    else:
+                        self._final_estimator.fit(X=Xt, y=y, **fit_params_last_step)
 
         return self
 
