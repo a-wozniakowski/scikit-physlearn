@@ -1,0 +1,23 @@
+language: python
+
+env:
+  global:  # default values
+    - TEST_DIR=/tmp/physlearn
+    - OMP_NUM_THREADS=2
+    - OPENBLAS_NUM_THREADS=2
+    - PYTHON_VERSION=latest
+  matrix:
+    - TASK=regular PYTHON_VERSION=3.6
+    - TASK=sdist PYTHON_VERSION=2.7
+    - TASK=bdist
+    - TASK=if-else
+    - TASK=lint
+    - TASK=check-docs
+    - TASK=mpi METHOD=source
+    - TASK=mpi METHOD=pip PYTHON_VERSION=3.7
+
+install:
+  - bash .ci/setup.sh
+
+script:
+  - bash .ci/test.sh
