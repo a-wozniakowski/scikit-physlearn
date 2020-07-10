@@ -25,8 +25,7 @@ The standard version of gradient boosting fits an additive model, whereby the fi
 initializes to the optimal constant model. In the low data regime, this choice of initialization generally
 results in substandard generalization performance. Inspired by the process of human research, wherein scientific
 progress derives from prior scientific knowledge, base boosting initializes with a base regressor's initial predictions.
-As a greedy stagewise algorithm, base boosting sequentially appends basis functions to an additive model without adjusting
-the previously learned expansion coefficients or parameter sets.
+As a greedy stagewise algorithm, base boosting sequentially appends basis functions to the base regressor's initial basis.
 
 
 Below is the directory structure for ```paper_results```:
