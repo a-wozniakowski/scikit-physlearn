@@ -38,9 +38,12 @@ examples
     |   supplementary.py
 ```
 
-The results in ```main_body.py``` use a ```StackingRegressor``` for each single-target subtask, and the 
-pseudo-residuals are the negative gradient of the squared error loss function. The results in
-```improved_main_body.py``` use a ```Ridge``` regressor for the third single-target subtask, and 
-for each single-target subtask the pseudo-residuals are the negative gradient of the Huber loss function.
-The results in ```supplementary.py``` use an ```MLPRegressor``` for each single-target subtask,
-and the regressor uses the raw features as input.
+The results in ```main_body.py``` use a
+[StackingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.StackingRegressor.html)
+for each single-target subtask, and the pseudo-residuals are the negative gradient of the squared error loss function.
+The results in ```improved_main_body.py``` use a
+[Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html) regressor for the third single-target subtask,
+and for each single-target subtask the pseudo-residuals are the negative gradient of the Huber loss function.
+The results in ```supplementary.py``` use an
+[MLPRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html)
+for each single-target subtask, and the regressor uses the raw control voltage features as input.
