@@ -18,7 +18,7 @@ Reference Paper
 ----------------
 
 <div align="center">
-  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/a-wozniakowski-dev/images/framework.png" width="100" height="100"><br><br>
+  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/a-wozniakowski-dev/images/framework.png" width="175" height="175"><br><br>
 </div>
 
 If you use this code, please consider adding the corresponding citation:
