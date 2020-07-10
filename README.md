@@ -1,16 +1,16 @@
 scikit-physlearn
 ----------------
 
-**scikit-physlearn** is a Python package for single-target and multi-target regression tasks. 
-It is designed to follow the scikit-learn API with data representations in pandas. 
-The model dictionary provides streamlined access to regressors in
+**scikit-physlearn** is a Python package for single-target and multi-target regression. 
+It is designed to amalgamate regressors in
 [scikit-learn](https://scikit-learn.org/),
 [LightGBM](https://lightgbm.readthedocs.io/en/latest/index.html),
 [XGBoost](https://xgboost.readthedocs.io/en/latest/),
 [CatBoost](https://catboost.ai/),
-and [Mlxtend](http://rasbt.github.io/mlxtend/).
-The ```ModifiedPipeline``` object offers the ability to boost any of these regressors with a modified initialization,
-as described in the paper *Boosting on the shoulders of giants in quantum device calibration*.
+and [Mlxtend](http://rasbt.github.io/mlxtend/)
+with a unified ```Regressor``` object that follows the scikit-learn API with data representations in pandas.
+Moreover, it offers the ability to boost these regressors with a modified initialization,
+as described in the paper: *Boosting on the shoulders of giants in quantum device calibration*.
 
 The repository was started by Alex Wozniakowski during his graduate studies at Nanyang Technological University.
 
