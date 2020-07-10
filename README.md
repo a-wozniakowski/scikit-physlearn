@@ -37,3 +37,10 @@ examples
     |   main_body.py
     |   supplementary.py
 ```
+
+The results in ```main_body.py``` use a ```StackingRegressor``` for each single-target subtask, and the 
+pseudo-residuals are the negative gradient of the squared error loss function. The results in
+```improved_main_body.py``` use a ```Ridge``` regressor for the third single-target subtask, and 
+for each single-target subtask the pseudo-residuals are the negative gradient of the Huber loss function.
+The results in ```supplementary.py``` use an ```MLPRegressor``` for each single-target subtask,
+and the regressor uses the raw features as input.
