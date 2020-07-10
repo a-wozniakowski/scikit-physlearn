@@ -17,6 +17,10 @@ The repository was started by Alex Wozniakowski during his graduate studies at N
 Reference Paper
 ----------------
 
+<div align="center">
+  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/a-wozniakowski-dev/images/framework.png"><br><br>
+</div>
+
 If you use this code, please consider adding the corresponding citation:
 ```
 @article{wozniakowski_2020_boosting,
