@@ -3,7 +3,7 @@ import unittest
 import pandas as pd
 
 from scipy.stats import uniform
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_boston, load_linnerud
 from sklearn.model_selection import train_test_split
 
 from physlearn import Regressor
@@ -66,9 +66,29 @@ class TestBasic(unittest.TestCase):
         reg.fit(X_train, y_train)
         y_pred = reg.fit(X_train, y_train).predict(X_test)
         score = reg.score(y_test, y_pred)
-        self.assertCountEqual(X_test.index, y_test.index)
+        self.assertCountEqual(y_pred.index, y_test.index)
+        self.assertGreaterEqual(score['mae'].values, 0.0)
+        self.assertGreaterEqual(score['mse'].values, 0.0)
         self.assertLess(score['mae'].values, 3.1)
         self.assertLess(score['mse'].values, 23.0)
+
+    # sklearn < 0.23 does not have as_frame parameter
+    @unittest.skipIf(sk_version < '0.23.0', 'scikit-learn version is less than 0.23')
+    def test_multioutput_regressor(self):
+        bunch = load_linnerud(as_frame=True)  # returns a Bunch instance
+        X, y = bunch['data'], bunch['target']
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
+        params = dict(n_estimators=3, objective='mean_squared_error')
+        reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler',
+                        params=params)
+        y_pred = reg.fit(X_train, y_train).predict(X_test)
+        score = reg.score(y_test, y_pred).mean()
+        self.assertCountEqual(y_pred.index, y_test.index)
+        self.assertGreaterEqual(score['mae'], 0.0)
+        self.assertGreaterEqual(score['mse'], 0.0)
+        self.assertLess(score['mae'], 8.1)
+        self.assertLess(score['mse'], 122.5)
 
 if __name__ == '__main__':
     unittest.main()
