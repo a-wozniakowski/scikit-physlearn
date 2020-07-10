@@ -4,8 +4,10 @@ Bayesian optimization (hyper)parameter search.
 
 # Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 
+import sklearn.model_selection
+
 from bayes_opt import BayesianOptimization
-from ..utils._model_checks import _check_bayesopt_parameter_type
+from ..utils._model_checks import _check_bayesoptcv_parameter_type
 
 
 def _bayesoptcv(X, y, estimator, search_params, cv,
@@ -13,7 +15,7 @@ def _bayesoptcv(X, y, estimator, search_params, cv,
                 init_points, n_iter):
 
     def regressor_cross_val_mean(**pbounds):
-        pbounds = _check_bayesopt_parameter_type(pbounds)
+        pbounds = _check_bayesoptcv_parameter_type(pbounds)
         estimator.set_params(**pbounds)
         cross_val = sklearn.model_selection.cross_val_score(estimator=estimator,
                                                             X=X, y=y, scoring=scoring,

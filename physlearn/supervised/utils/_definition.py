@@ -80,16 +80,14 @@ KERNEL_DICT = {'dotproduct': DotProduct,
 _SCORE_CHOICE = ['mae', 'mse', 'rmse', 'r2', 'ev', 'msle']
 
 
-_PIPELINE_TRANSFORM_CHOICE = ['standard_scaler', 'box_cox', 'yeo_johnson',
-                              'boundary_yeo_johnson', 'quantile_uniform',
-                              'quantile_normal']
+_PIPELINE_TRANSFORM_CHOICE = ['standardscaler', 'boxcox', 'yeojohnson',
+                              'quantileuniform', 'quantilenormal']
 
 
-_MODEL_SEARCH_STYLE = ['gridsearchcv', 'randomizedsearchcv',
-                       'bayesopt']
+_SEARCH_METHOD = ['gridsearchcv', 'randomizedsearchcv', 'bayesoptcv']
 
 
-_MODEL_SEARCH_METHOD = ['parallel', 'sequential']
+_SEARCH_TAXONOMY = ['parallel', 'sequential']
 
 
 _SHAP_TAXONOMY = {'linearregression': 'linear',

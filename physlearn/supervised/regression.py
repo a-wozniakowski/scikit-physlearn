@@ -31,10 +31,10 @@ from ..pipeline import _make_pipeline
 from .interface import RegressorDictionaryInterface
 from .model_selection.bayesian_search import _bayesoptcv
 from .utils._data_checks import _n_features, _n_targets, _n_samples, _validate_data
-from .utils._definition import (_MODEL_DICT, _MODEL_SEARCH_METHOD, _PIPELINE_TRANSFORM_CHOICE,
-                                _SCORE_CHOICE)
-from .utils._model_checks import (_check_bayesopt_parameter_type, _check_model_choice,
-                                  _check_search_style, _check_stacking_layer,
+from .utils._definition import (_MODEL_DICT, _SEARCH_METHOD, _PIPELINE_TRANSFORM_CHOICE,
+                                _SCORE_CHOICE, _SEARCH_TAXONOMY)
+from .utils._model_checks import (_check_bayesoptcv_parameter_type, _check_model_choice,
+                                  _check_search_method, _check_stacking_layer,
                                   _convert_filename_to_csv_path, _parallel_search_preprocessing,
                                   _sequential_search_preprocessing)
 
@@ -350,14 +350,14 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
 
         return score
 
-    def _preprocess_search_params(self, search_params, search_method='parallel'):
+    def _preprocess_search_params(self, search_params, search_taxonomy='parallel'):
         """Search parameter helper function."""
 
-        assert search_method in _MODEL_SEARCH_METHOD
+        assert search_taxonomy in _SEARCH_TAXONOMY
 
-        if search_method == 'parallel':
+        if search_taxonomy == 'parallel':
             search_params = _parallel_search_preprocessing(raw_params=search_params)
-        elif search_method == 'sequential':
+        elif search_taxonomy == 'sequential':
             search_params = _sequential_search_preprocessing(raw_pbounds=search_params)
 
         return search_params
@@ -476,9 +476,9 @@ class Regressor(BaseRegressor):
     def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
                  verbose=1, n_jobs=-1, score_multioutput='raw_values',
                  scoring='neg_mean_absolute_error', refit=True,
-                 randomizedcv_n_iter=20, bayesopt_init_points=2,
-                 bayesopt_n_iter=20, return_train_score=True,
-                 pipeline_transform='quantile_normal', pipeline_memory=None,
+                 randomizedcv_n_iter=20, bayesoptcv_init_points=2,
+                 bayesoptcv_n_iter=20, return_train_score=True,
+                 pipeline_transform='quantilenormal', pipeline_memory=None,
                  params=None, chain_order=None, stacking_layer=None,
                  target_index=None, n_regressors=None, boosting_loss=None,
                  line_search_regularization=None, line_search_options=None):
@@ -504,13 +504,13 @@ class Regressor(BaseRegressor):
 
         assert isinstance(refit, bool)
         assert isinstance(randomizedcv_n_iter, int)
-        assert isinstance(bayesopt_init_points, int)
-        assert isinstance(bayesopt_n_iter, int)
+        assert isinstance(bayesoptcv_init_points, int)
+        assert isinstance(bayesoptcv_n_iter, int)
 
         self.refit = refit
         self.randomizedcv_n_iter = randomizedcv_n_iter
-        self.bayesopt_init_points = bayesopt_init_points
-        self.bayesopt_n_iter = bayesopt_n_iter
+        self.bayesoptcv_init_points = bayesoptcv_init_points
+        self.bayesoptcv_n_iter = bayesoptcv_n_iter
 
     @property
     def check_regressor(self):
@@ -601,17 +601,17 @@ class Regressor(BaseRegressor):
         return super().cross_val_score(X=X, y=y,
                                        return_incumbent_score=return_incumbent_score)
 
-    def _search(self, X, y, search_params, search_style='gridsearchcv'):
-        """Prepare model search attribute according to search_style."""
+    def _search(self, X, y, search_params, search_method='gridsearchcv'):
+        """Helper (hyper)parameter search method."""
 
         # The returned search method is either
         # sequential or parallell. The former
         # identifies Bayesian optimization, while
         # the latter identifies grid or randomized
         # search by Sklearn. 
-        search_style, search_method = _check_search_style(search_style)
+        search_method, search_taxonomy = _check_search_method(search_method=search_method)
         search_params = super()._preprocess_search_params(search_params=search_params,
-                                                          search_method=search_method)
+                                                          search_taxonomy=search_taxonomy)
 
         if not hasattr(self, 'pipe'):
             n_samples = _n_samples(y)
@@ -620,20 +620,20 @@ class Regressor(BaseRegressor):
             estimate_fold_size = n_samples - np.max(fold_size)
             self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
 
-        if search_style == 'gridsearchcv':
+        if search_method == 'gridsearchcv':
             self._regressor_search = sklearn.model_selection._search.GridSearchCV(
                 estimator=self.pipe, param_grid=search_params,
                 scoring=self.scoring, refit=self.refit, n_jobs=self.n_jobs,
                 cv=self.cv, verbose=self.verbose, pre_dispatch='2*n_jobs',
                 error_score=np.nan, return_train_score=self.return_train_score)
-        elif search_style == 'randomizedsearchcv':
+        elif search_method == 'randomizedsearchcv':
             self._regressor_search = sklearn.model_selection._search.RandomizedSearchCV(
                 estimator=self.pipe, param_distributions=search_params,
                 n_iter=self.randomizedcv_n_iter, scoring=self.scoring,
                 n_jobs=self.n_jobs, refit=self.refit, cv=self.cv,
                 verbose=self.verbose, pre_dispatch='2*n_jobs',
                 error_score=np.nan, return_train_score=self.return_train_score)
-        elif search_style == 'bayesianoptimization':
+        elif search_method == 'bayesoptcv':
             self.optimization = _bayesoptcv(X=X, y=y, estimator=self.pipe,
                                             search_params=search_params,
                                             cv=self.cv,
@@ -641,15 +641,15 @@ class Regressor(BaseRegressor):
                                             n_jobs=self.n_jobs,
                                             verbose=self.verbose,
                                             random_state=self.random_state,
-                                            init_points=self.bayesopt_init_points,
-                                            n_iter=self.bayesopt_n_iter)
+                                            init_points=self.bayesoptcv_init_points,
+                                            n_iter=self.bayesoptcv_n_iter)
 
             if self.refit:
                 max_params = self.optimization.max['params']
-                get_best_params_ = _check_bayesopt_parameter_type(max_params)
+                get_best_params_ = _check_bayesoptcv_parameter_type(max_params)
                 self._regressor_search = self.pipe.set_params(**get_best_params_)
 
-    def search(self, X, y, search_params, search_style='gridsearchcv', filename=None):
+    def search(self, X, y, search_params, search_method='gridsearchcv', filename=None):
         """(Hyper)parameter search method."""
 
         if filename is not None:
@@ -660,17 +660,17 @@ class Regressor(BaseRegressor):
             # Selects a particular single-target
             y = y.iloc[:, self.target_index]
 
-        self._search(X=X, y=y, search_params=search_params, search_style=search_style)
+        self._search(X=X, y=y, search_params=search_params, search_method=search_method)
 
         try:
             self._regressor_search.fit(X=X, y=y)
         except AttributeError:
             print('Fit method requires _regressor_search attribute')
 
-        if search_style in ['gridsearchcv', 'randomizedsearchcv']:
+        if search_method in ['gridsearchcv', 'randomizedsearchcv']:
             self.best_params_ = pd.Series(self._regressor_search.best_params_)
             self.best_score_ = pd.Series({'best_score': self._regressor_search.best_score_})
-        elif search_style == 'bayesianoptimization':
+        elif search_method == 'bayesoptcv':
             try:
                 self.best_params_ = pd.Series(self.optimization.max['params'])
                 self.best_score_ = pd.Series({'best_score': self.optimization.max['target']})

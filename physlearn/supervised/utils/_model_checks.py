@@ -1,7 +1,7 @@
 import Levenshtein
 import numpy as np
 
-from ._definition import _MODEL_DICT, _MODEL_SEARCH_STYLE
+from ._definition import _MODEL_DICT, _SEARCH_METHOD
 
 
 def _basic_autocorrect(model_choice, model_choices, model_type):
@@ -54,7 +54,7 @@ def _check_stacking_layer(stacking_layer, model_type):
         return stacking_layer
 
 
-def _check_bayesopt_parameter_type(params): 
+def _check_bayesoptcv_parameter_type(params): 
     assert isinstance(params, dict)
 
     for key, param in params.items():
@@ -80,21 +80,21 @@ def _sequential_search_preprocessing(raw_pbounds):
     assert isinstance(raw_pbounds, (dict))
     pbounds = {}
     for raw_pbound, value in raw_pbounds.items():
-        bayesopt_search_key = 'reg__' + raw_pbound
-        pbounds[bayesopt_search_key] = value
+        bayesoptcv_search_key = 'reg__' + raw_pbound
+        pbounds[bayesoptcv_search_key] = value
     return pbounds
 
 
-def _check_search_style(search_style):
-    assert isinstance(search_style, str)
-    assert search_style in _MODEL_SEARCH_STYLE
+def _check_search_method(search_method):
+    assert isinstance(search_method, str)
+    assert search_method in _SEARCH_METHOD
 
-    search_style = search_style.strip().lower()
-    if search_style in ['gridsearchcv', 'randomizedsearchcv']:
-        search_method = 'parallel'
-    elif search_style in ['bayesianoptimization']:
-        search_method = 'sequential'
-    return search_style, search_method
+    search_method = search_method.strip().lower()
+    if search_method in ['gridsearchcv', 'randomizedsearchcv']:
+        search_taxonomy = 'parallel'
+    elif search_method in ['bayesoptcv']:
+        search_taxonomy = 'sequential'
+    return search_method, search_taxonomy
 
 
 def _prepare_best_params_filename(folder, model_choice):

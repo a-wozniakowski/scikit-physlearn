@@ -31,17 +31,17 @@ def _make_pipeline(estimator, transform, n_targets,
                    regularization=None, line_search_options=None):
 
     # Feature transformation options
-    if transform == 'standard_scaler':
+    if transform == 'standardscaler':
         transform = sklearn.preprocessing.StandardScaler()
-    elif transform == 'box_cox':
+    elif transform == 'boxcox':
         transform = sklearn.preprocessing.PowerTransformer(method='box-cox')
-    elif transform == 'yeo_johnson':
+    elif transform == 'yeojohnson':
         transform = sklearn.preprocessing.PowerTransformer(method='yeo-johnson')
-    elif transform == 'quantile_uniform':
+    elif transform == 'quantileuniform':
         transform = sklearn.preprocessing.QuantileTransformer(n_quantiles=n_quantiles,
                                                               output_distribution='uniform',
                                                               random_state=random_state)
-    elif transform == 'quantile_normal':  
+    elif transform == 'quantilenormal':  
         transform = sklearn.preprocessing.QuantileTransformer(n_quantiles=n_quantiles,
                                                               output_distribution='normal',
                                                               random_state=random_state)
