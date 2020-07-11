@@ -215,11 +215,13 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
 
         assert hasattr(self, 'pipe') and isinstance(attr, str)
 
-        attr = {f'target {index}': getattr(self.pipe, attr)
-               for index, self.pipe
-               in enumerate(self.pipe.named_steps['reg'].estimators_)}
-
-        return attr
+        try:
+            attr = {f'target {index}': getattr(self.pipe, attr)
+                   for index, self.pipe
+                   in enumerate(self.pipe.named_steps['reg'].estimators_)}
+            return attr
+        except AttributeError:
+            print(f'{self.pipe.named_steps["reg"]} needs to have an estimators_ attribute.')
 
     @staticmethod
     def _fit(regressor, X, y, sample_weight=None):
