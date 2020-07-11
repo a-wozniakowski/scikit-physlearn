@@ -1,5 +1,5 @@
 scikit-physlearn
-----------------
+=======
 
 **scikit-physlearn** is a Python package for single-target and multi-target regression. 
 It is designed to amalgamate regressors in
@@ -15,7 +15,7 @@ The regressor object supports base boosting, as introduced in the paper:
 The repository was started by Alex Wozniakowski during his graduate studies at Nanyang Technological University.
 
 Base boosting
-----------------
+-----------
 
 <div align="center">
   <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/a-wozniakowski-dev/images/framework.png" width="600" height="300"><br><br>
@@ -55,7 +55,7 @@ for each single-target regression subtask, where the features are the raw contro
 
 
 Reference
-----------------
+-----------
 
 If you use this code, please consider adding the corresponding citation:
 ```
