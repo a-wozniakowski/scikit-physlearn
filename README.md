@@ -8,10 +8,10 @@ It is designed to amalgamate regressors in
 [XGBoost](https://xgboost.readthedocs.io/en/latest/),
 [CatBoost](https://catboost.ai/),
 and [Mlxtend](http://rasbt.github.io/mlxtend/)
-through a unified ```Regressor``` object. The API follows scikit-learn conventions,
-data representations are in pandas, and the regressor object supports base boosting,
-as introduced in 
-[*Boosting on the shoulders of giants in quantum device calibration*](https://arxiv.org/abs/2005.06194).
+through a unified ```Regressor``` object:
+* The API follows scikit-learn conventions.
+* Pandas data representations.
+* Supports [*base boosting*](https://arxiv.org/abs/2005.06194).
 
 The repository was started by Alex Wozniakowski during his graduate studies at Nanyang Technological University.
 
