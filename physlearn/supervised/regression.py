@@ -376,7 +376,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             n_samples = _n_samples(y)
             fold_size =  np.full(shape=n_samples, fill_value=n_samples // self.cv,
                                  dtype=np.int)
-            estimate_fold_size = n_samples - np.max(fold_size)
+            estimate_fold_size = n_samples - (np.max(fold_size) + 1)
             self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
 
         scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
@@ -615,7 +615,7 @@ class Regressor(BaseRegressor):
             n_samples = _n_samples(y)
             fold_size =  np.full(shape=n_samples, fill_value=n_samples // self.cv,
                                  dtype=np.int)
-            estimate_fold_size = n_samples - np.max(fold_size)
+            estimate_fold_size = n_samples - (np.max(fold_size) + 1)
             self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
 
         if search_method == 'gridsearchcv':
