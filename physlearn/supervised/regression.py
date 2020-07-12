@@ -31,8 +31,8 @@ from ..pipeline import _make_pipeline
 from .interface import RegressorDictionaryInterface
 from .model_selection.bayesian_search import _bayesoptcv
 from .utils._data_checks import _n_features, _n_targets, _n_samples, _validate_data
-from .utils._definition import (_MODEL_DICT, _SEARCH_METHOD, _PIPELINE_TRANSFORM_CHOICE,
-                                _SCORE_CHOICE, _SEARCH_TAXONOMY)
+from .utils._definition import (_MODEL_DICT, _SEARCH_METHOD, _SCORE_CHOICE,
+                                _SEARCH_TAXONOMY)
 from .utils._model_checks import (_check_bayesoptcv_parameter_type, _check_model_choice,
                                   _check_search_method, _check_stacking_layer,
                                   _convert_filename_to_csv_path, _parallel_search_preprocessing,
@@ -70,10 +70,6 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         assert isinstance(stacking_cv_refit, bool)
         assert isinstance(stacking_passthrough, bool)
         assert isinstance(stacking_meta_features, bool)
-
-        if pipeline_transform is not None:
-            assert any(pipeline_transform == transform for transform in _PIPELINE_TRANSFORM_CHOICE), (
-                'Choose from ' f'{_PIPELINE_TRANSFORM_CHOICE}')
 
         if pipeline_memory is not None:
             assert isinstance(pipeline_memory, bool)
