@@ -17,7 +17,8 @@ class TestBasic(unittest.TestCase):
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-        params = dict(n_estimators=10, objective='mean_squared_error')
+        params = dict(n_estimators=10, objective='mean_squared_error',
+                      boosting_type='goss')
         reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler',
                         params=params)
         reg.fit(X_train, y_train)
@@ -26,7 +27,7 @@ class TestBasic(unittest.TestCase):
         self.assertCountEqual(y_pred.index, y_test.index)
         self.assertGreaterEqual(score['mae'].values, 0.0)
         self.assertGreaterEqual(score['mse'].values, 0.0)
-        self.assertLess(score['mae'].values, 3.5)
+        self.assertLess(score['mae'].values, 3.4)
         self.assertLess(score['mse'].values, 24.0)
 
     # sklearn < 0.23 does not have as_frame parameter
