@@ -14,6 +14,12 @@ regressors into a unified ```Regressor```, which:
 
 The repository was started by Alex Wozniakowski during his graduate studies at Nanyang Technological University.
 
+## Install
+Scikit-physlearn can be installed from [PyPi](https://pypi.org/project/scikit-physlearn/0.1/):
+```
+pip install scikit-physlearn
+```
+
 ## Quick Start
 
 See below for a quick tour of the Scikit-physlearn package.
