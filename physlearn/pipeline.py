@@ -21,7 +21,9 @@ import sklearn.utils.metaestimators
 import sklearn.utils.multiclass
 
 from .loss import LOSS_FUNCTIONS
+
 from .supervised.utils._data_checks import _n_targets
+from .supervised.utils._definition import _PIPELINE_TRANSFORM_CHOICE
 
 
 _CHAIN_FLAG = sklearn.multioutput.RegressorChain(base_estimator=sklearn.dummy.DummyRegressor()).__class__
@@ -34,28 +36,36 @@ def _make_pipeline(estimator, transform, n_targets,
                    target_index=None, boosting_loss=None,
                    regularization=None, line_search_options=None):
 
-    # Feature transformation options
-    if transform == 'standardscaler':
-        transform = sklearn.preprocessing.StandardScaler()
-    elif transform == 'boxcox':
-        transform = sklearn.preprocessing.PowerTransformer(method='box-cox')
-    elif transform == 'yeojohnson':
-        transform = sklearn.preprocessing.PowerTransformer(method='yeo-johnson')
-    elif transform == 'quantileuniform':
-        transform = sklearn.preprocessing.QuantileTransformer(n_quantiles=n_quantiles,
-                                                              output_distribution='uniform',
-                                                              random_state=random_state)
-    elif transform == 'quantilenormal':  
-        transform = sklearn.preprocessing.QuantileTransformer(n_quantiles=n_quantiles,
-                                                              output_distribution='normal',
-                                                              random_state=random_state)
-
-    # Automatically manages single-target 
-    # and multi-target regression
-    if transform is not None:
+    if isinstance(transform, (list, tuple)):
+        # Allows custom transformation options
+        if isinstance(transform, tuple):
+            # Needs to have append attribute for downstream tasks
+            steps = [transform]
+        else:
+            steps = transform
+    elif transform in _PIPELINE_TRANSFORM_CHOICE:
+        # Feature transformation options
+        if transform == 'standardscaler':
+            transform = sklearn.preprocessing.StandardScaler()
+        elif transform == 'boxcox':
+            transform = sklearn.preprocessing.PowerTransformer(method='box-cox')
+        elif transform == 'yeojohnson':
+            transform = sklearn.preprocessing.PowerTransformer(method='yeo-johnson')
+        elif transform == 'quantileuniform':
+            transform = sklearn.preprocessing.QuantileTransformer(n_quantiles=n_quantiles,
+                                                                  output_distribution='uniform',
+                                                                  random_state=random_state)
+        elif transform == 'quantilenormal':  
+            transform = sklearn.preprocessing.QuantileTransformer(n_quantiles=n_quantiles,
+                                                                  output_distribution='normal',
+                                                                  random_state=random_state)
         steps = [('tr', transform)]
     else:
+        # No transform steps were provided
         steps = []
+
+    # Automatically prepares pipeline for single-target
+    # or multi-target regression task
     if n_targets == 1:
         steps.append(('reg', estimator))
     elif n_targets > 1:
