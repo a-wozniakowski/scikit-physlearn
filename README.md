@@ -2,63 +2,56 @@ Scikit-physlearn
 =======
 
 **Scikit-physlearn** is a Python package for single-target and multi-target regression.
-It is designed to amalgamate regressors in
-[scikit-learn](https://scikit-learn.org/),
+It is designed to amalgamate 
+[Scikit-learn](https://scikit-learn.org/),
 [LightGBM](https://lightgbm.readthedocs.io/en/latest/index.html),
 [XGBoost](https://xgboost.readthedocs.io/en/latest/),
 [CatBoost](https://catboost.ai/),
 and [Mlxtend](http://rasbt.github.io/mlxtend/)
-through a unified ```Regressor``` object:
-* The API follows scikit-learn conventions.
-* Pandas data representations.
+regressors into a unified ```Regressor```, which:
+* Follows the Scikit-learn API.
+* Represents data in pandas.
 * Supports [*base boosting*](https://arxiv.org/abs/2005.06194).
 
 The repository was started by Alex Wozniakowski during his graduate studies at Nanyang Technological University.
 
-Base boosting
------------
+## Quick Start
+
+See below for a quick tour of the Scikit-physlearn package.
+* Follow the
+[introduction](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/basics/introduction.py)
+module to get started with single-target regression.
+* Check out the
+[multi-target](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/basics/multi_target.py)
+module to get started with multi-target regression.
+* Explore the
+[model search](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/basics/model_search.py)
+module to learn about (hyper)parameter optimization.
+
+## Base boosting
 
 <div align="center">
-  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/a-wozniakowski-dev/images/framework.png" width="600" height="300"><br><br>
+  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/framework.png" width="600" height="300"><br><br>
 </div>
 
-The standard version of gradient boosting fits an additive model, whereby the first algorithmic step
-initializes to the optimal constant model. In the low data regime, this choice of initialization generally
-results in substandard generalization performance. Inspired by the process of human research, wherein scientific
-progress derives from prior scientific knowledge, base boosting initializes with a base regressor's initial predictions.
-As a greedy stagewise algorithm, base boosting sequentially appends basis functions to the base regressor's initial basis.
+Inspired by the process of human research, base boosting is a modification of the standard version of
+[gradient boosting](https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451),
+which is designed to emulate the paradigm of "standing on the shoulders of giants." To evaluate its
+efficacy in a quantum device calibration application with a limited supply of experimental data:
+* Run the
+[main body](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/main_body.py)
+module to generate the test error results in the [benchmark task](#Citation).
+* Compare these results with the scientific model's results in the
+[benchmark](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/benchmark.py)
+module.
+* Explore the difficulty in learning without the scientific model's inductive bias in the
+[supplementary](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/supplementary.py)
+module.
 
 
-Below is the directory structure for ```paper_results```:
-```
-examples
-|
-|
-|___paper_results
-    |   improved_main_body.py
-    |   main_body.py
-    |   supplementary.py
-```
+## Citation
 
-To obtain the results in ```main_body.py```, we use
-[StackingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.StackingRegressor.html)
-as the basis function in each single-target regression subtask. Moreover, we compute the pseudo-residuals
-by taking the negative gradient of the squared error loss function.
-
-To obtain the results in ```improved_main_body.py```, we modify the aforementioned procedure. Namely, we use
-[Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html)
-as the basis function in the third single-target regression subtask. Moreover, we compute the pseudo-residuals
-by taking the negative gradient of the Huber loss function in each single-target regression subtask. 
-
-To obtain the results in ```supplementary.py```, we use
-[MLPRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html)
-for each single-target regression subtask, where the features are the raw control voltage features.
-
-
-Reference
------------
-
-If you use this code, please consider adding the corresponding citation:
+If you use this package, please consider adding the corresponding citation:
 ```
 @article{wozniakowski_2020_boosting,
   title={Boosting on the shoulders of giants in quantum device calibration},
