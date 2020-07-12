@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 
-DISTNAME = 'physlearn'
+DISTNAME = 'scikit-physlearn'
 DESCRIPTION = 'A Python package for single-target and multi-target regression tasks.'
 MAINTAINER = 'Alex Wozniakowski'
 MAINTAINER_EMAIL = 'wozn0001@e.ntu.edu.sg'
@@ -32,11 +32,12 @@ def setup_package():
                     maintainer=MAINTAINER,
                     maintainer_email=MAINTAINER_EMAIL,
                     description=DESCRIPTION,
-                    long_description='Scikit-physlearn is a Python package for single-target' + \
-                                      'and multi-target regression. It is designed to amalgamate' +\
-                                      'Scikit-learn, LightGBM, XGBoost, CatBoost, and Mlxtend' +\
-                                      'regressors into a unified Regressor. It follows the Scikit-learn' +\
-                                      'API, represents data in pandas, and it supports base boosting.',
+                    long_description='Scikit-physlearn is a Python package for single-target and ' + \
+                                     'multi-target regression. It is designed to amalgamate Scikit-learn, ' + \
+                                     'LightGBM, XGBoost, CatBoost, and Mlxtend regressors into a unified ' + \
+                                     'Regressor. It follows the Scikit-learnAPI, represents data in pandas, ' + \
+                                     'and it supports base boosting.',
+                    long_description_content_type='text/markdown',
                     url=URL,
                     download_url=DOWNLOAD_URL,
                     version=VERSION,
