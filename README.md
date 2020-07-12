@@ -1,5 +1,5 @@
 Scikit-physlearn
-=======
+---
 
 **Scikit-physlearn** is a Python package for single-target and multi-target regression.
 It is designed to amalgamate 
