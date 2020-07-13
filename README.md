@@ -41,15 +41,23 @@ module to learn about (hyper)parameter optimization.
 
 Inspired by the process of human research, base boosting is a modification of the standard version of
 [gradient boosting](https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451),
-which is designed to emulate the paradigm of "standing on the shoulders of giants." To evaluate its
-efficacy in a quantum device calibration application with a limited supply of experimental data:
-* Run the
-[main body](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/main_body.py)
-module to generate the test error results in the [benchmark task](#Citation).
-* Compare these results with the scientific model's results in the
+which is designed to emulate the paradigm of "standing on the shoulders of giants." To evaluate the
+efficacy of this approach in a quantum device calibration application with a limited supply of experimental data:
+* Start with the
+[learning curve](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/learning_curve/benchmark.py)
+module, and use it to generate an augmented learning curve:
+
+<div align="center">
+  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/aug_learning_curve.png" width="600" height="300"><br><br>
+</div>
+
+* Next, run the 
 [benchmark](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/benchmark.py)
-module.
-* Explore the difficulty in learning without the scientific model's inductive bias in the
+module, and use it to obtain the base regressor's test error.
+* Then, run the
+[main body](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/main_body.py)
+module, and compare the test error of [base boosting](#Citation) with the benchmark error. 
+* Lastly, explore the difficulty in learning without the base regressor's inductive bias in the
 [supplementary](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/supplementary.py)
 module.
 
