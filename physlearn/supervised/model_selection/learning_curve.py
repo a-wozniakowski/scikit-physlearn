@@ -240,4 +240,4 @@ def plot_learning_curve(regressor_choice, title, X, y, verbose=0, cv=5,
         assert path is not None and isinstance(path, str)
         plt.savefig(path)
     else:
-        return plt
+        plt.show(block=True)

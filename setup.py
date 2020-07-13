@@ -9,7 +9,7 @@ MAINTAINER = 'Alex Wozniakowski'
 MAINTAINER_EMAIL = 'wozn0001@e.ntu.edu.sg'
 URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
 DOWNLOAD_URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
-VERSION = '0.1'
+VERSION = '0.1.1'
 LICENSE = 'MIT'
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
@@ -35,7 +35,7 @@ def setup_package():
                     long_description='Scikit-physlearn is a Python package for single-target and ' + \
                                      'multi-target regression. It is designed to amalgamate Scikit-learn, ' + \
                                      'LightGBM, XGBoost, CatBoost, and Mlxtend regressors into a unified ' + \
-                                     'Regressor. It follows the Scikit-learnAPI, represents data in pandas, ' + \
+                                     'Regressor. It follows the Scikit-learn API, represents data in pandas, ' + \
                                      'and it supports base boosting.',
                     long_description_content_type='text/markdown',
                     url=URL,
