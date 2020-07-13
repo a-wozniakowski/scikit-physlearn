@@ -10,7 +10,6 @@ except ImportError:
 try:
     from .model_selection.learning_curve import plot_learning_curve
     from .model_selection.bayesian_search import _bayesoptcv
-    from .model_persistence._paper_params import paper_params, supplementary_params
 except ImportError:
     pass
 
