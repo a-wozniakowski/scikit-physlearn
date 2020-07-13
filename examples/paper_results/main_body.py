@@ -1,8 +1,18 @@
+"""
+============================
+Main body test error
+============================
+
+This example generates the machine learned test error
+results in the main body.
+
+Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+"""
+
 import pandas as pd
 
 from physlearn import Regressor
-from physlearn.datasets import load_benchmark
-from physlearn.supervised import paper_params
+from physlearn.datasets import load_benchmark, paper_params
 
 
 X_train, X_test, y_train, y_test = load_benchmark(return_split=True)
@@ -23,9 +33,11 @@ print('Building scoring DataFrame for each single-target subtask.')
 test_error = []
 for index in range(5):
     reg = Regressor(regressor_choice=model, n_regressors=n_regressors,
-                    boosting_loss=boosting_loss, line_search_regularization=line_search_regularization,
-                    line_search_options=line_search_options, stacking_layer=stack,
-                    params=paper_params(index), target_index=index)
+                    boosting_loss=boosting_loss,
+                    line_search_regularization=line_search_regularization,
+                    line_search_options=line_search_options,
+                    stacking_layer=stack, params=paper_params(index),
+                    target_index=index)
 
     y_pred = reg.baseboostcv(X_train, y_train).predict(X_test)
     score = reg.score(y_test, y_pred)

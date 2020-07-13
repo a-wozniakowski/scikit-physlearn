@@ -1,9 +1,11 @@
-import copy
+"""
+Utility for plotting (augmented) learning curves.
+"""
+
+# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+
 import joblib
 import matplotlib
-import numbers
-import time
-import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,158 +13,71 @@ import pandas as pd
 
 import sklearn.base
 import sklearn.metrics
-import sklearn.metrics._scorer
 import sklearn.model_selection._split
 import sklearn.model_selection._validation
-import sklearn.utils.metaestimators
+import sklearn.utils.multiclass
 import sklearn.utils.validation
 
-from traceback import format_exc
-
 from ..regression import Regressor
-from ..utils._data_checks import _validate_data
+from ..utils._data_checks import _n_samples, _validate_data
 
 
 class LearningCurve(Regressor):
+    """(Augmented) learning curve for base boosting."""
 
-    def __init__(self, model_choice, cv=5, verbose=0, n_jobs=-1,
-                 scoring='mae', scoring_multioutput='raw_values',
-                 search_scoring='neg_mean_absolute_error',
-                 transform_feature='quantile_normal', transform_target=None,
-                 params=None, stacking_layer=None, chain_order=None,
-                 n_regressors=None, target_index=None):
+    def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
+                 verbose=1, n_jobs=-1, scoring='neg_mean_absolute_error',
+                 return_train_score=True, pipeline_transform='quantilenormal',
+                 pipeline_memory=None, params=None, chain_order=None,
+                 stacking_layer=None, target_index=None, n_regressors=None,
+                 boosting_loss=None, line_search_regularization=None,
+                 line_search_options=None):
 
-        super().__init__(model_choice=model_choice, cv=cv, verbose=verbose, 
-                         n_jobs=n_jobs, scoring=scoring,
-                         scoring_multioutput=scoring_multioutput,
-                         search_scoring=search_scoring,
-                         transform_feature=transform_feature,
-                         transform_target=transform_target, params=params,
-                         stacking_layer=stacking_layer, chain_order=chain_order,
-                         n_regressors=n_regressors, target_index=target_index)
-
-    def _modified_fit_and_score(self, regressor, X, y, scorer, train, test,
-                                verbose, parameters, fit_params,
-                                return_train_score=False, return_parameters=False,
-                                return_n_test_samples=False, return_times=False,
-                                return_regressor=False, error_score=np.nan):
-        if verbose > 1:
-            if parameters is None:
-                msg = ''
-            else:
-                msg = '%s' % (', '.join('%s=%s' % (k, v)
-                              for k, v in parameters.items()))
-            print('[CV] %s %s' % (msg, (64 - len(msg)) * '.'))
-
-        # Adjust length of sample weights
-        fit_params = fit_params if fit_params is not None else {}
-        fit_params = sklearn.utils.validation._check_fit_params(X, fit_params, train)
-
-        train_scores = {}
-        if parameters is not None:
-            # clone after setting parameters in case any parameters
-            # are regressors (like pipeline steps)
-            # because pipeline doesn't clone steps in fit
-            cloned_parameters = {}
-            for k, v in parameters.items():
-                cloned_parameters[k] = clone(v, safe=False)
-
-            regressor = regressor.set_params(**cloned_parameters)
-
-        start_time = time.time()
-
-        X_train, y_train = sklearn.utils.metaestimators._safe_split(regressor, X, y, train)
-        X_test, y_test = sklearn.utils.metaestimators._safe_split(regressor, X, y, test, train)
-
-        try:
-            if y_train is None:
-                regressor.fit(X=X_train, **fit_params)
-            else:
-                regressor.fit(X=X_train, y=y_train, **fit_params)
-
-        except Exception as e:
-            # Note fit time as time until error
-            fit_time = time.time() - start_time
-            score_time = 0.0
-            if error_score == 'raise':
-                raise
-            elif isinstance(error_score, numbers.Number):
-                if isinstance(scorer, dict):
-                    test_scores = {name: error_score for name in scorer}
-                    if return_train_score:
-                        train_scores = test_scores.copy()
-                else:
-                    test_scores = error_score
-                    if return_train_score:
-                        train_scores = error_score
-                warnings.warn("Regressor fit failed. The score on this train-test"
-                              " partition for these parameters will be set to %f. "
-                              "Details: \n%s" %
-                              (error_score, format_exc()),
-                              FitFailedWarning)
-            else:
-                raise ValueError("error_score must be the string 'raise' or a"
-                                 " numeric value. (Hint: if using 'raise', please"
-                                 " make sure that it has been spelled correctly.)")
-
-        else:
-            fit_time = time.time() - start_time
-            if self.target_index is not None and y.ndim > 1:
-                y_test = y_test.iloc[:, self.target_index]
-            test_scores = sklearn.model_selection._validation._score(regressor, X_test, y_test, scorer)
-            score_time = time.time() - start_time - fit_time
-            if return_train_score:
-                if self.target_index is not None and y.ndim > 1:
-                    y_train = y_train.iloc[:, self.target_index]
-                train_scores = sklearn.model_selection._validation._score(
-                    regressor, X_train, y_train, scorer
-                )
-        if verbose > 2:
-            if isinstance(test_scores, dict):
-                for scorer_name in sorted(test_scores):
-                    msg += ', %s=' % scorer_name
-                    if return_train_score:
-                        msg += '(train=%.3f,' % train_scores[scorer_name]
-                        msg += ' test=%.3f)' % test_scores[scorer_name]
-                    else:
-                        msg += '%.3f' % test_scores[scorer_name]
-            else:
-                msg += ', score='
-                msg += ('%.3f' % test_scores if not return_train_score else
-                        '(train=%.3f, test=%.3f)' % (train_scores, test_scores))
-
-        if verbose > 1:
-            total_time = score_time + fit_time
-            print(_message_with_time('CV', msg, total_time))
-
-        ret = [train_scores, test_scores] if return_train_score else [test_scores]
-
-        if return_n_test_samples:
-            ret.append(_num_samples(X_test))
-        if return_times:
-            ret.extend([fit_time, score_time])
-        if return_parameters:
-            ret.append(parameters)
-        if return_regressor:
-            ret.append(regressor)
-        return ret
+        super().__init__(regressor_choice=regressor_choice,
+                         cv=cv,
+                         random_state=random_state,
+                         verbose=verbose,
+                         n_jobs=n_jobs,
+                         scoring=scoring,
+                         return_train_score=return_train_score,
+                         pipeline_transform=pipeline_transform,
+                         pipeline_memory=pipeline_memory,
+                         params=params,
+                         chain_order=chain_order,
+                         stacking_layer=stacking_layer,
+                         target_index=target_index,
+                         n_regressors=n_regressors,
+                         boosting_loss=boosting_loss,
+                         line_search_regularization=line_search_regularization,
+                         line_search_options=line_search_options)
 
     def _modified_learning_curve(self, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
                                  return_train_score=True, return_times=False,
-                                 return_regressor=False, error_score=np.nan,
+                                 return_estimator=False, error_score=np.nan,
                                  return_incumbent_score=False):
 
+        if self.target_index is not None and \
+        sklearn.utils.multiclass.type_of_target(y) == 'continuous-multioutput':
+            # Selects a particular single-target
+            y = y.iloc[:, self.target_index]
+
         X, y = _validate_data(X=X, y=y)
-        self._get_pipeline(X=X, y=y)
         X, y, groups = sklearn.utils.validation.indexable(X, y, None)
-        
+
+        if not hasattr(self, 'pipe'):
+            n_samples = _n_samples(y)
+            fold_size =  np.full(shape=n_samples, fill_value=n_samples // self.cv,
+                                 dtype=np.int)
+            estimate_fold_size = n_samples - (np.max(fold_size) + 1)
+            self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
+
         cv = sklearn.model_selection._split.check_cv(cv=self.cv, y=y,
                                                      classifier=sklearn.base.is_classifier(self.pipe))
         cv_iter = list(cv.split(X, y, groups))
 
-        scorer = sklearn.metrics.check_scoring(estimator=self.pipe, scoring=self.search_scoring)
+        scorer = sklearn.metrics.check_scoring(estimator=self.pipe, scoring=self.scoring)
 
-        # modified n_max_training_samples from sklearn
+        # Modify n_max_training_samples
         n_max_training_samples = X.shape[0]
         train_sizes_abs = sklearn.model_selection._validation._translate_train_sizes(
             train_sizes=train_sizes, n_max_training_samples=n_max_training_samples
@@ -178,12 +93,12 @@ class LearningCurve(Regressor):
             for n_train_samples in train_sizes_abs:
                 train_test_proportions.append((train[:n_train_samples], test))
 
-        out = parallel(joblib.delayed(self._modified_fit_and_score)(
-            regressor=sklearn.base.clone(self.pipe), X=X, y=y, scorer=scorer,
+        out = parallel(joblib.delayed(sklearn.model_selection._validation._fit_and_score)(
+            estimator=sklearn.base.clone(self.pipe), X=X, y=y, scorer=scorer,
             train=train, test=test, verbose=self.verbose, parameters=None,
             fit_params=None, return_train_score=return_train_score,
             return_parameters=False, return_n_test_samples=False,
-            return_times=return_times, return_regressor=return_regressor,
+            return_times=return_times, return_estimator=return_estimator,
             error_score=error_score)
             for train, test in train_test_proportions)
         out = np.array(out)
@@ -193,38 +108,42 @@ class LearningCurve(Regressor):
         
         out = np.asarray(out).transpose((2, 1, 0))
 
-        if self.search_scoring in ['neg_mean_absolute_error', 'neg_mean_squared_error']:
+        # Sklearn returns negative MAE and MSE scores,
+        # so we restore nonnegativity
+        if self.scoring in ['neg_mean_absolute_error', 'neg_mean_squared_error']:
             out *= -1
 
         if return_incumbent_score:
             if self.target_index is not None:
                 y_pred = X.iloc[:, self.target_index]
-                y_true = y.iloc[:, self.target_index]
             else:
                 y_pred = X
 
-            incumbent_score = parallel(joblib.delayed(self.score_summary)(
-                y_true=y_true.loc[test], y_pred=y_pred.loc[test])
-                for _, test in train_test_proportions)
+            # Avoids recomputing the incumbent score for each
+            # training size, as the score does not depend upon
+            # the training size.
+            incumbent_score = parallel(joblib.delayed(self.score)(
+                y_true=y.loc[pair[1]], y_pred=y_pred.loc[pair[1]])
+                for index, pair in enumerate(train_test_proportions)
+                if index % len(train_sizes) == 0)
             
-            if self.search_scoring == 'neg_mean_absolute_error':
+            if self.scoring == 'neg_mean_absolute_error':
                 incumbent_score = [score['mae'] for score in incumbent_score]
-            elif self.search_scoring == 'neg_mean_squared_error':
-                incumbent_score = [score['mse'] for score in incumbent_score]            
-            incumbent_score = np.array(incumbent_score).reshape(n_cv_folds, n_unique_ticks).transpose()
+            elif self.scoring == 'neg_mean_squared_error':
+                incumbent_score = [score['mse'] for score in incumbent_score]
+            incumbent_score = np.array(incumbent_score).transpose()
 
-            # Base boosting cross-validation check
-            # if initialization step produces a
-            # better cross-validation score return
-            # the identity function
-            get_index = []
+            # Check if the incumbent won the inbuilt
+            # model selection step in the augmented version
+            # of base boosting. If the incumbent won,
+            # then we replace the cross-validation score
+            # with the incumbent score, as base boosting
+            # would utilize the incumbent.
             for index, row_score in enumerate(out[1]):
-                if np.mean(row_score) > np.mean(incumbent_score[index]):
-                    out[1][index] = incumbent_score[index]
-                    get_index.append(index)
+                if np.mean(row_score) > np.mean(incumbent_score):
+                    out[1][index] = incumbent_score
 
             ret = train_sizes_abs, out[0], out[1], incumbent_score
-            self.init_score_index_ = get_index
         else:
             ret = train_sizes_abs, out[0], out[1]
 
@@ -234,21 +153,23 @@ class LearningCurve(Regressor):
         return ret
 
 
-def plot_learning_curve(model_choice, title, X, y, verbose=0,
+def plot_learning_curve(regressor_choice, title, X, y, verbose=0, cv=5,
                         train_sizes=np.linspace(0.2, 1.0, 5), alpha=0.1,
-                        train_color='b', cv_color='orange',
-                        y_ticks_step=0.15, fill_std=False,
-                        legend_loc='best', save_plot=False,
-                        path=None, params=None, stacking_layer=None, 
-                        ylabel=None, n_regressors=None, target_index=None,
+                        train_color='b', cv_color='orange', y_ticks_step=0.15,
+                        fill_std=False, legend_loc='best', save_plot=False,
+                        path=None, pipeline_transform='quantilenormal',
+                        pipeline_memory=None, params=None, chain_order=None,
+                        stacking_layer=None, target_index=None, n_regressors=None,
+                        boosting_loss=None, line_search_regularization=None,
+                        line_search_options=None, ylabel=None,
                         return_incumbent_score=False):
 
-    lcurve = LearningCurve(model_choice=model_choice, params=params,
-                           stacking_layer=stacking_layer, verbose=verbose,
-                           n_regressors=n_regressors, target_index=target_index)
-
-    if target_index is not None:
-            y = y.iloc[:, target_index]
+    lcurve = LearningCurve(regressor_choice=regressor_choice, verbose=verbose, cv=cv,
+                           pipeline_transform=pipeline_transform, pipeline_memory=pipeline_memory,
+                           params=params, chain_order=chain_order, stacking_layer=stacking_layer,
+                           target_index=target_index, n_regressors=n_regressors,
+                           boosting_loss=boosting_loss, line_search_regularization=line_search_regularization,
+                           line_search_options=line_search_options)
 
     if return_incumbent_score:
         train_sizes, train_score, cv_score, incumbent_score = lcurve._modified_learning_curve(
@@ -267,9 +188,9 @@ def plot_learning_curve(model_choice, title, X, y, verbose=0,
         assert isinstance(ylabel, str)
         plt.ylabel(ylabel)
     else:
-        if lcurve.search_scoring == 'neg_mean_absolute_error':
+        if lcurve.scoring == 'neg_mean_absolute_error':
             plt.ylabel('MAE')
-        elif lcurve.search_scoring == 'neg_mean_squared_error':
+        elif lcurve.scoring == 'neg_mean_squared_error':
             plt.ylabel('MSE')
         else:
             plt.ylabel('Empirical error')
@@ -280,10 +201,10 @@ def plot_learning_curve(model_choice, title, X, y, verbose=0,
     cv_score_std = np.std(cv_score, axis=1)
     
     if return_incumbent_score:
-        incumbent_score_mean = np.mean(incumbent_score, axis=1)
-        incumbent_score_std = np.std(incumbent_score, axis=1)
-        for index in lcurve.init_score_index_:
-            cv_score_std[index] = incumbent_score_std[index]
+        incumbent_score_mean = np.repeat(a=np.mean(incumbent_score, axis=1),
+                                         repeats=len(train_sizes))
+        incumbent_score_std = np.repeat(a=np.std(incumbent_score, axis=1),
+                                        repeats=len(train_sizes))
         global_score_min = np.around(np.min([train_score.min(), cv_score.min(),
                                      incumbent_score_mean.min()]), decimals=2)
         global_score_max = np.around(np.max([train_score.max(), cv_score.max(),

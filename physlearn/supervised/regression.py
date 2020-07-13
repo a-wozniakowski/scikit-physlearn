@@ -370,7 +370,6 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             X, y = _validate_data(X=X, y=y)
 
         X, y, groups = sklearn.utils.validation.indexable(X, y, None)
-        cv = sklearn.model_selection._split.check_cv(cv=self.cv, y=y, classifier=False)
 
         if not hasattr(self, 'pipe'):
             n_samples = _n_samples(y)
@@ -378,6 +377,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                                  dtype=np.int)
             estimate_fold_size = n_samples - (np.max(fold_size) + 1)
             self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
+
+        cv = sklearn.model_selection._split.check_cv(cv=self.cv, y=y, classifier=self.pipe)
 
         scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
                                                                         scoring=self.scoring)
