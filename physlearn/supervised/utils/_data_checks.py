@@ -23,7 +23,10 @@ def _check_X_y(X, y):
         n_features = 1
 
     data = pd.concat([X, y], axis=1).dropna(how='any', axis=0)
-    return data.iloc[:, :n_features], data.iloc[:, n_features:]
+    if sklearn.utils.multiclass.type_of_target(y) == 'continuous-multioutput':
+        return data.iloc[:, :n_features], data.iloc[:, n_features:]
+    else:
+        return data.iloc[:, :n_features], data.iloc[:, n_features:].squeeze()
 
 
 def _validate_data(X, y=None):
