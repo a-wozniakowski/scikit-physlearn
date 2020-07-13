@@ -6,6 +6,8 @@ Exhaustive grid search
 This example introduces the search method, wherein
 we perform (hyper)parameter search with the Sklearn
 GridSearchCV object.
+
+Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 """
 
 import pandas as pd

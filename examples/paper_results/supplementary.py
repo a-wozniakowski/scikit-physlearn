@@ -1,8 +1,19 @@
+"""
+============================
+Supplementary test error
+============================
+
+This example generates the machine learned test error
+results in the supplementary, wherein the machine learner
+does not receive the incumbent's inductive bias.
+
+Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+"""
+
 import pandas as pd
 
 from physlearn import Regressor
-from physlearn.datasets import load_benchmark
-from physlearn.supervised import supplementary_params
+from physlearn.datasets import load_benchmark, supplementary_params
 
 
 n_features = 9

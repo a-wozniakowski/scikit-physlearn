@@ -1,3 +1,14 @@
+"""
+============================
+Benchmark test error
+============================
+
+This example generates the incumbent state-of-the-art model's
+test error on the benchmark task in the quantum device calibration
+application. 
+
+Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+"""
 
 from physlearn import Regressor
 from physlearn.datasets import load_benchmark
