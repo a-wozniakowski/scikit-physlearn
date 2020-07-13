@@ -5,8 +5,8 @@ Machine learning package for Python.
 # Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 """
 
-
 from __future__ import absolute_import
+
 
 try:
     from .supervised.regression import Regressor
@@ -23,7 +23,6 @@ try:
                        QuantileLossFunction)
 except ImportError:
     pass
-
 
 
 __all__ = ['Regressor', 'ModifiedPipeline',
