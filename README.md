@@ -44,7 +44,7 @@ Inspired by the process of human research, base boosting is a modification of th
 which is designed to emulate the paradigm of "standing on the shoulders of giants." To evaluate the
 efficacy of this approach in a quantum device calibration application with a limited supply of experimental data:
 * Start with the
-[learning curve](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/learning_curve/benchmark.py)
+[learning curve](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/learning_curve.py)
 module, and use it to generate an augmented learning curve:
 
 <div align="center">
