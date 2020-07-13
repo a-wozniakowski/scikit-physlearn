@@ -10,7 +10,6 @@ Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 """
 
 import numpy as np
-import pandas as pd
 
 from physlearn import Regressor
 from physlearn.datasets import load_benchmark, paper_params
@@ -19,7 +18,7 @@ from physlearn.supervised import plot_learning_curve
 
 X_train, X_test, y_train, y_test = load_benchmark(return_split=True)
 
-index = 0
+index = 2
 model = 'stackingregressor'
 n_regressors = 1
 boosting_loss = 'ls'
