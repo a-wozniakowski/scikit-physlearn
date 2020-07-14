@@ -48,7 +48,7 @@ efficacy of this approach in a quantum device calibration application with a lim
 module, and use it to generate an augmented learning curve:
 
 <div align="center">
-  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/aug_learning_curve.png" width="600" height="300"><br><br>
+  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/aug_learning_curve.png" width="395" height="280"><br><br>
 </div>
 
 * Next, run the 
