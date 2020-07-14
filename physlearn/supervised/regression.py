@@ -31,8 +31,8 @@ from ..pipeline import _make_pipeline
 from .interface import RegressorDictionaryInterface
 from .model_selection.bayesian_search import _bayesoptcv
 from .utils._data_checks import _n_features, _n_targets, _n_samples, _validate_data
-from .utils._definition import (_MODEL_DICT, _SEARCH_METHOD, _SCORE_CHOICE,
-                                _SEARCH_TAXONOMY)
+from .utils._definition import (_MODEL_DICT, _MULTI_TARGET, _SEARCH_METHOD,
+                                _SCORE_CHOICE, _SEARCH_TAXONOMY)
 from .utils._model_checks import (_check_bayesoptcv_parameter_type, _check_model_choice,
                                   _check_search_method, _check_stacking_layer,
                                   _convert_filename_to_csv_path, _parallel_search_preprocessing,
@@ -242,7 +242,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             X, y = _validate_data(X=X, y=y)
 
         if self.target_index is not None and \
-        sklearn.utils.multiclass.type_of_target(y) == 'continuous-multioutput':
+        sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
             # Selects a particular single-target
             y = y.iloc[:, self.target_index]
 
@@ -271,7 +271,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         X, y = _validate_data(X=X, y=y)
 
         if self.target_index is not None and \
-        sklearn.utils.multiclass.type_of_target(y) == 'continuous-multioutput':
+        sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
             # Selects a particular single-target
             y = y.iloc[:, self.target_index]
 
@@ -317,7 +317,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             assert any(multioutput for output in possible_multioutputs)
 
         if self.target_index is not None and \
-        sklearn.utils.multiclass.type_of_target(y_true) == 'continuous-multioutput':
+        sklearn.utils.multiclass.type_of_target(y_true) in _MULTI_TARGET:
             # Selects a particular single-target
             y_true = y_true.iloc[:, self.target_index]
 
@@ -348,15 +348,33 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
 
         return score
 
-    def _preprocess_search_params(self, search_params, search_taxonomy='parallel'):
+    def _preprocess_search_params(self, y, search_params, search_taxonomy='parallel'):
         """Search parameter helper function."""
 
         assert search_taxonomy in _SEARCH_TAXONOMY
 
         if search_taxonomy == 'parallel':
-            search_params = _parallel_search_preprocessing(raw_params=search_params)
+            if sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
+                if self.chain_order is not None:
+                    search_params = _parallel_search_preprocessing(raw_params=search_params,
+                                                                   multi_target=True, chain=True)
+                else:
+                    search_params = _parallel_search_preprocessing(raw_params=search_params,
+                                                                   multi_target=True, chain=False)
+            else:
+                search_params = _parallel_search_preprocessing(raw_params=search_params,
+                                                               multi_target=False, chain=False)
         elif search_taxonomy == 'sequential':
-            search_params = _sequential_search_preprocessing(raw_pbounds=search_params)
+            if sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
+                if self.chain_order is not None:
+                    search_params = _sequential_search_preprocessing(raw_pbounds=search_params,
+                                                                     multi_target=True, chain=True)
+                else:
+                    search_params = _sequential_search_preprocessing(raw_pbounds=search_params,
+                                                                     multi_target=True, chain=False)
+            else:
+                search_params = _sequential_search_preprocessing(raw_pbounds=search_params,
+                                                                 multi_target=False, chain=False)
 
         return search_params
 
@@ -609,9 +627,8 @@ class Regressor(BaseRegressor):
         # the latter identifies grid or randomized
         # search by Sklearn. 
         search_method, search_taxonomy = _check_search_method(search_method=search_method)
-        search_params = super()._preprocess_search_params(search_params=search_params,
+        search_params = super()._preprocess_search_params(y=y, search_params=search_params,
                                                           search_taxonomy=search_taxonomy)
-
         if not hasattr(self, 'pipe'):
             n_samples = _n_samples(y)
             fold_size =  np.full(shape=n_samples, fill_value=n_samples // self.cv,
@@ -655,7 +672,7 @@ class Regressor(BaseRegressor):
             assert isinstance(filename, str)
 
         if self.target_index is not None and \
-        sklearn.utils.multiclass.type_of_target(y) == 'continuous-multioutput':
+        sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
             # Selects a particular single-target
             y = y.iloc[:, self.target_index]
 

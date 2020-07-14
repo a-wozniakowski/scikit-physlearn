@@ -1,10 +1,23 @@
+"""
+Utilities for automated model checking.
+"""
+
+# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+
+import os
 import Levenshtein
+
 import numpy as np
 
 from ._definition import _MODEL_DICT, _SEARCH_METHOD
 
 
 def _basic_autocorrect(model_choice, model_choices, model_type):
+    """
+    Choose a model in the model dictionary, which minimizes
+    the edit distance.
+    """
+
     assert isinstance(model_choice, str)
     assert isinstance(model_choices, list)
     assert isinstance(model_type, str)
@@ -24,6 +37,8 @@ def _basic_autocorrect(model_choice, model_choices, model_type):
 
 
 def _check_model_choice(model_choice, model_type):
+    """Choose a model in the model dictionary."""
+
     assert all(isinstance(arg, str) for arg in [model_choice, model_type])
 
     model_choices = [choice for choice in _MODEL_DICT[model_type].keys()]
@@ -34,6 +49,11 @@ def _check_model_choice(model_choice, model_type):
 
 
 def _check_stacking_layer(stacking_layer, model_type):
+    """
+    Choose the stacking layer models in the model
+    dictionary.
+    """
+
     try:
         assert isinstance(stacking_layer, dict)
         assert isinstance(model_type, str)
@@ -54,7 +74,12 @@ def _check_stacking_layer(stacking_layer, model_type):
         return stacking_layer
 
 
-def _check_bayesoptcv_parameter_type(params): 
+def _check_bayesoptcv_parameter_type(params):
+    """
+    Ensure that the Bayesian optimization utility
+    returns an int for select int parameters.
+    """
+
     assert isinstance(params, dict)
 
     for key, param in params.items():
@@ -67,25 +92,55 @@ def _check_bayesoptcv_parameter_type(params):
     return params
 
 
-def _parallel_search_preprocessing(raw_params):
+def _parallel_search_preprocessing(raw_params, multi_target, chain):
+    """
+    Prepares the search parameters for GridSearchCV and RandomizedSearchCV.
+    """
+
     assert isinstance(raw_params, (dict))
     params = {}
-    for raw_param, value in raw_params.items():
-        search_key = 'reg__' + raw_param
-        params[search_key] = value
+    if multi_target and chain:
+        for raw_param, value in raw_params.items():
+            search_key = 'reg__base_estimator__' + raw_param
+            params[search_key] = value
+    elif multi_target and not chain:
+        for raw_param, value in raw_params.items():
+            search_key = 'reg__estimator__' + raw_param
+            params[search_key] = value
+    else:
+        for raw_param, value in raw_params.items():
+            search_key = 'reg__' + raw_param
+            params[search_key] = value
     return params
 
 
-def _sequential_search_preprocessing(raw_pbounds):
+def _sequential_search_preprocessing(raw_pbounds, multi_target, chain):
+    """
+    Prepares the search parameters for BayesianOptimization.
+    """
+
     assert isinstance(raw_pbounds, (dict))
     pbounds = {}
-    for raw_pbound, value in raw_pbounds.items():
-        bayesoptcv_search_key = 'reg__' + raw_pbound
-        pbounds[bayesoptcv_search_key] = value
+    if multi_target and chain:
+        for raw_pbound, value in raw_pbounds.items():
+            bayesoptcv_search_key = 'reg__base_estimator__' + raw_pbound
+            pbounds[bayesoptcv_search_key] = value
+    elif multi_target and not chain:
+        for raw_pbound, value in raw_pbounds.items():
+            bayesoptcv_search_key = 'reg__estimator__' + raw_pbound
+            pbounds[bayesoptcv_search_key] = value
+    else:
+        for raw_pbound, value in raw_pbounds.items():
+            bayesoptcv_search_key = 'reg__' + raw_pbound
+            pbounds[bayesoptcv_search_key] = value
     return pbounds
 
 
 def _check_search_method(search_method):
+    """
+    Differentiates between the Sklearn and Bayesian Optimization package.
+    """
+
     assert isinstance(search_method, str)
     assert search_method in _SEARCH_METHOD
 
@@ -97,14 +152,9 @@ def _check_search_method(search_method):
     return search_method, search_taxonomy
 
 
-def _prepare_best_params_filename(folder, model_choice):
-    assert isinstance(folder, str)
-    assert isinstance(model_choice, str)
-
-    return folder + model_choice + '_best_params_.joblib'
-    
-
 def _convert_filename_to_csv_path(filename):
+    """Saves filename as a csv in the current working directory."""
+
     assert isinstance(filename, str)
     
     root = os.getcwd()
