@@ -1,3 +1,9 @@
+"""
+Collection of definitions used in the package.
+"""
+
+# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+
 import catboost
 import lightgbm as lgb
 import xgboost as xgb
@@ -78,6 +84,9 @@ _MODEL_DICT = dict(regression=_REGRESSION_DICT)
 KERNEL_DICT = dict(dotproduct=DotProduct,
                    rbf=RBF,
                    whitekernel=WhiteKernel)
+
+
+_MULTI_TARGET = ['continuous-multioutput', 'multiclass-multioutput']
 
 
 _SCORE_CHOICE = ['mae', 'mse', 'rmse', 'r2', 'ev', 'msle']

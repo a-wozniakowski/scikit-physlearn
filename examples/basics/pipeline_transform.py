@@ -5,9 +5,9 @@ Custom pipeline transform
 
 This example extends the introduction, wherein we use
 a custom pipeline transform.
-
-Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 """
+
+# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 
 import pandas as pd
 

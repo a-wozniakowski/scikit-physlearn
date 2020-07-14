@@ -5,11 +5,18 @@ from setuptools import setup, find_packages
 
 DISTNAME = 'scikit-physlearn'
 DESCRIPTION = 'A Python package for single-target and multi-target regression tasks.'
+
+try:
+    import pypandoc
+    LONG_DESCRIPTION = pypandoc.convert('README.md', 'rst')
+except (IOError, ImportError):
+    LONG_DESCRIPTION = open('README.md').read()
+
 MAINTAINER = 'Alex Wozniakowski'
 MAINTAINER_EMAIL = 'wozn0001@e.ntu.edu.sg'
 URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
 DOWNLOAD_URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 LICENSE = 'MIT'
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
@@ -25,6 +32,9 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Programming Language :: Python :: 3.8']
 PACKAGES = find_packages()
 
+with open('requirements.txt') as f:
+    REQUIRED = f.read().splitlines()
+
 
 def setup_package():
 
@@ -32,11 +42,7 @@ def setup_package():
                     maintainer=MAINTAINER,
                     maintainer_email=MAINTAINER_EMAIL,
                     description=DESCRIPTION,
-                    long_description='Scikit-physlearn is a Python package for single-target and ' + \
-                                     'multi-target regression. It is designed to amalgamate Scikit-learn, ' + \
-                                     'LightGBM, XGBoost, CatBoost, and Mlxtend regressors into a unified ' + \
-                                     'Regressor. It follows the Scikit-learn API, represents data in pandas, ' + \
-                                     'and it supports base boosting.',
+                    long_description=LONG_DESCRIPTION,
                     long_description_content_type='text/markdown',
                     url=URL,
                     download_url=DOWNLOAD_URL,
@@ -44,7 +50,8 @@ def setup_package():
                     license=LICENSE,
                     classifiers=CLASSIFIERS,
                     packages=PACKAGES,
-                    package_data={'': ['*.json', '*.csv']})
+                    package_data={'': ['*.json', '*.csv']},
+                    install_requires=REQUIRED)
 
     setup(**metadata)
 

@@ -1,3 +1,9 @@
+"""
+Utilities for automated data checking.
+"""
+
+# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+
 import os
 import re
 import numpy as np
@@ -7,11 +13,15 @@ import sklearn.utils.multiclass
 
 
 def _check_X(X):
+    """Check if the data matrix is using a pandas data representation."""
+
     assert isinstance(X, (pd.Series, pd.DataFrame))
     return X
 
 
 def _check_X_y(X, y):
+    """Check if the data matrix and the target(s) are using pandas data representations."""
+
     assert all(isinstance(var, (pd.Series, pd.DataFrame)) for var in [X, y])
     assert X.index.equals(y.index)
     assert any(sklearn.utils.multiclass.type_of_target(y) != target_type
@@ -30,6 +40,8 @@ def _check_X_y(X, y):
 
 
 def _validate_data(X, y=None):
+    """Bundles the pandas data checks."""
+
     if y is not None:
         out = _check_X_y(X, y)
     else:
@@ -38,6 +50,8 @@ def _validate_data(X, y=None):
 
 
 def _n_features(X):
+    """Counts the number of features in the data matrix."""
+
     if X.ndim > 1:
         dim = X.shape[-1]
     else:
@@ -46,6 +60,8 @@ def _n_features(X):
 
 
 def _n_targets(y):
+    """Counts the number of targets."""
+
     if y.ndim > 1:
         dim = y.shape[-1]
     else:
@@ -54,4 +70,6 @@ def _n_targets(y):
 
 
 def _n_samples(y):
+    """Counts the number of observations."""
+
     return y.shape[0]

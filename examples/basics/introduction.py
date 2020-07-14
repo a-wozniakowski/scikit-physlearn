@@ -5,9 +5,9 @@ Single-target regression
 
 This example introduces the Regressor object in a
 single-target regression task.
-
-Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 """
+
+# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 
 import pandas as pd
 
