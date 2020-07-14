@@ -110,7 +110,8 @@ class TestBasic(unittest.TestCase):
     def test_regressor_fit_score(self):
         X, y = load_boston(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            random_state=42)
 
         params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
         reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
@@ -129,7 +130,8 @@ class TestBasic(unittest.TestCase):
     def test_multioutput_regressor_fit_score(self):
         bunch = load_linnerud(as_frame=True)  # returns a Bunch instance
         X, y = bunch['data'], bunch['target']
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            random_state=42)
 
         params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
         reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
@@ -147,7 +149,8 @@ class TestBasic(unittest.TestCase):
     def test_multioutput_regressorchain_fit_score(self):
         bunch = load_linnerud(as_frame=True)  # returns a Bunch instance
         X, y = bunch['data'], bunch['target']
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            random_state=42)
 
         params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
         reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
