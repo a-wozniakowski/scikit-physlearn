@@ -7,11 +7,12 @@ DISTNAME = 'scikit-physlearn'
 DESCRIPTION = 'A Python package for single-target and multi-target regression tasks.'
 
 # Convert Markdown file into RestructuredText.
+# Use the README without images.
 try:
     import pypandoc
-    LONG_DESCRIPTION = pypandoc.convert('README.md', 'rst')
+    LONG_DESCRIPTION = pypandoc.convert('pypi/README.md', 'rst')
 except (IOError, ImportError):
-    LONG_DESCRIPTION = open('README.md').read()
+    LONG_DESCRIPTION = open('pypi/README.md').read()
 
 MAINTAINER = 'Alex Wozniakowski'
 MAINTAINER_EMAIL = 'wozn0001@e.ntu.edu.sg'

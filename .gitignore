@@ -139,3 +139,6 @@ cython_debug/
 
 # CatBoost testing
 catboost_info/
+
+# Packaging artifacts
+pypi/
