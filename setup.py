@@ -6,6 +6,7 @@ from setuptools import setup, find_packages
 DISTNAME = 'scikit-physlearn'
 DESCRIPTION = 'A Python package for single-target and multi-target regression tasks.'
 
+# Convert Markdown file into RestructuredText.
 try:
     import pypandoc
     LONG_DESCRIPTION = pypandoc.convert('README.md', 'rst')
