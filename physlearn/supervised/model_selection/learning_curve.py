@@ -128,9 +128,9 @@ class LearningCurve(Regressor):
                 if index % len(train_sizes) == 0)
             
             if self.scoring == 'neg_mean_absolute_error':
-                incumbent_score = [score['mae'] for score in incumbent_score]
+                incumbent_score = [score['mae'].values for score in incumbent_score]
             elif self.scoring == 'neg_mean_squared_error':
-                incumbent_score = [score['mse'] for score in incumbent_score]
+                incumbent_score = [score['mse'].values for score in incumbent_score]
             incumbent_score = np.array(incumbent_score).transpose()
 
             # Check if the incumbent won the inbuilt
