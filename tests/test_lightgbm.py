@@ -25,8 +25,10 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
+        params = dict(n_estimators=3, objective='mean_squared_error')
+        reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler',
+                        params=params)
         search_params = dict(n_estimators=[3, 5, 10])
-        reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler')
         reg.search(X_train, y_train, search_params=search_params)
         self.assertLess(reg.best_score_.values, 3.8)
         self.assertIn(reg.best_params_['reg__n_estimators'], [3, 5, 10])
@@ -39,8 +41,10 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
+        params = dict(n_estimators=3, objective='mean_squared_error')
+        reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler',
+                        params=params)
         search_params = dict(n_estimators=[3, 5, 10])
-        reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler')
         reg.search(X_train, y_train, search_params=search_params)
         self.assertLess(reg.best_score_.values, 10.0)
         self.assertIn(reg.best_params_['reg__estimator__n_estimators'], [3, 5, 10])
@@ -53,9 +57,10 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
-        search_params = dict(n_estimators=[3, 5, 10])
+        params = dict(n_estimators=3, objective='mean_squared_error')
         reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler',
-                        chain_order=[2, 0, 1])
+                        params=params, chain_order=[2, 0, 1])
+        search_params = dict(n_estimators=[3, 5, 10])
         reg.search(X_train, y_train, search_params=search_params)
         self.assertLess(reg.best_score_.values, 10.0)
         self.assertIn(reg.best_params_['reg__base_estimator__n_estimators'], [3, 5, 10])
@@ -66,8 +71,10 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
+        params = dict(n_estimators=3, objective='mean_squared_error')
+        reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler',
+                        params=params)
         search_params = dict(n_estimators=randint(low=3, high=10))
-        reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler')
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
         self.assertLess(reg.best_score_.values, 4.0)
@@ -82,8 +89,10 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
+        params = dict(n_estimators=3, objective='mean_squared_error')
+        reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler',
+                        params=params)
         search_params = dict(n_estimators=randint(low=3, high=10))
-        reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler')
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
         self.assertLess(reg.best_score_.values, 10.0)
@@ -98,9 +107,10 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
-        search_params = dict(n_estimators=randint(low=3, high=10))
+        params = dict(n_estimators=3, objective='mean_squared_error')
         reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform='standardscaler',
-                        chain_order=[2, 0, 1])
+                        params=params, chain_order=[2, 0, 1])
+        search_params = dict(n_estimators=randint(low=3, high=10))
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
         self.assertLess(reg.best_score_.values, 10.0)

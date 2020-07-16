@@ -25,10 +25,12 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
+        params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
+        reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
+                        params=params)
         search_params = dict(n_estimators=[3, 5, 10])
-        reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler')
         reg.search(X_train, y_train, search_params=search_params)
-        self.assertLess(reg.best_score_.values, 3.8)
+        self.assertLess(reg.best_score_.values, 9.0)
         self.assertIn(reg.best_params_['reg__n_estimators'], [3, 5, 10])
 
     # sklearn < 0.23 does not have as_frame parameter
@@ -39,10 +41,12 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
+        params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
+        reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
+                        params=params)
         search_params = dict(n_estimators=[3, 5, 10])
-        reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler')
         reg.search(X_train, y_train, search_params=search_params)
-        self.assertLess(reg.best_score_.values, 10.5)
+        self.assertLess(reg.best_score_.values, 37.0)
         self.assertIn(reg.best_params_['reg__estimator__n_estimators'], [3, 5, 10])
 
     # sklearn < 0.23 does not have as_frame parameter
@@ -53,11 +57,12 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
-        search_params = dict(n_estimators=[3, 5, 10])
+        params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
         reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
-                        chain_order=[2, 0, 1])
+                        params=params, chain_order=[2, 0, 1])
+        search_params = dict(n_estimators=[3, 5, 10])
         reg.search(X_train, y_train, search_params=search_params)
-        self.assertLess(reg.best_score_.values, 10.5)
+        self.assertLess(reg.best_score_.values, 37.0)
         self.assertIn(reg.best_params_['reg__base_estimator__n_estimators'], [3, 5, 10])
 
     def test_regressor_randomizedsearchcv(self):
@@ -66,11 +71,13 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
+        params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
+        reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
+                        params=params)
         search_params = dict(n_estimators=randint(low=3, high=10))
-        reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler')
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 4.0)
+        self.assertLess(reg.best_score_.values, 10.0)
         self.assertLessEqual(reg.best_params_['reg__n_estimators'], 10)
         self.assertGreaterEqual(reg.best_params_['reg__n_estimators'], 3)
 
@@ -82,11 +89,13 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
+        params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
+        reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
+                        params=params)
         search_params = dict(n_estimators=randint(low=3, high=10))
-        reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler')
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 12.0)
+        self.assertLess(reg.best_score_.values, 40.0)
         self.assertLessEqual(reg.best_params_['reg__estimator__n_estimators'], 10)
         self.assertGreaterEqual(reg.best_params_['reg__estimator__n_estimators'], 3)
 
@@ -98,12 +107,13 @@ class TestBasic(unittest.TestCase):
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
 
-        search_params = dict(n_estimators=randint(low=3, high=10))
+        params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
         reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
-                        chain_order=[2, 0, 1])
+                        params=params, chain_order=[2, 0, 1])
+        search_params = dict(n_estimators=randint(low=3, high=10))
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 12.0)
+        self.assertLess(reg.best_score_.values, 42.0)
         self.assertLessEqual(reg.best_params_['reg__base_estimator__n_estimators'], 10)
         self.assertGreaterEqual(reg.best_params_['reg__base_estimator__n_estimators'], 3)
 
@@ -122,8 +132,8 @@ class TestBasic(unittest.TestCase):
         self.assertCountEqual(y_pred.index, y_test.index)
         self.assertGreaterEqual(score['mae'].values, 0.0)
         self.assertGreaterEqual(score['mse'].values, 0.0)
-        self.assertLess(score['mae'].values, 2.5)
-        self.assertLess(score['mse'].values, 14.0)
+        self.assertLess(score['mae'].values, 8.0)
+        self.assertLess(score['mse'].values, 80.0)
 
     # sklearn < 0.23 does not have as_frame parameter
     @unittest.skipIf(sk_version < '0.23.0', 'scikit-learn version is less than 0.23')
@@ -141,8 +151,8 @@ class TestBasic(unittest.TestCase):
         self.assertCountEqual(y_pred.index, y_test.index)
         self.assertGreaterEqual(score['mae'], 0.0)
         self.assertGreaterEqual(score['mse'], 0.0)
-        self.assertLess(score['mae'], 14.0)
-        self.assertLess(score['mse'], 410.0)
+        self.assertLess(score['mae'], 37.0)
+        self.assertLess(score['mse'], 2080.0)
 
     # sklearn < 0.23 does not have as_frame parameter
     @unittest.skipIf(sk_version < '0.23.0', 'scikit-learn version is less than 0.23')
@@ -160,8 +170,8 @@ class TestBasic(unittest.TestCase):
         self.assertCountEqual(y_pred.index, y_test.index)
         self.assertGreaterEqual(score['mae'], 0.0)
         self.assertGreaterEqual(score['mse'], 0.0)
-        self.assertLess(score['mae'], 14.0)
-        self.assertLess(score['mse'], 430.0)
+        self.assertLess(score['mae'], 37.0)
+        self.assertLess(score['mse'], 2080.0)
 
 if __name__ == '__main__':
     unittest.main()
