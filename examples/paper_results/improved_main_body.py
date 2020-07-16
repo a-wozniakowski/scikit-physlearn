@@ -87,9 +87,9 @@ for index in range(5):
     score = reg.score(y_test, y_pred)
     test_error.append(score)
 
-test_error = pd.concat(test_error).round(decimals=2)
+test_error = pd.concat(test_error)
 print('Finished building the scoring DataFrame.')
-print(test_error)
+print(test_error.round(decimals=2))
 print('Finished computing the multi-target scores.')
 print(test_error.mean().round(decimals=2))
 print('To gain the improvement, we computed the negative gradient of the Huber loss function',
