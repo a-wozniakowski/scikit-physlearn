@@ -18,7 +18,7 @@ MAINTAINER = 'Alex Wozniakowski'
 MAINTAINER_EMAIL = 'wozn0001@e.ntu.edu.sg'
 URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
 DOWNLOAD_URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
-VERSION = '0.1.2'
+VERSION = '0.1.3.dev1'
 LICENSE = 'MIT'
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
@@ -33,9 +33,10 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Programming Language :: Python :: 3.7',
                'Programming Language :: Python :: 3.8']
 PACKAGES = find_packages()
-
-with open('requirements.txt') as f:
-    REQUIRED = f.read().splitlines()
+REQUIRED = ['numpy', 'scipy', 'scikit-learn>0.23.0', 'pandas',
+            'shap', 'bayesian-optimization', 'catboost',
+            'xgboost', 'lightgbm', 'mlxtend',
+            'python-Levenshtein-wheels'],
 
 
 def setup_package():
