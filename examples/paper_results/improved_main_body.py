@@ -46,13 +46,16 @@ n_regressors = 1
 boosting_loss = 'huber'
 
 
-# Here we set the line search regularization strength and optimization
-# algorithm.
+# Here we set the line search regularization strength, as well as
+# the optimization algorithm and its parameters. Moreover, we
+# specify the loss function utilized in the line search.
+# Namely, lad is the key for absolute error.
 line_search_regularization = 0.1
 line_search_options = dict(init_guess=1, opt_method='minimize',
                            alg='Nelder-Mead', tol=1e-7,
                            options={"maxiter": 10000},
-                           niter=None, T=None)
+                           niter=None, T=None,
+                           loss='huber')
 
 print('Building scoring DataFrame for each single-target regression subtask.')
 test_error = []
@@ -92,7 +95,7 @@ print('Finished building the scoring DataFrame.')
 print(test_error.round(decimals=2))
 print('Finished computing the multi-target scores.')
 print(test_error.mean().round(decimals=2))
-print('To gain the improvement, we computed the negative gradient of the Huber loss function',
-      'instead of the negative gradient of the least squares loss function.',
-      'Additionally, we used ridge regression as the basis function in the',
-      'third single-target subtask.', sep='\n')
+print('To gain the improvement, we used the Huber loss function in the',
+      'negative gradient and line search computations. Additionally, we',
+      'used ridge regression as the basis function in the third single-target',
+      'regression subtask.', sep='\n')

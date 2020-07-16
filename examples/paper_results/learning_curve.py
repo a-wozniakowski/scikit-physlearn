@@ -36,13 +36,16 @@ n_regressors = 1
 # negative gradient. 
 boosting_loss = 'ls'
 
-# Here we set the line search regularization strength and optimization
-# algorithm.
+# Here we set the line search regularization strength, as well as
+# the optimization algorithm and its parameters. Moreover, we
+# specify the loss function utilized in the line search.
+# Namely, lad is the key for absolute error.
 line_search_regularization = 0.1
 line_search_options = dict(init_guess=1, opt_method='minimize',
                            alg='Nelder-Mead', tol=1e-7,
                            options={"maxiter": 10000},
-                           niter=None, T=None)
+                           niter=None, T=None,
+                           loss='lad')
 
 # We focus on the third single-target regression subtask,
 # as this is the least difficult subtask for the base regressor.
