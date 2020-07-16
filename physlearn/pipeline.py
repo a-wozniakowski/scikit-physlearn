@@ -13,6 +13,7 @@ import scipy.optimize
 
 import sklearn.base
 import sklearn.dummy
+import sklearn.ensemble._gradient_boosting
 import sklearn.metrics
 import sklearn.multioutput
 import sklearn.pipeline
@@ -131,6 +132,9 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
     def line_search(function, init_guess, opt_method,
                     alg=None, tol=None, options=None,
                     niter=None, T=None):
+        """
+        Optimization method used within _fit_stages to compute
+        the expansion coefficient in the additive expansion."""
 
         assert opt_method in ['minimize', 'basinhopping']
 
@@ -147,30 +151,54 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         
         return minimize_object.x
 
+    def _fit_stage(self, X, pseudo_residual, raw_predictions, **fit_params_last_step):
+        """Fit a stage of the stagewise additive expansion."""
+
+        for k in range(self.loss.K):
+            self._final_estimator.fit(X=X, y=pseudo_residual, **fit_params_last_step)
+
+        return raw_predictions
+
     def _fit_stages(self, X, y, raw_predictions, **fit_params_last_step):
+        """Fit the additive expansion in a stagewise fashion."""
+
         self._estimators = []
         self._coefs = []
 
         if getattr(self, "_estimator_type", None) == 'regressor':
-            loss = LOSS_FUNCTIONS[self.boosting_loss](n_classes=1)
+            # This loss attribute determines the loss function used
+            # in the negative gradient computation.
+            if self.boosting_loss == 'huber':
+                self.loss = LOSS_FUNCTIONS[self.boosting_loss](n_classes=1, alpha=0.9)
+            else:
+                self.loss = LOSS_FUNCTIONS[self.boosting_loss](n_classes=1)
         
-        pseudo_residual = y
+        pseudo_residual = self.loss.negative_gradient(y=y,
+                                                      raw_predictions=raw_predictions)
 
         # Number of terms in the additive expansion
         for k in range(self.n_estimators):
-            pseudo_residual = loss.negative_gradient(y=pseudo_residual,
-                                                     raw_predictions=raw_predictions)
-            
-            self._final_estimator.fit(X=X, y=pseudo_residual, **fit_params_last_step)
+            raw_predictions = self._fit_stage(X=X, pseudo_residual=pseudo_residual,
+                                              raw_predictions=raw_predictions,
+                                              **fit_params_last_step)
+
+            # Store a copy of the basis function
+            # for the predict method.
             self._estimators.append(copy.deepcopy(self))
             y_pred = self._final_estimator.predict(X=X)
             
             def regularized_loss(alpha):
                 line_search_df = raw_predictions
                 line_search_df = line_search_df.add(alpha * y_pred)
-                loss = sklearn.metrics.mean_absolute_error(y, line_search_df)
-                loss += self.regularization * np.abs(alpha)                    
-                return loss
+                # This choice of loss determines the loss function used
+                # in the line search.
+                if self.line_search_options['loss'] == 'huber':
+                    loss = LOSS_FUNCTIONS[self.line_search_options['loss']](n_classes=1,
+                                                                            alpha=0.9)
+                else:
+                    loss = LOSS_FUNCTIONS[self.line_search_options['loss']](n_classes=1)
+                return self.regularization*np.abs(alpha) + loss(y=y,
+                                                                raw_predictions=line_search_df)
 
             coef = self.line_search(function=regularized_loss,
                                     init_guess=self.line_search_options['init_guess'],
@@ -181,13 +209,25 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                                     niter=self.line_search_options['niter'],
                                     T=self.line_search_options['T'])
             
+            # Store a copy of the expansion coefficient
+            # for the prediction method.
             self._coefs.append(coef[0])
-            raw_predictions = raw_predictions.add(coef[0] * y_pred)
+
+            # This computation is not necessary in the last stage.
+            if self.n_estimators - 1 > k:
+                raw_predictions = raw_predictions.add(coef[0] * y_pred)
+                pseudo_residual = self.loss.negative_gradient(y=pseudo_residual,
+                                                              raw_predictions=raw_predictions)
 
         self.estimators_ = self._estimators
         self.coefs_ = self._coefs
 
     def fit(self, X, y, **fit_params):
+        """
+        Fit the model, wherein transforms are seqeuntially fit,
+        then the final estimator is fit. This method supports
+        base boosting."""
+
         fit_params_steps = self._check_fit_params(**fit_params)
 
         if X.ndim == 1:
@@ -218,6 +258,10 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
     @sklearn.utils.metaestimators.if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X, **predict_params):
+        """
+        Apply transforms to the data, then predict with the final estimator.
+        The method supports base boosting."""
+
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             if Xt.ndim == 1:
