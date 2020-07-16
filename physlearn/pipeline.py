@@ -11,6 +11,7 @@ import pandas as pd
 
 import scipy.optimize
 
+import sklearn.base
 import sklearn.dummy
 import sklearn.metrics
 import sklearn.multioutput
@@ -150,14 +151,17 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         self._estimators = []
         self._coefs = []
 
-        loss = LOSS_FUNCTIONS[self.boosting_loss](self.n_estimators)
-        residual = y
+        if getattr(self, "_estimator_type", None) == 'regressor':
+            loss = LOSS_FUNCTIONS[self.boosting_loss](n_classes=1)
+        
+        pseudo_residual = y
 
-        for k in range(loss.K):
-            residual = loss.negative_gradient(y=residual,
-                                              raw_predictions=raw_predictions)
+        # Number of terms in the additive expansion
+        for k in range(self.n_estimators):
+            pseudo_residual = loss.negative_gradient(y=pseudo_residual,
+                                                     raw_predictions=raw_predictions)
             
-            self._final_estimator.fit(X=X, y=residual, **fit_params_last_step)            
+            self._final_estimator.fit(X=X, y=pseudo_residual, **fit_params_last_step)
             self._estimators.append(copy.deepcopy(self))
             y_pred = self._final_estimator.predict(X=X)
             
