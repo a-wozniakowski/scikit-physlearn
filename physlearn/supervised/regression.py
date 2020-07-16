@@ -238,8 +238,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
     def fit(self, X, y, sample_weight=None):
         """Fit regressor."""
 
-        if not hasattr(self, '_baseboostcv'):
+        if not hasattr(self, '_validated_data'):
             X, y = _validate_data(X=X, y=y)
+            setattr(self, '_validated_data', True)
 
         if self.target_index is not None and \
         sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
@@ -263,34 +264,39 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
 
         if mean_cross_val_score[0] >= mean_cross_val_score[1]:
             # Base boosting did not improve performance
-            setattr(self, 'return_incumbent_', True)
+            setattr(self, '_return_incumbent', True)
 
     def baseboostcv(self, X, y, sample_weight=None):
         """Base boosting with inbuilt cross-validation"""
 
-        X, y = _validate_data(X=X, y=y)
+        if not hasattr(self, '_validated_data'):
+            X, y = _validate_data(X=X, y=y)
+            setattr(self, '_validated_data', True)
 
         if self.target_index is not None and \
         sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
             # Selects a particular single-target
             y = y.iloc[:, self.target_index]
 
-        self._baseboostcv = True
         self._inbuilt_model_selection_step(X=X, y=y)
-        if not hasattr(self, 'return_incumbent_'):
+
+        if not hasattr(self, 'pipe'):
+            self.get_pipeline(y=y)
+
+        if not hasattr(self, '_return_incumbent'):
             # Base boosting improves performance,
             # so we fit the candidate
             self.fit(X=X, y=y, sample_weight=sample_weight)
+            return self.pipe
         else:
-            self.get_pipeline(y=y)
-
-        return self.pipe
+            setattr(self, 'return_incumbent_', True) 
+            return self
 
     def predict(self, X):
         """Generate predictions."""
 
-        assert hasattr(self, 'pipe')
-        X = _validate_data(X=X)
+        if not hasattr(self, '_validated_data'):
+            X = _validate_data(X=X)
 
         if hasattr(self, 'return_incumbent_'):
             # Generate predictions with the incumbent
@@ -299,6 +305,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             else:
                 y_pred = X
         else:
+            assert hasattr(self, 'pipe')
             y_pred = self.pipe.predict(X=X)
 
         return y_pred
@@ -383,9 +390,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         """Perform cross-validation for regressor
            and incumbent, if return_incumbent_score is True."""
 
-        # Base boosting has already validated the data
-        if not hasattr(self, '_baseboostcv'):
+        if not hasattr(self, '_validated_data'):
             X, y = _validate_data(X=X, y=y)
+            setattr(self, '_validated_data', True)
 
         X, y, groups = sklearn.utils.validation.indexable(X, y, None)
 
