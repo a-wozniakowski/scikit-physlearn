@@ -25,7 +25,7 @@ pip install scikit-physlearn
 ## Quick Start
 
 A multi-target regression example:
-```
+```python
 from sklearn.datasets import load_linnerud
 from sklearn.model_selection import train_test_split
 from physlearn import Regressor
@@ -60,7 +60,7 @@ Example output:
 8.04
 ```
 A [SHAP](https://shap.readthedocs.io/en/latest/#) visualization example:
-```
+```python
 from physlearn.datasets import load_benchmark
 from physlearn.supervised import ShapInterpret
 
