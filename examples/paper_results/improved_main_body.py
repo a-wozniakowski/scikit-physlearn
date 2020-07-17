@@ -38,43 +38,69 @@ linear_basis_fn = 'ridge'
 # The number of regressors corresponds to K in Eq. 2.
 n_regressors = 1
 
-# The boosting loss is the Huber loss function, which is
-# utilized in the computation of the pseudo-residuals, e.g., the
-# negative gradient. This choice of loss function is less sensitive
-# to outliers than our previous choice of the squared error loss
-# function. See the loss module for its implementation.
-boosting_loss = 'huber'
+# In the single-target regression subtask: 4, we will use
+# the squared error loss function in the computation of the
+# pseudo-residuals, e.g., negative gradient. This choice
+# results in stable model selection results. In the other
+# single-target regression subtasks, namely: 1, 2, 3, and 5,
+# we will use the Huber loss function in the computation of the
+# pseudo-residuals. See the loss module for its implementation,
+# it is written as in the M-regression section 4.4 of refrerence:
+# Jerome Friedman. Greedy function approximation: A gradient
+# boosting machine. Annals of Statistics, 29(5):1189–1232, 2001.
+huber_loss = 'huber'
+ls_loss = 'ls'
 
 
 # Here we set the line search regularization strength, as well as
 # the optimization algorithm and its parameters. Moreover, we
 # specify the loss function utilized in the line search.
-# Namely, lad is the key for absolute error.
+# Namely, lad is the key for absolute error in the single-target
+# regression subtask: 4. Otherwise, 'huber' is the key for the
+# Huber loss function in the single-target regression subtasks:
+# 1, 2, 3, and 5.
 line_search_regularization = 0.1
-line_search_options = dict(init_guess=1, opt_method='minimize',
-                           alg='Nelder-Mead', tol=1e-7,
-                           options={"maxiter": 10000},
-                           niter=None, T=None,
-                           loss='huber')
+line_search_options_with_lad = dict(init_guess=1, opt_method='minimize',
+                                    alg='Nelder-Mead', tol=1e-7,
+                                    options={"maxiter": 10000},
+                                    niter=None, T=None,
+                                    loss='lad')
+line_search_options_with_huber = dict(init_guess=1, opt_method='minimize',
+                                      alg='Nelder-Mead', tol=1e-7,
+                                      options={"maxiter": 10000},
+                                      niter=None, T=None,
+                                      loss='huber')
 
 print('Building scoring DataFrame for each single-target regression subtask.')
 test_error = []
 for index in range(5):
-    if index != 2:
+    if index in [0, 1, 4]:
         # We make an instance of Regressor with our choice of stacking
-        # for the single-target regression subtasks: 1, 2, 4, and 5.
+        # for the single-target regression subtasks: 1, 2, and 5.
         reg = Regressor(regressor_choice=stacking_basis_fn, n_regressors=n_regressors,
-                        boosting_loss=boosting_loss, params=paper_params(index),
+                        boosting_loss=huber_loss, params=paper_params(index),
                         line_search_regularization=line_search_regularization,
-                        line_search_options=line_search_options,
+                        line_search_options=line_search_options_with_huber,
+                        stacking_layer=stack, target_index=index)
+    elif index == 3:
+        # We make an instance of Regressor with our choice of stacking
+        # for the single-target regression subtask: 4.
+        reg = Regressor(regressor_choice=stacking_basis_fn, n_regressors=n_regressors,
+                        boosting_loss=ls_loss, params=paper_params(index),
+                        line_search_regularization=line_search_regularization,
+                        line_search_options=line_search_options_with_lad,
                         stacking_layer=stack, target_index=index)
     else:
         # We make an instance of Regressor with our choice of ridge
         # regression for the single-target regression subtask: 3.
+        # The parameter alpha denotes the regularization strength
+        # in ridge regression, where the Tikhonov matrix is the
+        # scalar alpha times the identity matrix.
         reg = Regressor(regressor_choice=linear_basis_fn, n_regressors=n_regressors,
-                        boosting_loss=boosting_loss, params=dict(alpha=0.1),
+                        boosting_loss=huber_loss, params=dict(alpha=0.1),
                         line_search_regularization=line_search_regularization,
-                        line_search_options=line_search_options, target_index=index)
+                        line_search_options=line_search_options_with_huber,
+                        target_index=index)
 
     # We use the baseboostcv method, which utilizes a private
     # inbuilt model selection method to choose either the
@@ -96,6 +122,9 @@ print(test_error.round(decimals=2))
 print('Finished computing the multi-target scores.')
 print(test_error.mean().round(decimals=2))
 print('To gain the improvement, we used the Huber loss function in the',
-      'negative gradient and line search computations. Additionally, we',
-      'used ridge regression as the basis function in the third single-target',
-      'regression subtask.', sep='\n')
+      'negative gradient and line search computations in the single-target',
+      'regression subtasks: 1, 2, 3, and 5. We used the squared error loss',
+      'function in the negative gradient computation and the absolute error',
+      'loss function in the line search computation in the single-target',
+      'regression subtask: 4. Additionally, we used ridge regression as the',
+      'basis function in the single-target regression subtask: 3.', sep='\n')

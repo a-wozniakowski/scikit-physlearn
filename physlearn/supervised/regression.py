@@ -219,6 +219,16 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         except AttributeError:
             print(f'{self.pipe.named_steps["reg"]} needs to have an estimators_ attribute.')
 
+    def _check_target_index(self, y):
+        """Automates single-target regression subtask slicing."""
+
+        if self.target_index is not None and \
+        sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
+            # Selects a particular single-target
+            return y.iloc[:, self.target_index]
+        else:
+            return y
+
     @staticmethod
     def _fit(regressor, X, y, sample_weight=None):
         """Helper fit method."""
@@ -242,10 +252,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             X, y = _validate_data(X=X, y=y)
             setattr(self, '_validated_data', True)
 
-        if self.target_index is not None and \
-        sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
-            # Selects a particular single-target
-            y = y.iloc[:, self.target_index]
+        # Automates single-target slicing
+        y = self._check_target_index(y=y)
 
         if not hasattr(self, 'pipe'):
             self.get_pipeline(y=y)
@@ -254,43 +262,6 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                   sample_weight=sample_weight)
 
         return self.pipe
-
-    def _inbuilt_model_selection_step(self, X, y):
-        """Cross-validates the incumbent and the candidate regressor."""
-
-        cross_val_score = self.cross_val_score(X=X, y=y,
-                                               return_incumbent_score=True)
-        mean_cross_val_score = cross_val_score.mean(axis=0)
-
-        if mean_cross_val_score[0] >= mean_cross_val_score[1]:
-            # Base boosting did not improve performance
-            setattr(self, '_return_incumbent', True)
-
-    def baseboostcv(self, X, y, sample_weight=None):
-        """Base boosting with inbuilt cross-validation"""
-
-        if not hasattr(self, '_validated_data'):
-            X, y = _validate_data(X=X, y=y)
-            setattr(self, '_validated_data', True)
-
-        if self.target_index is not None and \
-        sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
-            # Selects a particular single-target
-            y = y.iloc[:, self.target_index]
-
-        self._inbuilt_model_selection_step(X=X, y=y)
-
-        if not hasattr(self, 'pipe'):
-            self.get_pipeline(y=y)
-
-        if not hasattr(self, '_return_incumbent'):
-            # Base boosting improves performance,
-            # so we fit the candidate
-            self.fit(X=X, y=y, sample_weight=sample_weight)
-            return self.pipe
-        else:
-            setattr(self, 'return_incumbent_', True) 
-            return self
 
     def predict(self, X):
         """Generate predictions."""
@@ -323,10 +294,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             possible_multioutputs = ['raw_values', 'uniform_average']
             assert any(multioutput for output in possible_multioutputs)
 
-        if self.target_index is not None and \
-        sklearn.utils.multiclass.type_of_target(y_true) in _MULTI_TARGET:
-            # Selects a particular single-target
-            y_true = y_true.iloc[:, self.target_index]
+        # Automates single-target slicing
+        y_true = self._check_target_index(y=y_true)
 
         if scoring == 'mae':
             score = sklearn.metrics.mean_absolute_error(y_true=y_true, y_pred=y_pred,
@@ -578,10 +547,42 @@ class Regressor(BaseRegressor):
 
         return super().fit(X=X, y=y, sample_weight=sample_weight)
 
+    def _inbuilt_model_selection_step(self, X, y):
+        """Cross-validates the incumbent and the candidate regressor."""
+
+        cross_val_score = super().cross_val_score(X=X, y=y,
+                                                  return_incumbent_score=True)
+        mean_cross_val_score = cross_val_score.mean(axis=0)
+
+        if mean_cross_val_score[0] >= mean_cross_val_score[1]:
+            # Base boosting did not improve performance
+            setattr(self, '_return_incumbent', True)
+
     def baseboostcv(self, X, y, sample_weight=None):
         """Base boosting with inbuilt cross-validation"""
 
-        return super().baseboostcv(X=X, y=y, sample_weight=sample_weight)
+        if not hasattr(self, '_validated_data'):
+            X, y = _validate_data(X=X, y=y)
+            setattr(self, '_validated_data', True)
+
+        # Automates single-target slicing
+        y = super()._check_target_index(y=y)
+
+        # Performs augmented k-fold cross-validation,
+        # then selects the incumbent or the candidate
+        self._inbuilt_model_selection_step(X=X, y=y)
+
+        if not hasattr(self, 'pipe'):
+            super().get_pipeline(y=y)
+
+        if not hasattr(self, '_return_incumbent'):
+            # Base boosting improves performance,
+            # so we fit the candidate
+            super().fit(X=X, y=y, sample_weight=sample_weight)
+            return self.pipe
+        else:
+            setattr(self, 'return_incumbent_', True) 
+            return self
 
     def predict(self, X):
         """Generate predictions."""
@@ -601,6 +602,8 @@ class Regressor(BaseRegressor):
 
         score_summary_df = pd.DataFrame(score_summary).dropna(how='any', axis=1)
         score_summary_df.index.name = 'target'
+        
+        # Shifts the index origin by one
         if self.target_index is not None:
             score_summary_df.index = pd.RangeIndex(start=self.target_index + 1,
                                                    stop=self.target_index + 2, step=1)
@@ -678,12 +681,11 @@ class Regressor(BaseRegressor):
         if filename is not None:
             assert isinstance(filename, str)
 
-        if self.target_index is not None and \
-        sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
-            # Selects a particular single-target
-            y = y.iloc[:, self.target_index]
+        # Automates single-target slicing
+        y = self._check_target_index(y=y)
 
-        self._search(X=X, y=y, search_params=search_params, search_method=search_method)
+        self._search(X=X, y=y, search_params=search_params,
+                     search_method=search_method)
 
         try:
             self._regressor_search.fit(X=X, y=y)
@@ -714,6 +716,12 @@ class Regressor(BaseRegressor):
             self.cv_results_ = pd.DataFrame(self._regressor_search.cv_results_)
             self.refit_time_ = pd.Series({'refit_time':self._regressor_search.refit_time_})
             self.search_summary_ = pd.concat([self.search_summary_, self.refit_time_], axis=0)
+
+        if self.refit:
+            try:
+                self.pipe = self._regressor_search.best_estimator_
+            except AttributeError:
+                print('The regressor search object does not have the attribute: base_estimator_.')
 
         if filename is not None:
             path = _convert_filename_to_csv_path(filename=filename)

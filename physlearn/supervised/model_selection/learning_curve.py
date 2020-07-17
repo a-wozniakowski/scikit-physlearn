@@ -18,15 +18,15 @@ import sklearn.model_selection._validation
 import sklearn.utils.multiclass
 import sklearn.utils.validation
 
-from ..regression import Regressor
+from ..regression import BaseRegressor
 from ..utils._data_checks import _n_samples, _validate_data
 
 
-class LearningCurve(Regressor):
+class LearningCurve(BaseRegressor):
     """(Augmented) learning curve for base boosting."""
 
-    def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
-                 verbose=1, n_jobs=-1, scoring='neg_mean_absolute_error',
+    def __init__(self, regressor_choice='ridge', cv=5, verbose=1,
+                 n_jobs=-1, scoring='neg_mean_absolute_error',
                  return_train_score=True, pipeline_transform='quantilenormal',
                  pipeline_memory=None, params=None, chain_order=None,
                  stacking_layer=None, target_index=None, n_regressors=None,
@@ -35,7 +35,6 @@ class LearningCurve(Regressor):
 
         super().__init__(regressor_choice=regressor_choice,
                          cv=cv,
-                         random_state=random_state,
                          verbose=verbose,
                          n_jobs=n_jobs,
                          scoring=scoring,
@@ -56,10 +55,8 @@ class LearningCurve(Regressor):
                                  return_estimator=False, error_score=np.nan,
                                  return_incumbent_score=False):
 
-        if self.target_index is not None and \
-        sklearn.utils.multiclass.type_of_target(y) == 'continuous-multioutput':
-            # Selects a particular single-target
-            y = y.iloc[:, self.target_index]
+        # Automates single-target slicing
+        y = super()._check_target_index(y=y)
 
         X, y = _validate_data(X=X, y=y)
         X, y, groups = sklearn.utils.validation.indexable(X, y, None)
@@ -106,7 +103,7 @@ class LearningCurve(Regressor):
         dim = 4 if return_times else 2
         out = out.reshape(n_cv_folds, n_unique_ticks, dim)
         
-        out = np.asarray(out).transpose((2, 1, 0))
+        out = np.asarray(a=out).transpose((2, 1, 0))
 
         # Sklearn returns negative MAE and MSE scores,
         # so we restore nonnegativity
@@ -119,18 +116,20 @@ class LearningCurve(Regressor):
             else:
                 y_pred = X
 
+            if self.scoring == 'neg_mean_absolute_error':
+                scoring = 'mae'
+            elif self.scoring == 'neg_mean_squared_error':
+                scoring = 'mse'
+
             # Avoids recomputing the incumbent score for each
             # training size, as the score does not depend upon
             # the training size.
             incumbent_score = parallel(joblib.delayed(self.score)(
-                y_true=y.loc[pair[1]], y_pred=y_pred.loc[pair[1]])
+                y_true=y.loc[pair[1]], y_pred=y_pred.loc[pair[1]],
+                scoring=scoring, multioutput='raw_values')
                 for index, pair in enumerate(train_test_proportions)
                 if index % len(train_sizes) == 0)
             
-            if self.scoring == 'neg_mean_absolute_error':
-                incumbent_score = [score['mae'].values for score in incumbent_score]
-            elif self.scoring == 'neg_mean_squared_error':
-                incumbent_score = [score['mse'].values for score in incumbent_score]
             incumbent_score = np.array(incumbent_score).transpose()
 
             # Check if the incumbent won the inbuilt
@@ -140,7 +139,7 @@ class LearningCurve(Regressor):
             # with the incumbent score, as base boosting
             # would utilize the incumbent.
             for index, row_score in enumerate(out[1]):
-                if np.mean(row_score) > np.mean(incumbent_score):
+                if np.mean(a=row_score) > np.mean(a=incumbent_score):
                     out[1][index] = incumbent_score
 
             ret = train_sizes_abs, out[0], out[1], incumbent_score
@@ -164,11 +163,13 @@ def plot_learning_curve(regressor_choice, title, X, y, verbose=0, cv=5,
                         line_search_options=None, ylabel=None,
                         return_incumbent_score=False):
 
-    lcurve = LearningCurve(regressor_choice=regressor_choice, verbose=verbose, cv=cv,
-                           pipeline_transform=pipeline_transform, pipeline_memory=pipeline_memory,
-                           params=params, chain_order=chain_order, stacking_layer=stacking_layer,
+    lcurve = LearningCurve(regressor_choice=regressor_choice, verbose=verbose,
+                           cv=cv, pipeline_transform=pipeline_transform,
+                           pipeline_memory=pipeline_memory, params=params,
+                           chain_order=chain_order, stacking_layer=stacking_layer,
                            target_index=target_index, n_regressors=n_regressors,
-                           boosting_loss=boosting_loss, line_search_regularization=line_search_regularization,
+                           boosting_loss=boosting_loss,
+                           line_search_regularization=line_search_regularization,
                            line_search_options=line_search_options)
 
     if return_incumbent_score:
@@ -176,7 +177,8 @@ def plot_learning_curve(regressor_choice, title, X, y, verbose=0, cv=5,
         X=X, y=y, train_sizes=train_sizes, return_incumbent_score=return_incumbent_score
     )
     else:
-        train_sizes, train_score, cv_score = lcurve._modified_learning_curve(X=X, y=y, train_sizes=train_sizes)
+        train_sizes, train_score, cv_score = lcurve._modified_learning_curve(X=X, y=y,
+                                                                             train_sizes=train_sizes)
 
     matplotlib.rcParams['font.family'] = 'serif'
     matplotlib.rcParams['font.serif'] = ['Lucida Console']
@@ -195,23 +197,25 @@ def plot_learning_curve(regressor_choice, title, X, y, verbose=0, cv=5,
         else:
             plt.ylabel('Empirical error')
 
-    train_score_mean = np.mean(train_score, axis=1)
-    train_score_std = np.std(train_score, axis=1)
-    cv_score_mean = np.mean(cv_score, axis=1)
-    cv_score_std = np.std(cv_score, axis=1)
+    train_score_mean = np.mean(a=train_score, axis=1)
+    train_score_std = np.std(a=train_score, axis=1)
+    cv_score_mean = np.mean(a=cv_score, axis=1)
+    cv_score_std = np.std(a=cv_score, axis=1)
     
     if return_incumbent_score:
         incumbent_score_mean = np.repeat(a=np.mean(incumbent_score, axis=1),
                                          repeats=len(train_sizes))
         incumbent_score_std = np.repeat(a=np.std(incumbent_score, axis=1),
                                         repeats=len(train_sizes))
-        global_score_min = np.around(np.min([train_score.min(), cv_score.min(),
-                                     incumbent_score_mean.min()]), decimals=2)
-        global_score_max = np.around(np.max([train_score.max(), cv_score.max(),
-                                     incumbent_score_mean.max()]), decimals=2)
+        global_score_min = np.around(a=np.min([train_score.min(), cv_score.min(), incumbent_score_mean.min()]),
+                                     decimals=2)
+        global_score_max = np.around(a=np.max([train_score.max(), cv_score.max(), incumbent_score_mean.max()]),
+                                     decimals=2)
     else:
-        global_score_min = np.around(np.min([train_score.min(), cv_score.min()]), decimals=2)
-        global_score_max = np.around(np.max([train_score.max(), cv_score.max()]), decimals=2)
+        global_score_min = np.around(a=np.min([train_score.min(), cv_score.min()]),
+                                     decimals=2)
+        global_score_max = np.around(a=np.max([train_score.max(), cv_score.max()]),
+                                     decimals=2)
 
     plt.grid()
 

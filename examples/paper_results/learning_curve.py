@@ -55,7 +55,7 @@ index = 2
 # We generate the augmented learning curve with our choice
 # of stacking in the single-target regression subtask: 3,
 # wherein we use 40 different training data sizes. The
-# first training data size corresponds to a quater of 
+# first training data size corresponds to a quarter of 
 # the training data, and the last training data size
 # corresponds to the full amount of training data.
 plot_learning_curve(regressor_choice=basis_fn,
