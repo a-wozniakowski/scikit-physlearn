@@ -76,7 +76,7 @@ interpret = ShapInterpret(regressor_choice='ridgecv', target_index=index)
 # Generate a SHAP force plot, and visualize the subtask predictions.
 interpret.force_plot(X_train, y_train)
 ```
-Example output:
+Example output (this plot is interactive in a [notebook](https://jupyter.org/)):
 <div align="center">
   <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/force_plot.png" width="600" height="300"><br><br>
 </div>
