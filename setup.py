@@ -52,9 +52,11 @@ def setup_package():
                     version=VERSION,
                     license=LICENSE,
                     classifiers=CLASSIFIERS,
+                    python_requires='>=3.6',
                     packages=PACKAGES,
                     package_data={'': ['*.json', '*.csv']},
-                    install_requires=REQUIRED)
+                    install_requires=REQUIRED,
+                    zip_safe=False)
 
     setup(**metadata)
 
