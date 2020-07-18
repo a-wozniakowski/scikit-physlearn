@@ -5,7 +5,6 @@
 .. |SOTA| image:: https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/boosting-on-the-shoulders-of-giants-in/multi-target-regression-on-google-5-qubit
 .. _SOTA: https://paperswithcode.com/sota/multi-target-regression-on-google-5-qubit?p=boosting-on-the-shoulders-of-giants-in
 
-
 **Scikit-physlearn** is a Python package for single-target and multi-target regression.
 It is designed to amalgamate
 `Scikit-learn <https://scikit-learn.org/>`__,
