@@ -96,7 +96,7 @@ Example output (this plot is interactive in a `notebook <https://jupyter.org/>`_
 
 .. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/force_plot.png
   :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 500px
+  :width: 300px
   :height: 250px
 
 
@@ -112,8 +112,8 @@ which is designed to emulate the paradigm of "standing on the shoulders of giant
 
 .. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/framework.png
   :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 500px
-  :height: 250px
+  :width: 300px
+  :height: 200px
 
 To evaluate its efficacy in a
 superconducting quantum device calibration application with a limited supply of `experimental data <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/physlearn/datasets/google/google_json/_5q.json>`_:
@@ -123,7 +123,7 @@ superconducting quantum device calibration application with a limited supply of 
 .. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/aug_learning_curve.png
   :target: https://github.com/a-wozniakowski/scikit-physlearn/
   :width: 500px
-  :height: 250px
+  :height: 200px
 
 - Next, run the `benchmark <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/benchmark.py>`__ module, and use it to obtain the base regressor's test error.
 - Then, run the `main body <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/main_body.py>`__ module, and compare the test error of `base boosting <https://arxiv.org/abs/2005.06194>`__ with the benchmark error.
