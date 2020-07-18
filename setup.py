@@ -5,15 +5,8 @@ from setuptools import setup, find_packages
 
 DISTNAME = 'scikit-physlearn'
 DESCRIPTION = 'A Python package for single-target and multi-target regression tasks.'
-
-# Convert Markdown file into RestructuredText.
-# Use the README without images.
-try:
-    import pypandoc
-    LONG_DESCRIPTION = pypandoc.convert('pypi/README.md', 'rst')
-except (IOError, ImportError):
-    LONG_DESCRIPTION = open('pypi/README.md').read()
-
+with open('README.rst') as f:
+    LONG_DESCRIPTION = f.read()
 MAINTAINER = 'Alex Wozniakowski'
 MAINTAINER_EMAIL = 'wozn0001@e.ntu.edu.sg'
 URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
