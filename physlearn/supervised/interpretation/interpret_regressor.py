@@ -5,9 +5,11 @@ Regressor interpretability with SHAP utilities.
 # Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 
 import shap
-import matplotlib.pyplot as plt
 
 import sklearn.utils.multiclass
+import sklearn.utils.validation
+
+import matplotlib.pyplot as plt
 
 from IPython.display import display
 
@@ -61,18 +63,27 @@ class ShapInterpret(BaseRegressor):
     def explainer(self, X):
         """Compute the importance of each feature for the underlying regressor."""
 
+        try:
+            sklearn.utils.validation.check_is_fitted(estimator=self.pipe,
+                                                     attributes='_final_estimator')
+        except AttributeError:
+            print('The pipeline has not been built. Please use the fit method beforehand.')
+        
         if self.explainer_type == 'tree':
-            explainer = shap.TreeExplainer(model=self.pipe.named_steps['reg'])
+            explainer = shap.TreeExplainer(model=self.pipe.named_steps['reg'],
+                                           feature_perturbation='interventional',
+                                           data=X)
             shap_values = explainer.shap_values(X=X)
         elif self.explainer_type == 'linear':
             explainer = shap.LinearExplainer(model=self.pipe.named_steps['reg'],
-                                             data=X, feature_perturbation='correlation_dependent')
+                                             feature_perturbation='correlation_dependent',
+                                             data=X)
             shap_values = explainer.shap_values(X=X)
         elif self.explainer_type == 'kernel':
             explainer = shap.KernelExplainer(model=self.pipe.named_steps['reg'].predict,
                                              data=X)
             shap_values = explainer.shap_values(X=X, l1_reg='aic')
-
+        
         return explainer, shap_values
 
     def summary_plot(self, X, y, plot_type='dot'):
@@ -103,7 +114,8 @@ class ShapInterpret(BaseRegressor):
             self.fit(X=X, y=y, index=index)
             explainer, shap_values = self.explainer(X=X)
             force_plot = display(shap.force_plot(base_value=explainer.expected_value,
-                                                 shap_values=shap_values, features=X,
+                                                 shap_values=shap_values,
+                                                 features=X,
                                                  plot_cmap=['#52A267','#F0693B'],
                                                  feature_names=list(X.columns)))
 
@@ -121,7 +133,8 @@ class ShapInterpret(BaseRegressor):
                                  features=X, feature_names=list(X.columns),
                                  cmap=plt.get_cmap('hot'),
                                  interaction_index=interaction_index,
-                                 alpha=alpha, dot_size=dot_size, show=self.show)
+                                 alpha=alpha, dot_size=dot_size,
+                                 show=self.show)
 
     def decision_plot(self, X, y):
         """Visualization of the additive feature attribution."""
@@ -132,5 +145,7 @@ class ShapInterpret(BaseRegressor):
         for index in range(_n_targets(y)):
             self.fit(X=X, y=y, index=index)
             explainer, shap_values = self.explainer(X=X)
-            shap.decision_plot(base_value=explainer.expected_value, shap_values=shap_values,
-                               feature_names=list(X.columns), show=self.show)
+            shap.decision_plot(base_value=explainer.expected_value,
+                               shap_values=shap_values,
+                               feature_names=list(X.columns),
+                               show=self.show)

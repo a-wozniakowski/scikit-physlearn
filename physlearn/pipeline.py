@@ -5,6 +5,7 @@ Custom pipeline that handles base boosting.
 # Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
 
 import copy
+import joblib
 
 import numpy as np
 import pandas as pd
@@ -84,6 +85,7 @@ def _make_pipeline(estimator, transform, n_targets,
     return ModifiedPipeline(steps=steps,
                             memory=memory,
                             verbose=verbose,
+                            n_jobs=n_jobs,
                             n_estimators=n_estimators,
                             target_index=target_index,
                             boosting_loss=boosting_loss,
@@ -99,7 +101,7 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
     _required_parameters = ['steps']
 
     def __init__(self, steps, memory=None, verbose=False,
-                 n_estimators=None, target_index=None,
+                 n_jobs=None, n_estimators=None, target_index=None,
                  boosting_loss=None, regularization=None,
                  line_search_options=None):
 
@@ -121,6 +123,7 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
+        self.n_jobs = n_jobs
         self.n_estimators = n_estimators
         self.target_index = target_index
         self.boosting_loss = boosting_loss
@@ -134,7 +137,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                     niter=None, T=None):
         """
         Optimization method used within _fit_stages to compute
-        the expansion coefficient in the additive expansion."""
+        the expansion coefficient in the additive expansion.
+        """
 
         assert opt_method in ['minimize', 'basinhopping']
 
@@ -226,7 +230,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         """
         Fit the model, wherein transforms are seqeuntially fit,
         then the final estimator is fit. This method supports
-        base boosting."""
+        base boosting.
+        """
 
         fit_params_steps = self._check_fit_params(**fit_params)
 
@@ -256,11 +261,19 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         return self
 
+    def _predict(self, estimator, Xt, coef, **predict_params):
+        """
+        Helper method for generating the noise term predictions parallel.
+        """
+
+        return coef * estimator.steps[-1][-1].predict(X=Xt, **predict_params)
+
     @sklearn.utils.metaestimators.if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X, **predict_params):
         """
         Apply transforms to the data, then predict with the final estimator.
-        The method supports base boosting."""
+        The method supports base boosting.
+        """
 
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -270,15 +283,24 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                 Xt = pd.DataFrame(transform.transform(X=Xt), index=Xt.index)
                 
         if hasattr(self, 'coefs_') and hasattr(self, 'estimators_'):
-            # Generate predictions with base boosting model
+            # Generate the smooth term predictions.
             if self.target_index is not None:
-                y_pred = X.iloc[:, self.target_index]
+                smooth_term = X.iloc[:, self.target_index]
             else:
-                y_pred = X
-            for coef, estimator in zip(self.coefs_, self.estimators_):
-                y_pred = y_pred.add(coef * estimator.steps[-1][-1].predict(X=Xt, **predict_params))
+                smooth_term = X
+            
+            parallel = joblib.Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                                       pre_dispatch='2*n_jobs')
+
+            # Generate the noise term predictions in parallel.
+            noise_term = parallel(
+                joblib.delayed(self._predict)(
+                    estimator=estimator, Xt=Xt, coef=coef)
+                for coef, estimator in zip(self.coefs_, self.estimators_))
+            # Tukey's reroughing: add the smooth and noise terms.
+            y_pred = smooth_term.add(noise_term[0])
         else:
-            # Generate predictions without base boosting model
+            # Generate predictions without reroughing.
             y_pred = pd.DataFrame(self.steps[-1][-1].predict(Xt, **predict_params), index=Xt.index)
 
         return y_pred

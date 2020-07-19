@@ -392,13 +392,13 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         parallel = joblib.Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                    pre_dispatch='2*n_jobs')
 
-        scores = parallel(joblib.delayed(sklearn.model_selection._validation._fit_and_score)(
-            estimator=sklearn.base.clone(self.pipe), X=X, y=y, scorer=scorers,
-            train=train, test=test, verbose=self.verbose, parameters=None,
-            fit_params=None, return_train_score=self.return_train_score,
-            return_parameters=False, return_n_test_samples=False,
-            return_times=True, return_estimator=return_regressor,
-            error_score=np.nan)
+        scores = parallel(
+            joblib.delayed(sklearn.model_selection._validation._fit_and_score)(
+                estimator=sklearn.base.clone(self.pipe), X=X, y=y, scorer=scorers, train=train,
+                test=test, verbose=self.verbose, parameters=None, fit_params=None,
+                return_train_score=self.return_train_score, return_parameters=False,
+                return_n_test_samples=False, return_times=True,
+                return_estimator=return_regressor, error_score=np.nan)
             for train, test in cv.split(X, y, groups))
 
         if return_incumbent_score:
@@ -407,8 +407,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             else:
                 y_pred = X
 
-            incumbent_test_score = parallel(joblib.delayed(self.score)(
-                y_true=y.loc[test], y_pred=y_pred.loc[test])
+            incumbent_test_score = parallel(
+                joblib.delayed(self.score)(
+                    y_true=y.loc[test], y_pred=y_pred.loc[test])
                 for _, test in cv.split(X, y, groups))
 
             if self.scoring == 'neg_mean_absolute_error':
@@ -656,7 +657,7 @@ class Regressor(BaseRegressor):
         search_params = super()._preprocess_search_params(y=y, search_params=search_params,
                                                           search_taxonomy=search_taxonomy)
         if cv is None:
-            cv = cv.split
+            cv = self.cv
 
         if not hasattr(self, 'pipe'):
             n_samples = _n_samples(y)
