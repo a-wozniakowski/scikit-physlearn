@@ -15,6 +15,8 @@ from sklearn.datasets import load_boston, load_linnerud
 from sklearn.model_selection import train_test_split
 
 from physlearn import Regressor
+from physlearn.datasets import load_benchmark
+from physlearn.supervised import ShapInterpret
 
 
 class TestBasic(unittest.TestCase):
@@ -432,6 +434,29 @@ class TestBasic(unittest.TestCase):
         self.assertGreaterEqual(score['mse'], 0.0)
         self.assertLess(score['mae'], 7.0)
         self.assertLess(score['mse'], 110.0)
+
+    def test_without_cv_shap_explainer(self):
+        X_train, _, y_train, _ = load_benchmark(return_split=True)
+        index = 3
+        stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
+                     final_regressor='lasso')
+        interpret = ShapInterpret(regressor_choice='mlxtendstackingregressor', target_index=index,
+                                  stacking_layer=stack)
+        interpret.fit(X=X_train, y=y_train, index=index)
+        explainer, shap_values = interpret.explainer(X=X_train)
+        self.assertEqual(X_train.shape, shap_values.shape)
+
+    def test_with_cv_shap_explainer(self):
+        X_train, _, y_train, _ = load_benchmark(return_split=True)
+        index = 3
+        stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
+                     final_regressor='lasso')
+        interpret = ShapInterpret(regressor_choice='mlxtendstackingcvregressor', target_index=index,
+                                  stacking_layer=stack)
+        interpret.fit(X=X_train, y=y_train, index=index)
+        explainer, shap_values = interpret.explainer(X=X_train)
+        self.assertEqual(X_train.shape, shap_values.shape)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -49,8 +49,7 @@ class RegressorDictionaryInterface(AbstractModelDictionaryInterface):
             else:
                 model['regressor'] = _MODEL_DICT[self.regressor_choice]().set_params(**self.params)
         else:
-            # Retrieve default params, since
-            # none were specificed
+            # Retrieve default params, since params was None
             if self.stacking_layer is not None:
                 if any(self.regressor_choice == choice for choice in ['stackingregressor', 'votingregressor']):
                     model['regressors'] = [(str(index), _MODEL_DICT[choice]())

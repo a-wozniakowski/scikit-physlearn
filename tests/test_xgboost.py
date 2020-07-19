@@ -15,6 +15,8 @@ from sklearn.datasets import load_boston, load_linnerud
 from sklearn.model_selection import train_test_split
 
 from physlearn import Regressor
+from physlearn.datasets import load_benchmark
+from physlearn.supervised import ShapInterpret
 
 
 class TestBasic(unittest.TestCase):
@@ -172,6 +174,17 @@ class TestBasic(unittest.TestCase):
         self.assertGreaterEqual(score['mse'], 0.0)
         self.assertLess(score['mae'], 37.0)
         self.assertLess(score['mse'], 2080.0)
+
+    def test_shap_explainer(self):
+        X_train, _, y_train, _ = load_benchmark(return_split=True)
+        index = 3
+        params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
+        interpret = ShapInterpret(regressor_choice='xgbregressor', target_index=index,
+                                  params=params)
+        interpret.fit(X=X_train, y=y_train, index=index)
+        explainer, shap_values = interpret.explainer(X=X_train)
+        self.assertEqual(X_train.shape, shap_values.shape)
+
 
 if __name__ == '__main__':
     unittest.main()

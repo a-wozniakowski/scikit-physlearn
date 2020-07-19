@@ -54,7 +54,7 @@ Example output:
 ```
 8.04
 ```
-A [SHAP](https://shap.readthedocs.io/en/latest/#) visualization example:
+A [SHAP](https://shap.readthedocs.io/en/latest/#) visualization example of a single-target regression subtask:
 ```python
 from physlearn.datasets import load_benchmark
 from physlearn.supervised import ShapInterpret
@@ -74,7 +74,7 @@ interpret.force_plot(X_train, y_train)
 Example output (this plot is interactive in a [notebook](https://jupyter.org/)):
 
 <div align="center">
-  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/force_plot.png" width="600" height="300"><br><br>
+  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/force_plot.png" width="500" height="250"><br><br>
 </div>
 
 
@@ -82,32 +82,94 @@ For additional examples, check out the [basics](https://github.com/a-wozniakowsk
 
 ## Base boosting
 
-Inspired by the process of human research, wherein scientific progress derives from prior scientific knowledge,
-base boosting is a modification of the standard version of
-[gradient boosting](https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451),
-which is designed to emulate the paradigm of "standing on the shoulders of giants":
+Inspired by the process of human research, wherein scientific progress derives from prior scientific knowledge, [base boosting](https://arxiv.org/abs/2005.06194) is a modification of the standard version of [gradient boosting](https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451), which is designed to emulate the paradigm of "standing on the shoulders of giants":
 
 <div align="center">
-  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/framework.png" width="600" height="300"><br><br>
+  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/framework.png" width="500" height="250"><br><br>
 </div>
 
-To evaluate its efficacy in a
-superconducting quantum device calibration application with a limited supply of [experimental data](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/physlearn/datasets/google/google_json/_5q.json):
+To get started with base boosting, consider the following example, which compares non-nested and nested cross-validation in a quantum device calibration application with a limited supply of [experimental data](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/physlearn/datasets/google/google_json/_5q.json):
 
-* Start with the
-[learning curve](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/learning_curve.py)
-module, and use it to generate an augmented learning curve:
+```python
+from physlearn import Regressor
+from physlearn.datasets import load_benchmark, paper_params
+from physlearn.supervised import plot_cv_comparison
+
+# Number of random trials.
+n_trials = 30
+
+# Number of withheld folds in k-fold cross-validation.
+n_splits = 5
+
+# Load the training data from a quantum device calibration application, wherein
+# X_train denotes the base regressor's initial predictions and y_train denotes
+# the multi-target experimental observations, i.e., the eigenenergies.
+X_train, _, y_train, _ = load_benchmark(return_split=True)
+
+# Select a basis function, e.g., StackingRegressor from Sklearn with first
+# layer regressors: Ridge and RandomForestRegressor from Sklearn and final
+# layer regressor: KNeighborsRegressor from Sklearn.
+basis_fn = 'stackingregressor'
+stack = dict(regressors=['ridge', 'randomforestregressor'],
+             final_regressor='kneighborsregressor')
+
+# Number of basis functions in the noise term of the additive expansion.
+n_regressors = 1
+
+# Choice of squared error loss function for the pseduo-residual computation.
+boosting_loss = 'ls'
+
+# Choice of parameters for the line search computation.
+line_search_regularization = 0.1
+line_search_options = dict(init_guess=1, opt_method='minimize',
+                           alg='Nelder-Mead', tol=1e-7,
+                           options={"maxiter": 10000},
+                           niter=None, T=None,
+                           loss='lad')
+
+# (Hyper)parameters to to exhaustively search over, namely the regularization strength
+# in ridge regression and the number of neighbors in k-nearest neighbors.
+search_params = {'0__alpha': [0.5, 1.0, 1.5],
+                 'final_estimator__n_neighbors': [3, 5, 10]}
+
+# Choose the single-target regression subtask: 5, using Python indexing.
+index = 4
+
+# Make an instance of Regressor.
+reg = Regressor(regressor_choice=basis_fn, stacking_layer=stack,
+                scoring='neg_mean_absolute_error', target_index=index,
+                n_regressors=n_regressors, boosting_loss=boosting_loss,
+                line_search_regularization=line_search_regularization,
+                line_search_options=line_search_options)
+
+# Obtain the non-nested and the nested cross-validation scores. 
+non_nested_scores, nested_scores = reg.nested_cross_validate(X=X_train, y=y_train,
+                                                             search_params=search_params,
+                                                             n_splits=n_splits,
+                                                             search_method='gridsearchcv',
+                                                             n_trials=n_trials)
+
+# Illustrate the difference between the scores.
+plot_cv_comparison(non_nested_scores=non_nested_scores, nested_scores=nested_scores,
+                   n_trials=n_trials)
+```
+
+Example output:
+```Average difference of -0.011309 with standard deviation of 0.013053.```
+<div align="center">
+  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/cv_comparison.png" width="500" height="250"><br><br>
+</div>
+
+For additional examples, check out the [paper results](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results) directory:
+* Generate an [augmented learning curve](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/learning_curve.py).
 
 <div align="center">
   <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/aug_learning_curve.png" width="500" height="250"><br><br>
 </div>
 
-* Next, run the 
-[benchmark](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/benchmark.py)
-module, and use it to obtain the base regressor's test error.
-* Then, run the
-[main body](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/main_body.py)
-module, and compare the test error of [base boosting](https://arxiv.org/abs/2005.06194) with the benchmark error.
+* Establish a proxy of expert human-level performance on the calibration benchmark task with the [base regressor](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/benchmark.py).
+* Boost the initial predictions, generated by the base regressor, and evaulate the test error of the returned [regressor](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/main_body.py).
+* Examine the utility of the base regressor, as a data preprocessor, with a SHAP [summary plot](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/summary_plot.py).
 
 
 ## Citation

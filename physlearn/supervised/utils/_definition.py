@@ -132,15 +132,19 @@ _SHAP_TAXONOMY = dict(linearregression='linear',
                       gradientboostingregressor='tree',
                       randomforestregressor='tree',
                       histgradientboostingregressor='tree',
-                      xgbregressor='tree',
                       lgbmregressor='tree',
-                      catboostregressor='tree',
+                      xgbregressor='tree',
+                      catboostregressor='kernel',  # Changed to kernel per issue #480 in SHAP
                       baggingregressor='kernel',
                       kernelridge='kernel',
                       svr='kernel',
                       gaussianprocessregressor='kernel',
                       kneighborsregressor='kernel',
-                      mlpregressor='kernel')
+                      mlpregressor='kernel',
+                      stackingregressor='kernel',
+                      mlxtendstackingregressor='kernel',
+                      mlxtendstackingcvregressor='kernel',
+                      votingregressor='kernel')
 
 
 _SHAP_SUMMARY_PLOT_CHOICE = ['dot', 'violin', 'bar']

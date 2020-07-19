@@ -90,13 +90,14 @@ class LearningCurve(BaseRegressor):
             for n_train_samples in train_sizes_abs:
                 train_test_proportions.append((train[:n_train_samples], test))
 
-        out = parallel(joblib.delayed(sklearn.model_selection._validation._fit_and_score)(
-            estimator=sklearn.base.clone(self.pipe), X=X, y=y, scorer=scorer,
-            train=train, test=test, verbose=self.verbose, parameters=None,
-            fit_params=None, return_train_score=return_train_score,
-            return_parameters=False, return_n_test_samples=False,
-            return_times=return_times, return_estimator=return_estimator,
-            error_score=error_score)
+        out = parallel(
+            joblib.delayed(sklearn.model_selection._validation._fit_and_score)(
+                estimator=sklearn.base.clone(self.pipe), X=X, y=y, scorer=scorer,
+                train=train, test=test, verbose=self.verbose, parameters=None,
+                fit_params=None, return_train_score=return_train_score,
+                return_parameters=False, return_n_test_samples=False,
+                return_times=return_times, return_estimator=return_estimator,
+                error_score=error_score)
             for train, test in train_test_proportions)
         out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
@@ -124,20 +125,20 @@ class LearningCurve(BaseRegressor):
             # Avoids recomputing the incumbent score for each
             # training size, as the score does not depend upon
             # the training size.
-            incumbent_score = parallel(joblib.delayed(self.score)(
-                y_true=y.loc[pair[1]], y_pred=y_pred.loc[pair[1]],
-                scoring=scoring, multioutput='raw_values')
+            incumbent_score = parallel(
+                joblib.delayed(self.score)(
+                    y_true=y.loc[pair[1]], y_pred=y_pred.loc[pair[1]],
+                    scoring=scoring, multioutput='raw_values')
                 for index, pair in enumerate(train_test_proportions)
                 if index % len(train_sizes) == 0)
             
             incumbent_score = np.array(incumbent_score).transpose()
 
-            # Check if the incumbent won the inbuilt
-            # model selection step in the augmented version
-            # of base boosting. If the incumbent won,
-            # then we replace the cross-validation score
-            # with the incumbent score, as base boosting
-            # would utilize the incumbent.
+            # Check if the incumbent won the inbuilt model selection
+            # step in the augmented version of base boosting. If the
+            # incumbent won, then we replace the cross-validation score
+            # with the incumbent score, as base boosting would select
+            # the incumbent.
             for index, row_score in enumerate(out[1]):
                 if np.mean(a=row_score) > np.mean(a=incumbent_score):
                     out[1][index] = incumbent_score
