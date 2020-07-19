@@ -14,6 +14,7 @@ from sklearn.datasets import load_boston
 from physlearn import Regressor
 from physlearn.datasets import load_benchmark, paper_params
 from physlearn.loss import LOSS_FUNCTIONS
+from physlearn.supervised import ShapInterpret
 
 
 class TestBasic(unittest.TestCase):
@@ -24,6 +25,9 @@ class TestBasic(unittest.TestCase):
         score = reg.score(y_test, X_test)
         self.assertEqual(score['mae'].mean().round(decimals=2), 1.34)
         self.assertEqual(score['mse'].mean().round(decimals=2), 4.19)
+        self.assertEqual(score['rmse'].mean().round(decimals=2), 1.88)
+        self.assertEqual(score['r2'].mean().round(decimals=2), 0.99)
+        self.assertEqual(score['ev'].mean().round(decimals=2), 0.99)
 
     def test_return_incumbent(self):
         X_train, X_test, y_train, y_test = load_benchmark(return_split=True)
@@ -85,6 +89,7 @@ class TestBasic(unittest.TestCase):
         testBool = hasattr(obj, attr)
         self.assertTrue(testBool,
                         msg='obj lacking an attribute. obj: %s, attr: %s' % (obj, attr))
+
 
 if __name__ == '__main__':
     unittest.main()
