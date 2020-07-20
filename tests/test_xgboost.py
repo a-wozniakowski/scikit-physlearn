@@ -14,6 +14,8 @@ from sklearn import __version__ as sk_version
 from sklearn.datasets import load_boston, load_linnerud
 from sklearn.model_selection import train_test_split
 
+from xgboost import __version__ as xgb_version
+
 from physlearn import Regressor
 from physlearn.datasets import load_benchmark
 from physlearn.supervised import ShapInterpret
@@ -175,6 +177,8 @@ class TestBasic(unittest.TestCase):
         self.assertLess(score['mae'], 37.0)
         self.assertLess(score['mse'], 2080.0)
 
+    # xgboost >= 1.1.0 causes an issue with TreeExplainer; see issue #1215 in SHAP
+    @unittest.skipIf(xgb_version < '1.1.0', 'xgboost version is less than 1.1.0')
     def test_shap_explainer(self):
         X_train, _, y_train, _ = load_benchmark(return_split=True)
         index = 3
