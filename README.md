@@ -152,7 +152,9 @@ print(f'Mean of {nested_mean:.6f} with standard deviation of {nested_std:.6f}.')
 ```
 
 Example output:
-```Mean of 1.021210 with standard deviation of 0.229755.```
+```
+Mean of 1.021210 with standard deviation of 0.229755.
+```
 
 For additional examples, check out the [paper results](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results) directory:
 * Generate an [augmented learning curve](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/learning_curve.py).
