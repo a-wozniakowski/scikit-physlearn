@@ -12,7 +12,7 @@ It is designed to amalgamate [Scikit-learn](https://scikit-learn.org/), [LightGB
 The repository was started by Alex Wozniakowski during his graduate studies at Nanyang Technological University.
 
 ## Installation
-Scikit-physlearn can be installed from [PyPi](https://pypi.org/project/scikit-physlearn/):
+Scikit-physlearn can be installed from [PyPI](https://pypi.org/project/scikit-physlearn/):
 ```
 pip install scikit-physlearn
 ```
@@ -88,18 +88,12 @@ Inspired by the process of human research, wherein scientific progress derives f
   <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/framework.png" width="500" height="250"><br><br>
 </div>
 
-To get started with base boosting, consider the following example, which compares non-nested and nested cross-validation in a quantum device calibration application with a limited supply of [experimental data](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/physlearn/datasets/google/google_json/_5q.json):
+To get started with base boosting, consider the following example, which calculates the nested cross-validation score in a quantum device calibration application with a limited supply of [experimental data](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/physlearn/datasets/google/google_json/_5q.json):
 
 ```python
 from physlearn import Regressor
 from physlearn.datasets import load_benchmark, paper_params
-from physlearn.supervised import plot_cv_comparison
 
-# Number of random trials.
-n_trials = 30
-
-# Number of withheld folds in k-fold cross-validation.
-n_splits = 5
 
 # Load the training data from a quantum device calibration application, wherein
 # X_train denotes the base regressor's initial predictions and y_train denotes
@@ -127,8 +121,9 @@ line_search_options = dict(init_guess=1, opt_method='minimize',
                            niter=None, T=None,
                            loss='lad')
 
-# (Hyper)parameters to to exhaustively search over, namely the regularization strength
-# in ridge regression and the number of neighbors in k-nearest neighbors.
+# (Hyper)parameters to to exhaustively search over in the inner loop, namely
+# the regularization strength in ridge regression and the number of neighbors
+# in k-nearest neighbors.
 search_params = {'0__alpha': [0.5, 1.0, 1.5],
                  'final_estimator__n_neighbors': [3, 5, 10]}
 
@@ -142,23 +137,22 @@ reg = Regressor(regressor_choice=basis_fn, stacking_layer=stack,
                 line_search_regularization=line_search_regularization,
                 line_search_options=line_search_options)
 
-# Obtain the non-nested and the nested cross-validation scores. 
-non_nested_scores, nested_scores = reg.nested_cross_validate(X=X_train, y=y_train,
-                                                             search_params=search_params,
-                                                             n_splits=n_splits,
-                                                             search_method='gridsearchcv',
-                                                             n_trials=n_trials)
+# Number of folds in the outer and inner loops of nested cross-validation, respectively.
+outer_cv=5
+inner_cv=5
 
-# Illustrate the difference between the scores.
-plot_cv_comparison(non_nested_scores=non_nested_scores, nested_scores=nested_scores,
-                   n_trials=n_trials)
+# Perform a 5*5-fold nested cross-validation procedure.
+nested_mean, nested_std = reg.nested_cross_validate(X=X_train, y=y_train,
+                                                    search_params=search_params,
+                                                    search_method='gridsearchcv',
+                                                    outer_cv=outer_cv,
+                                                    inner_cv=inner_cv)
+
+print(f'Mean of {nested_mean:.6f} with standard deviation of {nested_std:.6f}.')
 ```
 
 Example output:
-```Average difference of -0.011309 with standard deviation of 0.013053.```
-<div align="center">
-  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/cv_comparison.png" width="500" height="250"><br><br>
-</div>
+```Mean of 1.021210 with standard deviation of 0.229755.```
 
 For additional examples, check out the [paper results](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results) directory:
 * Generate an [augmented learning curve](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/learning_curve.py).

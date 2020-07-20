@@ -13,7 +13,6 @@ except ImportError:
     pass
 
 try:
-    from .model_selection.cv_comparison import plot_cv_comparison
     from .model_selection.learning_curve import LearningCurve, plot_learning_curve
     from .model_selection.bayesian_search import _bayesoptcv
 except ImportError:
@@ -21,4 +20,4 @@ except ImportError:
 
 __all__ = ['BaseRegressor', 'Regressor', 'RegressorDictionaryInterface', 
            'ShapInterpret', 'plot_cv_comparison', 'LearningCurve',
-           'plot_learning_curve', '_bayesoptcv']
+           '_bayesoptcv']

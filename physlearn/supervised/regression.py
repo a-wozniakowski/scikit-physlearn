@@ -15,11 +15,11 @@ import sklearn.base
 import sklearn.metrics
 import sklearn.metrics._scorer
 import sklearn.model_selection
-import sklearn.model_selection._search
 import sklearn.model_selection._split
 import sklearn.model_selection._validation
 import sklearn.utils
 import sklearn.utils.estimator_checks
+import sklearn.utils.metaestimators
 import sklearn.utils.multiclass
 import sklearn.utils.validation
 
@@ -121,7 +121,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         self.line_search_regularization = line_search_regularization
         self.line_search_options = line_search_options
 
-        # Prepare regressor
+        # Prepare the regressor
         _regressor = RegressorDictionaryInterface(regressor_choice=self.regressor_choice,
                                                   params=params, stacking_layer=self.stacking_layer)
 
@@ -318,9 +318,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                 score = sklearn.metrics.mean_squared_log_error(y_true=y_true, y_pred=y_pred,
                                                                multioutput=multioutput)
             except ValueError:
-                # Sklearn will raise a ValueError if
-                # either statement is true, so we circumvent
-                # this error and score with a NaN
+                # Sklearn will raise a ValueError if either
+                # statement is true, so we circumvent
+                # this error and score with a NaN.
                 score = np.nan
 
         return score
@@ -355,11 +355,12 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
 
         return search_params
 
-    def _modified_cross_validate(self, X, y, return_regressor=False,
-                                 error_score=np.nan, return_incumbent_score=False,
-                                 cv=None):
-        """Perform cross-validation for regressor
-           and incumbent, if return_incumbent_score is True."""
+    def _modified_cross_validate(self, X, y, return_regressor=False, error_score=np.nan,
+                                 return_incumbent_score=False, cv=None):
+        """
+        Perform cross-validation for regressor and incumbent,
+        if return_incumbent_score is True.
+        """
 
         if not hasattr(self, 'validated_data'):
             X, y = _validate_data(X=X, y=y)
@@ -445,15 +446,17 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         return ret
 
     def cross_validate(self, X, y, return_incumbent_score=False, cv=None):
-        """Retrieve cross-validation results for regressor
-           and incumbent, if return_incumbent_score is True."""
+        """
+        Retrieve cross-validation results for regressor and incumbent,
+        if return_incumbent_score is True.
+        """
 
         scores_dict = self._modified_cross_validate(X=X, y=y,
                                                     return_incumbent_score=return_incumbent_score,
                                                     cv=cv)
 
         # Sklearn returns negative MAE and MSE scores,
-        # so we restore nonnegativity
+        # so we restore nonnegativity.
         if self.scoring in ['neg_mean_absolute_error', 'neg_mean_squared_error']:
             scores_dict['train_score'] = np.array([np.abs(score) for score in scores_dict['train_score']])
             scores_dict['test_score'] = np.array([np.abs(score) for score in scores_dict['test_score']])
@@ -461,8 +464,10 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         return pd.DataFrame(scores_dict)
 
     def cross_val_score(self, X, y, return_incumbent_score=False, cv=None):
-        """Retrieve withheld fold errors for regressor
-           and incumbent, if return_incumbent_score is True."""
+        """
+        Retrieve withheld fold errors for regressor and incumbent,
+        if return_incumbent_score is True.
+        """
 
         scores_dict = self.cross_validate(X=X, y=y,
                                           return_incumbent_score=return_incumbent_score,
@@ -478,7 +483,7 @@ class Regressor(BaseRegressor):
     """
     Main regressor class for building a prediction model.
 
-    Important methods are fit, baseboostcv, predict, and search.
+    Important methods are fit, baseboostcv, predict, search, and nested_cross_validate.
     """
 
     def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
@@ -525,8 +530,8 @@ class Regressor(BaseRegressor):
         """Check if regressor adheres to scikit-learn conventions."""
 
         # Sklearn and Mlxtend stacking regressors, as well as 
-        # LightGBM, XGBoost, and CatBoost regressor 
-        # do not adhere to the convention.
+        # LightGBM, XGBoost, and CatBoost regressor do not
+        # adhere to the convention.
         try:
             super().check_regressor
         except:
@@ -583,8 +588,8 @@ class Regressor(BaseRegressor):
         # Automates single-target slicing
         y = super()._check_target_index(y=y)
 
-        # Performs augmented k-fold cross-validation,
-        # then selects the incumbent or the candidate
+        # Performs augmented k-fold cross-validation, then it
+        # selects either the incumbent or the candidate.
         self._inbuilt_model_selection_step(X=X, y=y)
 
         if not hasattr(self, 'pipe'):
@@ -592,7 +597,7 @@ class Regressor(BaseRegressor):
 
         if not hasattr(self, '_return_incumbent'):
             # Base boosting improves performance,
-            # so we fit the candidate
+            # so we fit the candidate.
             super().fit(X=X, y=y, sample_weight=sample_weight)
             return self.pipe
         else:
@@ -630,16 +635,20 @@ class Regressor(BaseRegressor):
         return score_summary_df
 
     def cross_validate(self, X, y, return_incumbent_score=False, cv=None):
-        """Retrieve cross-validation results for regressor
-           and incumbent, if return_incumbent_score is True."""
+        """
+        Retrieve cross-validation results for regressor and incumbent,
+        if return_incumbent_score is True.
+        """
 
         return super().cross_validate(X=X, y=y,
                                       return_incumbent_score=return_incumbent_score,
                                       cv=cv)
 
     def cross_val_score(self, X, y, return_incumbent_score=False, cv=None):
-        """Retrieve withheld fold errors for regressor
-           and incumbent, if return_incumbent_score is True."""
+        """
+        Retrieve withheld fold errors for regressor and incumbent,
+        if return_incumbent_score is True.
+        """
 
         return super().cross_val_score(X=X, y=y,
                                        return_incumbent_score=return_incumbent_score,
@@ -648,11 +657,10 @@ class Regressor(BaseRegressor):
     def _search(self, X, y, search_params, search_method='gridsearchcv', cv=None):
         """Helper (hyper)parameter search method."""
 
-        # The returned search method is either
-        # sequential or parallell. The former
-        # identifies Bayesian optimization, while
-        # the latter identifies grid or randomized
-        # search by Sklearn. 
+        # The returned search method is either sequential
+        # or parallell. The former method identifies Bayesian
+        # optimization, while the latter method identifies
+        # grid or randomized search.
         search_method, search_taxonomy = _check_search_method(search_method=search_method)
         search_params = super()._preprocess_search_params(y=y, search_params=search_params,
                                                           search_taxonomy=search_taxonomy)
@@ -731,7 +739,7 @@ class Regressor(BaseRegressor):
                 print('best_params_ and best_score_ require optimization attribute')
 
         # Sklearn and bayes-opt return negative MAE and MSE scores,
-        # so we restore nonnegativity
+        # so we restore nonnegativity.
         if len(self.scoring) > 3 and self.scoring[:3] == 'neg':
             self.best_score_.loc['best_score'] *= -1.0
 
@@ -755,28 +763,93 @@ class Regressor(BaseRegressor):
             path = _convert_filename_to_csv_path(filename=filename)
             self.search_summary_.to_csv(path_or_buf=path, header=True)
 
-    def nested_cross_validate(self, X, y, search_params, n_splits, search_method='gridsearchcv',
-                              n_trials=5):
+    def _search_and_score(self, estimator, X, y, scorer, train, test, verbose,
+                          search_params, search_method='gridsearchcv', cv=None):
+        """
+        Helper method for nested cross-validation, which exhaustively searches over the
+        specified (hyper)parameters in the inner loop then scores the best performing
+        regressor in the outer loop.
+        """
 
-        non_nested_scores = np.zeros(n_trials)
-        nested_scores = np.zeros(n_trials)
+        X_train, y_train = sklearn.utils.metaestimators._safe_split(estimator=estimator,
+                                                                    X=X, y=y, indices=train)
+        X_test, y_test = sklearn.utils.metaestimators._safe_split(estimator=estimator,
+                                                                  X=X, y=y, indices=test,
+                                                                  train_indices=train)
 
-        # Loop for each trial
-        for i in range(n_trials):
+        self.search(X=X_train, y=y_train, search_params=search_params,
+                    search_method=search_method, cv=cv)
 
-            inner_cv = sklearn.model_selection.KFold(n_splits=n_splits, shuffle=True,
-                                                     random_state=i)
-            outer_cv = sklearn.model_selection.KFold(n_splits=n_splits, shuffle=True,
-                                                     random_state=i)
+        return sklearn.model_selection._validation._score(estimator=self.best_regressor_,
+                                                          X_test=X_test, y_test=y_test,
+                                                          scorer=scorer)
 
-            self.search(X=X, y=y, search_params=search_params, cv=inner_cv)
-            non_nested_scores[i] = self.best_score_
+    def nested_cross_validate(self, X, y, search_params, search_method='gridsearchcv', 
+                              outer_cv=None, inner_cv=None):
+        """
+        Performs a nested cross-validation procedure.
 
-            # Nested CV with parameter optimization
-            nested_score = self.cross_val_score(X=X, y=y, cv=outer_cv)
-            nested_scores[i] = nested_score.mean()
+        Notes
+        -----
+        The procedure does not compute the single best set of (hyper)parameters, as each inner
+        loop may return a different set of optimal (hyper)parameters.
 
-        return non_nested_scores, nested_scores
+        References
+        ---------
+        Jacques Wainer and Gavin Cawley. "Nested cross-validation when selecting
+        classifiers is overzealous for most practical applications," arXiv preprint
+        arXiv:1809.09446 (2018).
+        """
+
+        if not hasattr(self, 'validated_data'):
+            X, y = _validate_data(X=X, y=y)
+            setattr(self, 'validated_data', True)
+
+        # Automates single-target slicing
+        y = self._check_target_index(y=y)
+
+        X, y, groups = sklearn.utils.validation.indexable(X, y, None)
+
+        if outer_cv is None:
+            outer_cv = self.cv
+
+        if inner_cv is None:
+            inner_cv = self.cv
+
+        if not hasattr(self, 'pipe'):
+            n_samples = _n_samples(y)
+            if isinstance(outer_cv, int):
+                fold_size =  np.full(shape=n_samples, fill_value=n_samples // outer_cv,
+                                     dtype=np.int)
+            else:
+                fold_size =  np.full(shape=n_samples, fill_value=n_samples // outer_cv.n_splits,
+                                     dtype=np.int)
+            estimate_fold_size = n_samples - (np.max(fold_size) + 1)
+            self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
+
+        outer_cv = sklearn.model_selection._split.check_cv(cv=outer_cv, y=y, classifier=self.pipe)
+
+        scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
+                                                                        scoring=self.scoring)
+
+        parallel = joblib.Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                                   pre_dispatch='2*n_jobs')
+
+        # Parallelized nested cross-validation: the helper method utilizes
+        # the search method to select a regressor from the inner loop, then
+        # the performance of this regressor is evaluated in the outer loop.
+        scores = parallel(
+            joblib.delayed(self._search_and_score)(
+                estimator=sklearn.base.clone(self.pipe), X=X, y=y, scorer=scorers, train=train,
+                test=test, verbose=self.verbose, search_params=search_params,
+                search_method='gridsearchcv', cv=inner_cv)
+            for train, test in outer_cv.split(X, y, groups))
+
+        # Sklearn and bayes-opt return negative MAE and MSE scores,
+        # so we restore nonnegativity.
+        test_scores = [np.abs(test_score['score']) for test_score in scores]
+
+        return np.mean(test_scores), np.std(test_scores)
         
     def subsample(self, X, y, subsample_proportion=None):
         """Generate subsamples from data X, y."""

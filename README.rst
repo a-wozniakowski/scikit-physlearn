@@ -23,7 +23,7 @@ The repository was started by Alex Wozniakowski during his graduate studies at N
 Installation
 ------------
 
-Scikit-physlearn can be installed from `PyPi <https://pypi.org/project/scikit-physlearn/>`__::
+Scikit-physlearn can be installed from `PyPI <https://pypi.org/project/scikit-physlearn/>`__::
 
     pip install scikit-physlearn
 
@@ -110,83 +110,75 @@ Inspired by the process of human research, wherein scientific progress derives f
   :width: 500px
   :height: 250px
 
-To get started with base boosting, consider the following example, which compares non-nested and nested cross-validation in a quantum device calibration application with a limited supply of `experimental data <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/physlearn/datasets/google/google_json/_5q.json>`_:
+To get started with base boosting, consider the following example, which calculates the nested cross-validation score in a quantum device calibration application with a limited supply of `experimental data <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/physlearn/datasets/google/google_json/_5q.json>`_:
 
-.. code-block:: python
+.. code-block:: bash
 
-    from physlearn import Regressor
-    from physlearn.datasets import load_benchmark, paper_params
-    from physlearn.supervised import plot_cv_comparison
+  from physlearn import Regressor
+  from physlearn.datasets import load_benchmark, paper_params
 
-    # Number of random trials.
-    n_trials = 30
 
-    # Number of withheld folds in k-fold cross-validation.
-    n_splits = 5
+  # Load the training data from a quantum device calibration application, wherein
+  # X_train denotes the base regressor's initial predictions and y_train denotes
+  # the multi-target experimental observations, i.e., the eigenenergies.
+  X_train, _, y_train, _ = load_benchmark(return_split=True)
 
-    # Load the training data from a quantum device calibration application, wherein
-    # X_train denotes the base regressor's initial predictions and y_train denotes
-    # the multi-target experimental observations, i.e., the eigenenergies.
-    X_train, _, y_train, _ = load_benchmark(return_split=True)
+  # Select a basis function, e.g., StackingRegressor from Sklearn with first
+  # layer regressors: Ridge and RandomForestRegressor from Sklearn and final
+  # layer regressor: KNeighborsRegressor from Sklearn.
+  basis_fn = 'stackingregressor'
+  stack = dict(regressors=['ridge', 'randomforestregressor'],
+               final_regressor='kneighborsregressor')
 
-    # Select a basis function, e.g., StackingRegressor from Sklearn with first
-    # layer regressors: Ridge and RandomForestRegressor from Sklearn and final
-    # layer regressor: KNeighborsRegressor from Sklearn.
-    basis_fn = 'stackingregressor'
-    stack = dict(regressors=['ridge', 'randomforestregressor'],
-                 final_regressor='kneighborsregressor')
+  # Number of basis functions in the noise term of the additive expansion.
+  n_regressors = 1
 
-    # Number of basis functions in the noise term of the additive expansion.
-    n_regressors = 1
+  # Choice of squared error loss function for the pseduo-residual computation.
+  boosting_loss = 'ls'
 
-    # Choice of squared error loss function for the pseduo-residual computation.
-    boosting_loss = 'ls'
+  # Choice of parameters for the line search computation.
+  line_search_regularization = 0.1
+  line_search_options = dict(init_guess=1, opt_method='minimize',
+                             alg='Nelder-Mead', tol=1e-7,
+                             options={"maxiter": 10000},
+                             niter=None, T=None,
+                             loss='lad')
 
-    # Choice of parameters for the line search computation.
-    line_search_regularization = 0.1
-    line_search_options = dict(init_guess=1, opt_method='minimize',
-                               alg='Nelder-Mead', tol=1e-7,
-                               options={"maxiter": 10000},
-                               niter=None, T=None,
-                               loss='lad')
+  # (Hyper)parameters to to exhaustively search over in the inner loop, namely
+  # the regularization strength in ridge regression and the number of neighbors
+  # in k-nearest neighbors.
+  search_params = {'0__alpha': [0.5, 1.0, 1.5],
+                   'final_estimator__n_neighbors': [3, 5, 10]}
 
-    # (Hyper)parameters to to exhaustively search over, namely the regularization strength
-    # in ridge regression and the number of neighbors in k-nearest neighbors.
-    search_params = {'0__alpha': [0.5, 1.0, 1.5],
-                     'final_estimator__n_neighbors': [3, 5, 10]}
+  # Choose the single-target regression subtask: 5, using Python indexing.
+  index = 4
 
-    # Choose the single-target regression subtask: 5, using Python indexing.
-    index = 4
+  # Make an instance of Regressor.
+  reg = Regressor(regressor_choice=basis_fn, stacking_layer=stack,
+                  scoring='neg_mean_absolute_error', target_index=index,
+                  n_regressors=n_regressors, boosting_loss=boosting_loss,
+                  line_search_regularization=line_search_regularization,
+                  line_search_options=line_search_options)
 
-    # Make an instance of Regressor.
-    reg = Regressor(regressor_choice=basis_fn, stacking_layer=stack,
-                    scoring='neg_mean_absolute_error', target_index=index,
-                    n_regressors=n_regressors, boosting_loss=boosting_loss,
-                    line_search_regularization=line_search_regularization,
-                    line_search_options=line_search_options)
+  # Number of folds in the outer and inner loops of nested cross-validation, respectively.
+  outer_cv=5
+  inner_cv=5
 
-    # Obtain the non-nested and the nested cross-validation scores. 
-    non_nested_scores, nested_scores = reg.nested_cross_validate(X=X_train, y=y_train,
-                                                                 search_params=search_params,
-                                                                 n_splits=n_splits,
-                                                                 search_method='gridsearchcv',
-                                                                 n_trials=n_trials)
+  # Perform a 5*5-fold nested cross-validation procedure.
+  nested_mean, nested_std = reg.nested_cross_validate(X=X_train, y=y_train,
+                                                      search_params=search_params,
+                                                      search_method='gridsearchcv',
+                                                      outer_cv=outer_cv,
+                                                      inner_cv=inner_cv)
 
-    # Illustrate the difference between the scores.
-    plot_cv_comparison(non_nested_scores=non_nested_scores, nested_scores=nested_scores,
-                       n_trials=n_trials)
+  print(f'Mean of {nested_mean:.6f} with standard deviation of {nested_std:.6f}.')
 
 
 Example output:
 
 .. code-block:: bash
 
-    Average difference of -0.011309 with standard deviation of 0.013053.
-
-.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/cv_comparison.png
-  :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 500px
-  :height: 250px
+    Mean of 1.021210 with standard deviation of 0.229755.
 
 For additional examples, check out the `paper results <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results>`_ directory:
 
