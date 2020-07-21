@@ -96,6 +96,12 @@ def _make_pipeline(estimator, transform, n_targets,
 class ModifiedPipeline(sklearn.pipeline.Pipeline):
     """
     Custom pipeline object capable of base boosting.
+
+    References
+    ---------
+    Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+    "Boosting on the shoulders of giants in quantum device calibration",
+    arXiv preprint arXiv:2005.06194 (2020).
     """
 
     _required_parameters = ['steps']
@@ -136,8 +142,9 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                     alg=None, tol=None, options=None,
                     niter=None, T=None):
         """
-        Optimization method used within _fit_stages to compute
-        the expansion coefficient in the additive expansion.
+        Optimization method used within a stage of the
+        greedy stagewise algorithm, which computes an 
+        expansion coefficient.
         """
 
         assert opt_method in ['minimize', 'basinhopping']
@@ -164,14 +171,34 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         return raw_predictions
 
     def _fit_stages(self, X, y, raw_predictions, **fit_params_last_step):
-        """Fit the additive expansion in a stagewise fashion."""
+        """
+        Fit the additive expansion in a stagewise fashion.
 
+        Notes
+        -----
+        This greedy stagewise algorithm fits an additive expansion, which differs
+        from the standard additve expansion. Namely, the constant term is a random
+        variable, which depends upon the input example.
+
+        References
+        ---------
+        Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+        "Boosting on the shoulders of giants in quantum device calibration",
+        arXiv preprint arXiv:2005.06194 (2020).
+        Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
+        Annals of Statistics, 29(5):1189–1232 (2001).
+        Trevor Hastie, Robert Tibshirani, and Jerome Friedman. "The Elements of
+        Statistical Learning", Springer (2009).
+        """
+
+        # Collect basis functions and expansion
+        # coefficients, respectively.
         self._estimators = []
         self._coefs = []
 
         if getattr(self, "_estimator_type", None) == 'regressor':
-            # This loss attribute determines the loss function used
-            # in the negative gradient computation.
+            # The boosting loss attribute determines, which loss function
+            # is employed in the negative gradient computation.
             if self.boosting_loss == 'huber':
                 self.loss = LOSS_FUNCTIONS[self.boosting_loss](n_classes=1, alpha=0.9)
             else:
@@ -180,29 +207,35 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         pseudo_residual = self.loss.negative_gradient(y=y,
                                                       raw_predictions=raw_predictions)
 
-        # Number of terms in the additive expansion
+        # Greedily builds the additive expansion in a stagewise fashion.
         for k in range(self.n_estimators):
+            # The raw predicitions are not changed during
+            # the fit stage.
             raw_predictions = self._fit_stage(X=X, pseudo_residual=pseudo_residual,
                                               raw_predictions=raw_predictions,
                                               **fit_params_last_step)
 
-            # Store a copy of the basis function
+            # Store a deep copy of the basis function
             # for the predict method.
             self._estimators.append(copy.deepcopy(self))
+
+            # Generate predictions for the line search computation.
             y_pred = self._final_estimator.predict(X=X)
             
             def regularized_loss(alpha):
-                line_search_df = raw_predictions
-                line_search_df = line_search_df.add(alpha * y_pred)
-                # This choice of loss determines the loss function used
-                # in the line search.
+                # Reference the raw predictions DataFrame, and add
+                # the multiplier for the line search computation.
+                raw_predictions_reference = raw_predictions
+                raw_predictions_reference = raw_predictions_reference.add(alpha * y_pred)
+                # This loss key determines, which loss function
+                # is employed in the line search computation.
                 if self.line_search_options['loss'] == 'huber':
                     loss = LOSS_FUNCTIONS[self.line_search_options['loss']](n_classes=1,
                                                                             alpha=0.9)
                 else:
                     loss = LOSS_FUNCTIONS[self.line_search_options['loss']](n_classes=1)
-                return self.regularization*np.abs(alpha) + loss(y=y,
-                                                                raw_predictions=line_search_df)
+                loss = loss(y=y, raw_predictions=raw_predictions_reference)
+                return self.regularization*np.abs(alpha) + loss
 
             coef = self.line_search(function=regularized_loss,
                                     init_guess=self.line_search_options['init_guess'],
@@ -213,11 +246,11 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                                     niter=self.line_search_options['niter'],
                                     T=self.line_search_options['T'])
             
-            # Store a copy of the expansion coefficient
+            # Store the optimal expansion coefficient
             # for the prediction method.
             self._coefs.append(coef[0])
 
-            # This computation is not necessary in the last stage.
+            # This check circumvents the computation in the last stage.
             if self.n_estimators - 1 > k:
                 raw_predictions = raw_predictions.add(coef[0] * y_pred)
                 pseudo_residual = self.loss.negative_gradient(y=pseudo_residual,
@@ -236,7 +269,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         fit_params_steps = self._check_fit_params(**fit_params)
 
         if X.ndim == 1:
-            Xt = pd.DataFrame(self._fit(X=X.values.reshape(-1, 1), y=y, **fit_params_steps), index=X.index)
+            Xt = pd.DataFrame(self._fit(X=X.values.reshape(-1, 1), y=y, **fit_params_steps),
+                              index=X.index)
         else:
             Xt = pd.DataFrame(self._fit(X=X, y=y, **fit_params_steps), index=X.index)
         
@@ -251,7 +285,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                         raw_predictions = X.iloc[:, self.target_index]
                     else:
                         raw_predictions = X
-                    self._fit_stages(X=Xt, y=y, raw_predictions=raw_predictions, **fit_params_last_step)
+                    self._fit_stages(X=Xt, y=y, raw_predictions=raw_predictions,
+                                     **fit_params_last_step)
                 else:
                     if self._final_estimator.__class__ == _CHAIN_FLAG:
                         # RegressorChain capitilizes the target
@@ -273,12 +308,25 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         """
         Apply transforms to the data, then predict with the final estimator.
         The method supports base boosting.
+
+        Notes
+        -----
+        The prediction decomposition in base boosting emanates from
+        Tukey's reroughing, whereby data = smooth + rough.
+
+        References
+        ---------
+        Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+        "Boosting on the shoulders of giants in quantum device calibration",
+        arXiv preprint arXiv:2005.06194 (2020).
+        John Tukey. "Exploratory Data Analysis", Addison-Wesley (1977).
         """
 
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             if Xt.ndim == 1:
-                Xt = pd.DataFrame(transform.transform(X=Xt.values.reshape(-1, 1)), index=Xt.index)
+                Xt = pd.DataFrame(transform.transform(X=Xt.values.reshape(-1, 1)),
+                                  index=Xt.index)
             else:
                 Xt = pd.DataFrame(transform.transform(X=Xt), index=Xt.index)
                 
@@ -301,6 +349,7 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             y_pred = smooth_term.add(noise_term[0])
         else:
             # Generate predictions without reroughing.
-            y_pred = pd.DataFrame(self.steps[-1][-1].predict(Xt, **predict_params), index=Xt.index)
+            y_pred = pd.DataFrame(self.steps[-1][-1].predict(Xt, **predict_params),
+                                  index=Xt.index)
 
         return y_pred
