@@ -91,13 +91,13 @@ Inspired by the process of human research, wherein scientific progress derives f
 In a multi-target regression task, a base regressor, e.g., an explict model of the domain, generates the initial multi-target predictions. Subsequently, the multi-target boosting algorithm reduces the task to independent single-target regression subtasks. For the jth single-target regression subtask, base boosting greedily fits the following additive expansion in a stagewise fashion:
 
 <div align="center">
-  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/expansion.PNG" width="200" height="70"><br><br>
+  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/expansion.PNG" width="250" height="100"><br><br>
 </div>
 
 where the parameter alpha collects the expansion coefficients and the parameter theta collects the parameter sets, which characterize the basis function b. In contrast, the standard additive expansion:
 
 <div align="center">
-  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/standard_expansion.PNG" width="200" height="70"><br><br>
+  <img src="https://github.com/a-wozniakowski/scikit-physlearn/blob/master/images/standard_expansion.PNG" width="250" height="100"><br><br>
 </div>
 
 uses a constant offset value (usually determined by maximum likelihood estimation) in place of the base regressor's jth single-target prediction. In essence, this changes the initialization step in gradient boosting, and it enables base boosting to sequentially refine its predecessor's prior scientific knowledge in analogy with human scientific research.

@@ -114,16 +114,16 @@ In a multi-target regression task, a base regressor, e.g., an explict model of t
 
 .. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/expansion.PNG
   :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 200px
-  :height: 70px
+  :width: 250px
+  :height: 100px
   :align: center
 
 where the parameter alpha collects the expansion coefficients and the parameter theta collects the parameter sets, which characterize the basis function b. In contrast, the standard additive expansion:
 
 .. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/standard_expansion.PNG
   :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 200px
-  :height: 70px
+  :width: 250px
+  :height: 100px
   :align: center
 
 uses a constant offset value (usually determined by maximum likelihood estimation) in place of the base regressor's jth single-target prediction. In essence, this changes the initialization step in gradient boosting, and it enables base boosting to sequentially refine its predecessor's prior scientific knowledge in analogy with human scientific research.
