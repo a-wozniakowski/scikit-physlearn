@@ -90,15 +90,11 @@ Inspired by the process of human research, wherein scientific progress derives f
 
 In a multi-target regression task, a base regressor, e.g., an explict model of the domain, generates the initial multi-target predictions. Subsequently, the multi-target boosting algorithm reduces the task to independent single-target regression subtasks. For the jth single-target regression subtask, base boosting greedily fits the following additive expansion in a stagewise fashion:
 
-<div align="center">
-  <img src="http://www.sciweavers.org/tex2img.php?eq=%5Cbegin%7Balign%7D%0Ah_%7Bj%7D%28X%20%3B%20%5C%7B%20%5Calpha_%7Bj%7D%2C%20%5Ctheta_%7Bj%7D%20%5C%7D%29%20%3D%20X_%7Bj%7D%20%2B%20%5Csum_%7Bk%3D1%7D%5E%7BK_%7Bj%7D%7D%20%5Calpha_%7Bj%2Ck%7D%20b%28X%20%3B%20%5Ctheta_%7Bj%2Ck%7D%29%2C%0A%5Cend%7Balign%7D&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0" width="225" height="70"><br><br>
-</div>
+![base](http://www.sciweavers.org/tex2img.php?eq=%5Cbegin%7Balign%7D%0Ah_%7Bj%7D%28X%20%3B%20%5C%7B%20%5Calpha_%7Bj%7D%2C%20%5Ctheta_%7Bj%7D%20%5C%7D%29%20%3D%20X_%7Bj%7D%20%2B%20%5Csum_%7Bk%3D1%7D%5E%7BK_%7Bj%7D%7D%20%5Calpha_%7Bj%2Ck%7D%20b%28X%20%3B%20%5Ctheta_%7Bj%2Ck%7D%29%2C%0A%5Cend%7Balign%7D&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0)
 
 where the parameter alpha collects the expansion coefficients and the parameter theta collects the parameter sets, which characterize the basis function b. In contrast, the standard additive expansion:
 
-<div align="center">
-  <img src="http://www.sciweavers.org/tex2img.php?eq=%5Cbegin%7Balign%7D%0Ah_%7Bj%7D%28X%20%3B%20%5C%7B%20%5Calpha_%7Bj%7D%2C%20%5Ctheta_%7Bj%7D%5C%7D%29%20%3D%20%5Calpha_%7Bj%2C%200%7D%20%2B%20%5Csum_%7Bk%3D1%7D%5E%7BK_%7Bj%7D%7D%20%5Calpha_%7Bj%2Ck%7D%20b%28X%20%3B%20%5Ctheta_%7Bj%2Ck%7D%29%2C%0A%5Cend%7Balign%7D&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0" width="225" height="70"><br><br>
-</div>
+![standard](http://www.sciweavers.org/tex2img.php?eq=%5Cbegin%7Balign%7D%0Ah_%7Bj%7D%28X%20%3B%20%5C%7B%20%5Calpha_%7Bj%7D%2C%20%5Ctheta_%7Bj%7D%5C%7D%29%20%3D%20%5Calpha_%7Bj%2C%200%7D%20%2B%20%5Csum_%7Bk%3D1%7D%5E%7BK_%7Bj%7D%7D%20%5Calpha_%7Bj%2Ck%7D%20b%28X%20%3B%20%5Ctheta_%7Bj%2Ck%7D%29%2C%0A%5Cend%7Balign%7D&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0)
 
 uses a constant offset value (usually determined by maximum likelihood estimation) in place of the base regressor's jth single-target prediction. In essence, this changes the initialization step in gradient boosting, and it enables base boosting to sequentially refine its predecessor's prior scientific knowledge in analogy with human scientific research.
 
