@@ -114,7 +114,7 @@ In a multi-target regression task, a base regressor, e.g., an explict model of t
 
 .. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/expansion.PNG
   :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 250px
+  :width: 225px
   :height: 100px
   :align: center
 
@@ -122,7 +122,7 @@ where the parameter alpha collects the expansion coefficients and the parameter 
 
 .. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/standard_expansion.PNG
   :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 250px
+  :width: 225px
   :height: 100px
   :align: center
 
