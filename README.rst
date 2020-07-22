@@ -103,24 +103,49 @@ For additional examples, check out the `basics <https://github.com/a-wozniakowsk
 Base boosting
 -------------
 
-Inspired by the process of human research, wherein scientific progress derives from prior scientific knowledge, `base boosting <https://arxiv.org/abs/2005.06194>`_ is a modification of the standard version of `gradient boosting <https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451>`_, which is designed to emulate the paradigm of "standing on the shoulders of giants":
+Inspired by the process of human research, wherein scientific progress derives from prior scientific knowledge, `base boosting <https://arxiv.org/abs/2005.06194>`_ is a modification of the standard version of `gradient boosting <https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451>`_, which is designed to emulate the paradigm of "standing on the shoulders of giants". 
 
 .. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/framework.png
   :target: https://github.com/a-wozniakowski/scikit-physlearn/
   :width: 500px
   :height: 250px
 
-To get started with base boosting, consider the following example, which calculates the nested cross-validation score in a quantum device calibration application with a limited supply of `experimental data <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/physlearn/datasets/google/google_json/_5q.json>`_:
+In a multi-target regression task, a base regressor, e.g., an explict model of the domain, generates the initial multi-target predictions. Subsequently, the multi-target boosting algorithm reduces the task to independent single-target regression subtasks. For the jth single-target regression subtask, base boosting greedily fits the following additive expansion in a stagewise fashion:
 
-.. code-block:: bash
+.. image:: http://www.sciweavers.org/tex2img.php?eq=%5Cbegin%7Balign%7D%0Ah_%7Bj%7D%28X%20%3B%20%5C%7B%20%5Calpha_%7Bj%7D%2C%20%5Ctheta_%7Bj%7D%20%5C%7D%29%20%3D%20X_%7Bj%7D%20%2B%20%5Csum_%7Bk%3D1%7D%5E%7BK_%7Bj%7D%7D%20%5Calpha_%7Bj%2Ck%7D%20b%28X%20%3B%20%5Ctheta_%7Bj%2Ck%7D%29%2C%0A%5Cend%7Balign%7D&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0
+  :target: http://www.sciweavers.org/
+  :width: 225px
+  :height: 70px
+  :align: center
+
+where the parameter alpha collects the expansion coefficients and the parameter theta collects the parameter sets, which characterize the basis function b. In contrast, the standard additive expansion:
+
+.. image:: http://www.sciweavers.org/tex2img.php?eq=%5Cbegin%7Balign%7D%0Ah_%7Bj%7D%28X%20%3B%20%5C%7B%20%5Calpha_%7Bj%7D%2C%20%5Ctheta_%7Bj%7D%5C%7D%29%20%3D%20%5Calpha_%7Bj%2C%200%7D%20%2B%20%5Csum_%7Bk%3D1%7D%5E%7BK_%7Bj%7D%7D%20%5Calpha_%7Bj%2Ck%7D%20b%28X%20%3B%20%5Ctheta_%7Bj%2Ck%7D%29%2C%0A%5Cend%7Balign%7D&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0
+  :target: http://www.sciweavers.org/
+  :width: 225px
+  :height: 70px
+  :align: center
+
+uses a constant offset value (usually determined by maximum likelihood estimation) in place of the base regressor's jth single-target prediction. In essence, this changes the initialization step in gradient boosting, and it enables base boosting to sequentially refine its predecessor's prior scientific knowledge in analogy with human scientific research.
+
+To get started with base boosting, consider the following example, which compares `non-nested versus nested cross-validation <https://arxiv.org/abs/1809.09446>`_ scores in a multi-target quantum device calibration application with a limited supply of `experimental data <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/physlearn/datasets/google/google_json/_5q.json>`_:
+
+.. code-block:: python
+
+  import numpy as np
+  from sklearn.model_selection import KFold
 
   from physlearn import Regressor
   from physlearn.datasets import load_benchmark, paper_params
+  from physlearn.supervised import plot_cv_comparison
 
+
+  # Number of random trials
+  n_trials = 30
 
   # Load the training data from a quantum device calibration application, wherein
   # X_train denotes the base regressor's initial predictions and y_train denotes
-  # the multi-target experimental observations, i.e., the eigenenergies.
+  # the multi-target experimental observations, i.e., the extracted eigenenergies.
   X_train, _, y_train, _ = load_benchmark(return_split=True)
 
   # Select a basis function, e.g., StackingRegressor from Sklearn with first
@@ -136,7 +161,7 @@ To get started with base boosting, consider the following example, which calcula
   # Choice of squared error loss function for the pseduo-residual computation.
   boosting_loss = 'ls'
 
-  # Choice of parameters for the line search computation.
+  # Choice of absolute error loss function and (hyper)parameters for the line search computation.
   line_search_regularization = 0.1
   line_search_options = dict(init_guess=1, opt_method='minimize',
                              alg='Nelder-Mead', tol=1e-7,
@@ -144,41 +169,66 @@ To get started with base boosting, consider the following example, which calcula
                              niter=None, T=None,
                              loss='lad')
 
-  # (Hyper)parameters to to exhaustively search over in the inner loop, namely
-  # the regularization strength in ridge regression and the number of neighbors
-  # in k-nearest neighbors.
+  # (Hyper)parameters to to exhaustively search over in the non-nested cross-valdation procedure and in
+  # the inner loop of the nested cross-validation procedure. Namely, the regularization strength in ridge
+  # regression, number of decision trees in random forest, and number of neighbors in k-nearest neighbors.
   search_params = {'0__alpha': [0.5, 1.0, 1.5],
-                   'final_estimator__n_neighbors': [3, 5, 10]}
+                   '1__n_estimators': [30, 50, 100],
+                   'final_estimator__n_neighbors': [2, 5, 10]}
 
   # Choose the single-target regression subtask: 5, using Python indexing.
   index = 4
 
-  # Make an instance of Regressor.
+  # Make an instance of Regressor with the aforespecified choices.
   reg = Regressor(regressor_choice=basis_fn, stacking_layer=stack,
                   scoring='neg_mean_absolute_error', target_index=index,
                   n_regressors=n_regressors, boosting_loss=boosting_loss,
                   line_search_regularization=line_search_regularization,
                   line_search_options=line_search_options)
 
-  # Number of folds in the outer and inner loops of nested cross-validation, respectively.
-  outer_cv=5
-  inner_cv=5
+  # Make arrays to store the scores.
+  non_nested_scores = np.zeros(n_trials)
+  nested_scores = np.zeros(n_trials)
 
-  # Perform a 5*5-fold nested cross-validation procedure.
-  nested_mean, nested_std = reg.nested_cross_validate(X=X_train, y=y_train,
-                                                      search_params=search_params,
-                                                      search_method='gridsearchcv',
-                                                      outer_cv=outer_cv,
-                                                      inner_cv=inner_cv)
+  # Loop through the number of random trials.
+  for i in range(n_trials):
 
-  print(f'Mean of {nested_mean:.6f} with standard deviation of {nested_std:.6f}.')
+      # Make two instances of k-fold cross-validation, whereby we generate the same indices
+      # for non-nested cross-validation and the outer loop of nested cross-validation.
+      outer_cv = KFold(n_splits=5, shuffle=True, random_state=i)
+      inner_cv = KFold(n_splits=5, shuffle=True, random_state=i)
 
+      
+      # Perform a non-nested cross-validation procedure with GridSearchCV from Sklearn.
+      reg.search(X=X_train, y=y_train, search_params=search_params,
+                 search_method='gridsearchcv', cv=outer_cv)
+      non_nested_scores[i] = reg.best_score_
+
+      # Perform a 5*5-fold nested cross-validation procedure.
+      outer_loop_scores = reg.nested_cross_validate(X=X_train, y=y_train,
+                                                    search_params=search_params,
+                                                    search_method='gridsearchcv',
+                                                    outer_cv=outer_cv,
+                                                    inner_cv=inner_cv,
+                                                    return_inner_loop_score=False)
+      nested_scores[i] = outer_loop_scores.mean()
+
+  # Illustrate the non-nested and nested mean absolute error, as well as the score difference,
+  # for each of the 30 random trials. Note that mean absolute error is a nonnegative score.
+  plot_cv_comparison(non_nested_scores=non_nested_scores, nested_scores=nested_scores,
+                     n_trials=n_trials)
 
 Example output:
 
 .. code-block:: bash
 
-    Mean of 1.021210 with standard deviation of 0.229755.
+  Average difference of -0.038677 with standard deviation of 0.027483.
+
+.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/cv_comparison.png
+  :target: https://github.com/a-wozniakowski/scikit-physlearn/
+  :width: 500px
+  :height: 250px
+
 
 For additional examples, check out the `paper results <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results>`_ directory:
 
@@ -202,7 +252,7 @@ If you use this package, please consider adding the corresponding citation:
 
     @article{wozniakowski_2020_boosting,
       title={Boosting on the shoulders of giants in quantum device calibration},
-      author={Wozniakowski, Alex and Thompson, Jayne and Gu, Mile and Binder, Felix},
+      author={Wozniakowski, Alex and Thompson, Jayne and Gu, Mile and Binder, Felix C.},
       journal={arXiv preprint arXiv:2005.06194},
       year={2020}
     }
