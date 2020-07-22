@@ -385,7 +385,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             estimate_fold_size = n_samples - (np.max(fold_size) + 1)
             self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
 
-        cv = sklearn.model_selection._split.check_cv(cv=cv, y=y, classifier=self.pipe)
+        cv = sklearn.model_selection._split.check_cv(cv=cv, y=y, classifier=False)
 
         scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
                                                                         scoring=self.scoring)
@@ -748,16 +748,12 @@ class Regressor(BaseRegressor):
         # Filter based on sklearn model search attributes
         _sklearn_list = ['best_estimator_', 'cv_results_', 'refit_time_']
         if all(hasattr(self._regressor_search, attr) for attr in _sklearn_list):
+            self.pipe = self._regressor_search.best_estimator_
             self.best_regressor_ = self._regressor_search.best_estimator_
+            self.pipe = self._regressor_search.best_estimator_
             self.cv_results_ = pd.DataFrame(self._regressor_search.cv_results_)
             self.refit_time_ = pd.Series({'refit_time':self._regressor_search.refit_time_})
             self.search_summary_ = pd.concat([self.search_summary_, self.refit_time_], axis=0)
-
-        if self.refit:
-            try:
-                self.pipe = self._regressor_search.best_estimator_
-            except AttributeError:
-                print('The regressor search object does not have the attribute: base_estimator_.')
 
         if filename is not None:
             path = _convert_filename_to_csv_path(filename=filename)
@@ -780,12 +776,19 @@ class Regressor(BaseRegressor):
         self.search(X=X_train, y=y_train, search_params=search_params,
                     search_method=search_method, cv=cv)
 
-        return sklearn.model_selection._validation._score(estimator=self.best_regressor_,
-                                                          X_test=X_test, y_test=y_test,
-                                                          scorer=scorer)
+        if not self.refit:
+            self.pipe = sklearn.base.clone(sklearn.base.clone(self.pipe).set_params(
+                **self.best_params_))
+            self.pipe._fit(X=X_train, y=y_train)
 
-    def nested_cross_validate(self, X, y, search_params, search_method='gridsearchcv', 
-                              outer_cv=None, inner_cv=None):
+        test_score = sklearn.model_selection._validation._score(estimator=self.pipe,
+                                                                X_test=X_test, y_test=y_test,
+                                                                scorer=scorer)
+
+        return (self.best_score_.values, test_score)
+
+    def nested_cross_validate(self, X, y, search_params, search_method='gridsearchcv', outer_cv=None,
+                              inner_cv=None, return_inner_loop_score=False):
         """
         Performs a nested cross-validation procedure.
 
@@ -827,7 +830,7 @@ class Regressor(BaseRegressor):
             estimate_fold_size = n_samples - (np.max(fold_size) + 1)
             self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
 
-        outer_cv = sklearn.model_selection._split.check_cv(cv=outer_cv, y=y, classifier=self.pipe)
+        outer_cv = sklearn.model_selection._split.check_cv(cv=outer_cv, y=y, classifier=False)
 
         scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
                                                                         scoring=self.scoring)
@@ -847,9 +850,13 @@ class Regressor(BaseRegressor):
 
         # Sklearn and bayes-opt return negative MAE and MSE scores,
         # so we restore nonnegativity.
-        test_scores = [np.abs(test_score['score']) for test_score in scores]
+        outer_loop_scores = pd.Series([np.abs(pair[1]['score']) for pair in scores])
 
-        return np.mean(test_scores), np.std(test_scores)
+        if return_inner_loop_score:
+            inner_loop_scores = pd.Series(np.concatenate([np.abs(pair[0]) for pair in scores]))
+            return outer_loop_scores, inner_loop_scores
+        else:
+            return outer_loop_scores
         
     def subsample(self, X, y, subsample_proportion=None):
         """Generate subsamples from data X, y."""

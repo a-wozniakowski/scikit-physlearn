@@ -21,8 +21,6 @@ from physlearn.supervised import ShapInterpret
 
 class TestBasic(unittest.TestCase):
 
-    # sklearn < 0.22 does not have a stacking regressor
-    @unittest.skipIf(sk_version < '0.22.0', 'scikit-learn version is less than 0.22')
     def test_stacking_regressor_without_cv_gridsearchcv(self):
         X, y = load_boston(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
@@ -43,8 +41,6 @@ class TestBasic(unittest.TestCase):
         self.assertIn(reg.best_params_['reg__bayesianridge__alpha_1'], [1e-7, 1e-6])
         self.assertIn(reg.best_params_['reg__meta_regressor__alpha'], [1.0])
 
-    # sklearn < 0.22 does not have a stacking regressor
-    @unittest.skipIf(sk_version < '0.22.0', 'scikit-learn version is less than 0.22')
     def test_stacking_regressor_with_cv_gridsearchcv(self):
         X, y = load_boston(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
@@ -161,8 +157,6 @@ class TestBasic(unittest.TestCase):
         self.assertIn(reg.best_params_['reg__base_estimator__meta_regressor__alpha'],
                       [1.0])
 
-    # sklearn < 0.22 does not have a stacking regressor
-    @unittest.skipIf(sk_version < '0.22.0', 'scikit-learn version is less than 0.22')
     def test_stacking_regressor_without_cv_randomizedsearchcv(self):
         X, y = load_boston(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
@@ -185,8 +179,6 @@ class TestBasic(unittest.TestCase):
         self.assertIn(reg.best_params_['reg__bayesianridge__alpha_1'], [1e-7, 1e-6])
         self.assertIn(reg.best_params_['reg__meta_regressor__alpha'], [1.0])
 
-    # sklearn < 0.22 does not have a stacking regressor
-    @unittest.skipIf(sk_version < '0.22.0', 'scikit-learn version is less than 0.22')
     def test_stacking_regressor_with_cv_randomizedsearchcv(self):
         X, y = load_boston(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
