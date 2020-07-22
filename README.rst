@@ -112,7 +112,7 @@ Inspired by the process of human research, wherein scientific progress derives f
 
 In a multi-target regression task, a base regressor, e.g., an explict model of the domain, generates the initial multi-target predictions. Subsequently, the multi-target boosting algorithm reduces the task to independent single-target regression subtasks. For the jth single-target regression subtask, base boosting greedily fits the following additive expansion in a stagewise fashion:
 
-.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/expansion.png
+.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/expansion.PNG
   :target: https://github.com/a-wozniakowski/scikit-physlearn/
   :width: 200px
   :height: 70px
@@ -120,7 +120,7 @@ In a multi-target regression task, a base regressor, e.g., an explict model of t
 
 where the parameter alpha collects the expansion coefficients and the parameter theta collects the parameter sets, which characterize the basis function b. In contrast, the standard additive expansion:
 
-.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/standard_expansion.png
+.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/standard_expansion.PNG
   :target: https://github.com/a-wozniakowski/scikit-physlearn/
   :width: 200px
   :height: 70px
