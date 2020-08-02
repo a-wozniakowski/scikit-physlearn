@@ -2,13 +2,17 @@
 Collection of definitions used in the package.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
-import catboost
+import catboost as cat
 import lightgbm as lgb
 import xgboost as xgb
 
-import mlxtend.regressor
+from mlxtend.regressor import StackingRegressor, StackingCVRegressor
+
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.multioutput import ClassifierChain, RegressorChain
 
 from sklearn.experimental import enable_hist_gradient_boosting
 from sklearn.ensemble import (AdaBoostRegressor, BaggingRegressor, ExtraTreesRegressor,
@@ -67,18 +71,15 @@ _REGRESSION_DICT = dict(linearregression=LinearRegression,
                         histgradientboostingregressor=HistGradientBoostingRegressor,
                         xgbregressor=xgb.XGBRegressor,
                         lgbmregressor=lgb.LGBMRegressor,
-                        catboostregressor=catboost.CatBoostRegressor,
+                        catboostregressor=cat.CatBoostRegressor,
                         svr=SVR,
                         gaussianprocessregressor=GaussianProcessRegressor,
                         kneighborsregressor=KNeighborsRegressor,
                         mlpregressor=MLPRegressor,
                         stackingregressor=StackingRegressor,
-                        mlxtendstackingregressor=mlxtend.regressor.StackingRegressor,
-                        mlxtendstackingcvregressor=mlxtend.regressor.StackingCVRegressor,
+                        mlxtendstackingregressor=StackingRegressor,
+                        mlxtendstackingcvregressor=StackingCVRegressor,
                         votingregressor=VotingRegressor)
-
-
-_MODEL_DICT = dict(regression=_REGRESSION_DICT)
 
 
 _KERNEL_DICT = dict(dotproduct=DotProduct,
@@ -86,7 +87,33 @@ _KERNEL_DICT = dict(dotproduct=DotProduct,
                     whitekernel=WhiteKernel)
 
 
+_ESTIMATOR_DICT = dict(regression=_REGRESSION_DICT)
+
+
+# We need to identify chaining as the fit method capitilizes
+# the target Y, whereas other estimators conventionally write
+# the target as y.
+_CHAIN_FLAG = [RegressorChain(base_estimator=DummyRegressor()).__class__,
+               ClassifierChain(base_estimator=DummyClassifier()).__class__]
+
+
+# We need to identify XGBoost as the predict method utilizes the
+# parameter data for the conventional design matrix parameter X.
+_XGBOOST_FLAG = xgb.XGBRegressor().__class__
+
+
+# We need to identify CatBoost as the predict method utilizes the
+# parameter data for the conventional design matrix parameter X.
+_CATBOOST_FLAG = cat.CatBoostRegressor().__class__
+
+
 _MULTI_TARGET = ['continuous-multioutput', 'multiclass-multioutput']
+
+
+_OPTIMIZE_METHOD = ['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'Newton-CG',
+                    'L-BFGS-B', 'TNC', 'COBYLA', 'SLSQP', 'trust-constr',
+                    'dogleg', 'trust-ncg', 'trust-exact', 'trust-krylov',
+                    'custom']
 
 
 _SCORE_CHOICE = ['mae', 'mse', 'rmse', 'r2', 'ev', 'msle']
@@ -97,9 +124,6 @@ _PIPELINE_TRANSFORM_CHOICE = ['standardscaler', 'boxcox', 'yeojohnson',
 
 
 _SEARCH_METHOD = ['gridsearchcv', 'randomizedsearchcv', 'bayesoptcv']
-
-
-_SEARCH_TAXONOMY = ['parallel', 'sequential']
 
 
 _SHAP_TAXONOMY = dict(linearregression='linear',

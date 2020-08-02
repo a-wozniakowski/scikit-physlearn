@@ -1,17 +1,24 @@
 """
 Learning from Google calibration data experiment.
 
-Calibration data was collected by Benjamin Chiaro during his
-time as a graduate student at UC Santa Barbara.
+The calibration data was collected by Benjamin Chiaro during his
+time as a graduate student at UC Santa Barbara. The quantum device
+contains 9 qubits, wherein the 5 rightmost qubits and 4 interleaving
+couplers were utilized during experimentation. The 4 leftmost qubits
+and couplers were left idle.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
-from .base import BaseDataFrame
-from .utils._dataset_helper_functions import (_df_shuffle, _iqr_outlier_mask,
-                                              _train_test_split, _json_dump,
-                                              _json_load, _path_google_data,
-                                              _path_google_json_folder)
+from physlearn.datasets.google.base import BaseDataFrame
+from physlearn.datasets.google.utils._dataset_helper_functions import (_df_shuffle,
+                                                                       _iqr_outlier_mask,
+                                                                       _train_test_split,
+                                                                       _json_dump,
+                                                                       _json_load,
+                                                                       _path_google_data,
+                                                                       _path_google_json_folder)
 
 
 class GoogleDataFrame(BaseDataFrame):

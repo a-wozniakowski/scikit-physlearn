@@ -36,7 +36,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 # there are 3 possible choices for alpha, as well
 # as the Boolean choice of fitting the intercept.
 # Both alpha and fit_intercept are parameter names in Ridge.  
-search_params = dict(alpha=[0.1, 0.2, 0.5], fit_intercept=[True, False])
+search_params = dict(reg__alpha=[0.1, 0.2, 0.5],
+                     reg__fit_intercept=[True, False])
 
 # The default regressor choice is ridge regression, so we do not
 # need to specify regressor_choice='ridge'. The default pipeline

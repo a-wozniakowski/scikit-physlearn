@@ -2,7 +2,8 @@
 Base class for the supervised DataFrame.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
 
 from abc import ABC, abstractmethod

@@ -40,23 +40,25 @@ boosting_loss = 'ls'
 # the optimization algorithm and its parameters. Moreover, we
 # specify the loss function utilized in the line search.
 # Namely, lad is the key for absolute error.
-line_search_regularization = 0.1
 line_search_options = dict(init_guess=1, opt_method='minimize',
                            alg='Nelder-Mead', tol=1e-7,
                            options={"maxiter": 10000},
-                           niter=None, T=None,
-                           loss='lad')
+                           niter=None, T=None, loss='lad',
+                           regularization=0.1)
+
+# We collect the various base boosting (hyper)parameters.
+base_boosting_options = dict(n_regressors=n_regressors,
+                             boosting_loss=boosting_loss,
+                             line_search_options=line_search_options)
 
 print('Building scoring DataFrame for each single-target regression subtask.')
 test_error = []
 for index in range(5):
     # We make an instance of Regressor with our choice of stacking
     # for each single-target regression subtask.
-    reg = Regressor(regressor_choice=basis_fn, n_regressors=n_regressors,
-                    boosting_loss=boosting_loss, params=paper_params(index),
-                    line_search_regularization=line_search_regularization,
-                    line_search_options=line_search_options,
-                    stacking_layer=stack, target_index=index)
+    reg = Regressor(regressor_choice=basis_fn, params=paper_params(index),
+                    stacking_layer=stack, target_index=index,
+                    base_boosting_options=base_boosting_options)
 
     # We use the baseboostcv method, which utilizes a private
     # inbuilt model selection method to choose either the

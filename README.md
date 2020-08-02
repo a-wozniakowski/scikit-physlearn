@@ -22,25 +22,28 @@ pip install scikit-physlearn
 A multi-target regression example:
 ```python
 from sklearn.datasets import load_linnerud
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import FeatureUnion
 from physlearn import Regressor
 
-# Load an example dataset from Sklearn
 bunch = load_linnerud(as_frame=True)  # returns a Bunch instance
 X, y = bunch['data'], bunch['target']
-
-# Split the data in a supervised fashion
 X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                     random_state=42)
 
+transformer_list = [('pca', PCA(n_components=1)),
+                            ('svd', TruncatedSVD(n_components=2))]
+union = FeatureUnion(transformer_list=transformer_list, n_jobs=-1)
+
 # Select a regressor, e.g., LGBMRegressor from LightGBM, with a case-insensitive string.
-reg = Regressor(regressor_choice='lgbmregressor', cv=5, n_jobs=-1,
+reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform=('tr', union),
                 scoring='neg_mean_absolute_error')
 
 # Automatically build the pipeline with final estimator MultiOutputRegressor
 # from Sklearn, then exhaustively search over the (hyper)parameters.
-search_params = dict(boosting_type=['gbdt', 'goss'],
-                     n_estimators=[6, 8, 10, 20])
+search_params = dict(reg__boosting_type=['gbdt', 'goss'],
+                     reg__n_estimators=[6, 8, 10, 20])
 reg.search(X_train, y_train, search_params=search_params,
            search_method='gridsearchcv')
 
@@ -62,11 +65,9 @@ from physlearn.supervised import ShapInterpret
 # Load the training data from a quantum device calibration application.
 X_train, _, y_train, _ = load_benchmark(return_split=True)
 
-# Pick the single-target regression subtask: 2, using Python indexing.
-index = 1
-
-# Select a regressor, e.g., RidgeCV from Sklearn.
-interpret = ShapInterpret(regressor_choice='ridgecv', target_index=index)
+# Select a regressor, e.g., RidgeCV from Sklearn, and pick the single-target
+# regression subtask: 2, using Python indexing.
+interpret = ShapInterpret(regressor_choice='ridgecv', target_index=1)
 
 # Generate a SHAP force plot, and visualize the subtask predictions.
 interpret.force_plot(X_train, y_train)
@@ -135,29 +136,30 @@ n_regressors = 1
 boosting_loss = 'ls'
 
 # Choice of absolute error loss function and (hyper)parameters for the line search computation.
-line_search_regularization = 0.1
 line_search_options = dict(init_guess=1, opt_method='minimize',
                            alg='Nelder-Mead', tol=1e-7,
                            options={"maxiter": 10000},
-                           niter=None, T=None,
-                           loss='lad')
+                           niter=None, T=None, loss='lad',
+                           regularization=0.1)
+
+base_boosting_options = dict(n_regressors=n_regressors,
+                             boosting_loss=boosting_loss,
+                             line_search_options=line_search_options)
 
 # (Hyper)parameters to to exhaustively search over in the non-nested cross-valdation procedure and in
 # the inner loop of the nested cross-validation procedure. Namely, the regularization strength in ridge
 # regression, number of decision trees in random forest, and number of neighbors in k-nearest neighbors.
-search_params = {'0__alpha': [0.5, 1.0, 1.5],
-                 '1__n_estimators': [30, 50, 100],
-                 'final_estimator__n_neighbors': [2, 5, 10]}
+search_params = {'reg__0__alpha': [0.5, 1.0, 1.5],
+                 'reg__1__n_estimators': [30, 50, 100],
+                 'reg__final_estimator__n_neighbors': [2, 5, 10]}
 
 # Choose the single-target regression subtask: 5, using Python indexing.
 index = 4
 
 # Make an instance of Regressor with the aforespecified choices.
 reg = Regressor(regressor_choice=basis_fn, stacking_layer=stack,
-                scoring='neg_mean_absolute_error', target_index=index,
-                n_regressors=n_regressors, boosting_loss=boosting_loss,
-                line_search_regularization=line_search_regularization,
-                line_search_options=line_search_options)
+                target_index=index, scoring='neg_mean_absolute_error',
+                base_boosting_options=base_boosting_options)
 
 # Make arrays to store the scores.
 non_nested_scores = np.zeros(n_trials)
