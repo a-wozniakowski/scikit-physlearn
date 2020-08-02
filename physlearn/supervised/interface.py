@@ -2,7 +2,8 @@
 Automatic regressor retrieval from the model dictionary with stacking support.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
 
 import os
@@ -10,14 +11,14 @@ import joblib
 import mlxtend.regressor
 import sklearn.ensemble
 
-from ..base import AbstractModelDictionaryInterface
-from .utils._definition import _MODEL_DICT
+from physlearn.base import AbstractEstimatorDictionaryInterface
+from physlearn.supervised.utils._definition import _ESTIMATOR_DICT
 
 
-_MODEL_DICT = _MODEL_DICT['regression']
+_ESTIMATOR_DICT = _ESTIMATOR_DICT['regression']
 
         
-class RegressorDictionaryInterface(AbstractModelDictionaryInterface):
+class RegressorDictionaryInterface(AbstractEstimatorDictionaryInterface):
     """
     Interface between the model dictionary and regressor object.
     """
@@ -36,33 +37,33 @@ class RegressorDictionaryInterface(AbstractModelDictionaryInterface):
             if self.stacking_layer is not None:
                 if any(self.regressor_choice == choice for choice in ['stackingregressor', 'votingregressor']):
                     model['regressors'] = [
-                        (str(index), _MODEL_DICT[choice]().set_params(**self.params[0][index]))
+                        (str(index), _ESTIMATOR_DICT[choice]().set_params(**self.params[0][index]))
                         for index, choice
                         in enumerate(self.stacking_layer['regressors'])]
                 else:
-                    model['regressors'] = [_MODEL_DICT[choice]().set_params(**self.params[0][index])
+                    model['regressors'] = [_ESTIMATOR_DICT[choice]().set_params(**self.params[0][index])
                                           for index, choice
                                           in enumerate(self.stacking_layer['regressors'])]
                 if self.regressor_choice != 'votingregressor':
-                    final_regressor = _MODEL_DICT[self.stacking_layer['final_regressor']]()
+                    final_regressor = _ESTIMATOR_DICT[self.stacking_layer['final_regressor']]()
                     model['final_regressor'] = final_regressor.set_params(**self.params[1])
             else:
-                model['regressor'] = _MODEL_DICT[self.regressor_choice]().set_params(**self.params)
+                model['regressor'] = _ESTIMATOR_DICT[self.regressor_choice]().set_params(**self.params)
         else:
             # Retrieve default params, since params was None
             if self.stacking_layer is not None:
                 if any(self.regressor_choice == choice for choice in ['stackingregressor', 'votingregressor']):
-                    model['regressors'] = [(str(index), _MODEL_DICT[choice]())
+                    model['regressors'] = [(str(index), _ESTIMATOR_DICT[choice]())
                                           for index, choice
                                           in enumerate(self.stacking_layer['regressors'])]
                 else:
-                    model['regressors'] = [_MODEL_DICT[choice]()
+                    model['regressors'] = [_ESTIMATOR_DICT[choice]()
                                           for choice
                                           in self.stacking_layer['regressors']]
                 if self.regressor_choice != 'votingregressor':
-                    model['final_regressor'] = _MODEL_DICT[self.stacking_layer['final_regressor']]()
+                    model['final_regressor'] = _ESTIMATOR_DICT[self.stacking_layer['final_regressor']]()
             else:
-                model['regressor'] = _MODEL_DICT[self.regressor_choice]()
+                model['regressor'] = _ESTIMATOR_DICT[self.regressor_choice]()
 
         if 'regressor' in model:
             out = model['regressor']

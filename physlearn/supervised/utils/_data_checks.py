@@ -2,7 +2,8 @@
 Utilities for automated data checking.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
 import os
 import re

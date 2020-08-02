@@ -2,7 +2,8 @@
 Utility for plotting (augmented) learning curves.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
 import joblib
 import matplotlib
@@ -18,8 +19,8 @@ import sklearn.model_selection._validation
 import sklearn.utils.multiclass
 import sklearn.utils.validation
 
-from ..regression import BaseRegressor
-from ..utils._data_checks import _n_samples, _validate_data
+from physlearn.supervised.regression import BaseRegressor
+from physlearn.supervised.utils._data_checks import _n_samples, _validate_data
 
 
 class LearningCurve(BaseRegressor):
@@ -29,9 +30,8 @@ class LearningCurve(BaseRegressor):
                  n_jobs=-1, scoring='neg_mean_absolute_error',
                  return_train_score=True, pipeline_transform='quantilenormal',
                  pipeline_memory=None, params=None, chain_order=None,
-                 stacking_layer=None, target_index=None, n_regressors=None,
-                 boosting_loss=None, line_search_regularization=None,
-                 line_search_options=None):
+                 stacking_layer=None, target_index=None,
+                 base_boosting_options=None):
 
         super().__init__(regressor_choice=regressor_choice,
                          cv=cv,
@@ -45,10 +45,7 @@ class LearningCurve(BaseRegressor):
                          chain_order=chain_order,
                          stacking_layer=stacking_layer,
                          target_index=target_index,
-                         n_regressors=n_regressors,
-                         boosting_loss=boosting_loss,
-                         line_search_regularization=line_search_regularization,
-                         line_search_options=line_search_options)
+                         base_boosting_options=base_boosting_options)
 
     def _modified_learning_curve(self, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
                                  return_train_score=True, return_times=False,
@@ -159,27 +156,25 @@ def plot_learning_curve(regressor_choice, title, X, y, verbose=0, cv=5,
                         fill_std=False, legend_loc='best', save_plot=False,
                         path=None, pipeline_transform='quantilenormal',
                         pipeline_memory=None, params=None, chain_order=None,
-                        stacking_layer=None, target_index=None, n_regressors=None,
-                        boosting_loss=None, line_search_regularization=None,
-                        line_search_options=None, ylabel=None,
-                        return_incumbent_score=False):
+                        stacking_layer=None, target_index=None, ylabel=None,
+                        base_boosting_options=None, return_incumbent_score=False):
 
-    lcurve = LearningCurve(regressor_choice=regressor_choice, verbose=verbose,
-                           cv=cv, pipeline_transform=pipeline_transform,
-                           pipeline_memory=pipeline_memory, params=params,
-                           chain_order=chain_order, stacking_layer=stacking_layer,
-                           target_index=target_index, n_regressors=n_regressors,
-                           boosting_loss=boosting_loss,
-                           line_search_regularization=line_search_regularization,
-                           line_search_options=line_search_options)
+    lcurve = LearningCurve(regressor_choice=regressor_choice,
+                           verbose=verbose, cv=cv,
+                           pipeline_transform=pipeline_transform,
+                           pipeline_memory=pipeline_memory,
+                           params=params, chain_order=chain_order,
+                           stacking_layer=stacking_layer,
+                           target_index=target_index,
+                           base_boosting_options=base_boosting_options)
 
+    ret = lcurve._modified_learning_curve(X=X, y=y,
+                                          train_sizes=train_sizes,
+                                          return_incumbent_score=return_incumbent_score)
     if return_incumbent_score:
-        train_sizes, train_score, cv_score, incumbent_score = lcurve._modified_learning_curve(
-        X=X, y=y, train_sizes=train_sizes, return_incumbent_score=return_incumbent_score
-    )
+        train_sizes, train_score, cv_score, incumbent_score = ret
     else:
-        train_sizes, train_score, cv_score = lcurve._modified_learning_curve(X=X, y=y,
-                                                                             train_sizes=train_sizes)
+        train_sizes, train_score, cv_score = ret
 
     matplotlib.rcParams['font.family'] = 'serif'
     matplotlib.rcParams['font.serif'] = ['Lucida Console']
@@ -208,10 +203,12 @@ def plot_learning_curve(regressor_choice, title, X, y, verbose=0, cv=5,
                                          repeats=len(train_sizes))
         incumbent_score_std = np.repeat(a=np.std(incumbent_score, axis=1),
                                         repeats=len(train_sizes))
-        global_score_min = np.around(a=np.min([train_score.min(), cv_score.min(), incumbent_score_mean.min()]),
-                                     decimals=2)
-        global_score_max = np.around(a=np.max([train_score.max(), cv_score.max(), incumbent_score_mean.max()]),
-                                     decimals=2)
+        _score_min = np.min([train_score.min(), cv_score.min(),
+                             incumbent_score_mean.min()])
+        global_score_min = np.around(a=_score_min, decimals=2)
+        _score_max = np.max([train_score.max(), cv_score.max(),
+                             incumbent_score_mean.max()])
+        global_score_max = np.around(a=_score_max, decimals=2)
     else:
         global_score_min = np.around(a=np.min([train_score.min(), cv_score.min()]),
                                      decimals=2)
@@ -228,11 +225,14 @@ def plot_learning_curve(regressor_choice, title, X, y, verbose=0, cv=5,
                          cv_score_mean + cv_score_std,
                          alpha=alpha, color=cv_color)
 
-    plt.plot(train_sizes, train_score_mean, 'o-', color=train_color, label='Training error')
-    plt.plot(train_sizes, cv_score_mean, 'o-', color=cv_color, label='Cross-validation error')
+    plt.plot(train_sizes, train_score_mean, 'o-', color=train_color,
+             label='Training error')
+    plt.plot(train_sizes, cv_score_mean, 'o-', color=cv_color,
+             label='Cross-validation error')
     
     if return_incumbent_score:
-        plt.plot(train_sizes, incumbent_score_mean, 'o-', color='r', label='Incumbent error')
+        plt.plot(train_sizes, incumbent_score_mean, 'o-', color='r',
+                 label='Incumbent error')
         if fill_std:
             plt.fill_between(train_sizes, incumbent_score_mean - incumbent_score_std,
                              incumbent_score_mean + incumbent_score_std,

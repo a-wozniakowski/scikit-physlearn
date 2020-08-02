@@ -1,26 +1,37 @@
 """
-Abstract base class for the model dictionary and a mixin class for regression.
+Abstract base class for the estimator dictionary and a mixin class for regression.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
 
 from abc import ABC, abstractmethod
 
 
-class AbstractModelDictionaryInterface(ABC):
+class AbstractEstimatorDictionaryInterface(ABC):
     """
-    Abstract base class for the model dictionary interface.
+    Abstract base class for the estimator dictionary interface.
+
+    Notes
+    -----
+    All estimators should be retrieved from the estimator dictionary,
+    thereby enabling a case-insensitive estimator API.
     """
 
     @abstractmethod
-    def set_params(self, params):
-        """Set parameters of model choice."""
+    def set_params(self):
+        """Set the parameters."""
 
 
 class AdditionalRegressorMixin(ABC):
     """
-    Mixin class for regressor object.
+    An additional mixin to include with the :class:`sklearn.base.RegressorMixin 
+    <https://scikit-learn.org/stable/modules/generated/sklearn.base.RegressorMixin.html>`_.
+
+    Notes
+    -----
+    The Scikit-learn regressor mixin includes a ``score`` method.
     """
 
     @abstractmethod

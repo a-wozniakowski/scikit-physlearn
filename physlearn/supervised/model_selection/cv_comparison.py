@@ -2,9 +2,11 @@
 Utility for plotting the non-nested versus nested cross-validation.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
 import matplotlib.pyplot as plt
+
 
 def plot_cv_comparison(non_nested_scores, nested_scores, n_trials, fontsize='14',
                        save_plot=False, path=None):

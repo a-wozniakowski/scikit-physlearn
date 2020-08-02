@@ -2,9 +2,11 @@
 Single-target and multi-target regression.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
 import joblib
+import re
 
 import numpy as np
 import pandas as pd
@@ -25,22 +27,23 @@ import sklearn.utils.validation
 
 from collections import defaultdict
 
-from ..base import AdditionalRegressorMixin
-from ..loss import LOSS_FUNCTIONS
-from ..pipeline import _make_pipeline
+from physlearn.base import AdditionalRegressorMixin
+from physlearn.loss import LOSS_FUNCTIONS
+from physlearn.pipeline import _make_pipeline
+from physlearn.supervised.interface import RegressorDictionaryInterface
+from physlearn.supervised.model_selection.bayesian_search import _bayesoptcv
+from physlearn.supervised.utils._data_checks import (_n_features, _n_targets, _n_samples,
+                                                     _validate_data)
+from physlearn.supervised.utils._definition import (_ESTIMATOR_DICT, _MULTI_TARGET,
+                                                    _SEARCH_METHOD, _SCORE_CHOICE)
+from physlearn.supervised.utils._model_checks import (_check_bayesoptcv_parameter_type,
+                                                      _check_model_choice, _check_search_method,
+                                                      _check_stacking_layer,
+                                                      _convert_filename_to_csv_path,
+                                                      _preprocessing)
 
-from .interface import RegressorDictionaryInterface
-from .model_selection.bayesian_search import _bayesoptcv
-from .utils._data_checks import _n_features, _n_targets, _n_samples, _validate_data
-from .utils._definition import (_MODEL_DICT, _MULTI_TARGET, _SEARCH_METHOD,
-                                _SCORE_CHOICE, _SEARCH_TAXONOMY)
-from .utils._model_checks import (_check_bayesoptcv_parameter_type, _check_model_choice,
-                                  _check_search_method, _check_stacking_layer,
-                                  _convert_filename_to_csv_path, _parallel_search_preprocessing,
-                                  _sequential_search_preprocessing)
 
-
-_MODEL_DICT = _MODEL_DICT['regression']
+_ESTIMATOR_DICT = _ESTIMATOR_DICT['regression']
 
 
 class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, AdditionalRegressorMixin):
@@ -55,9 +58,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                  params=None, chain_order=None, stacking_layer=None,
                  stacking_cv_shuffle=True, stacking_cv_refit=True,
                  stacking_passthrough=True, stacking_meta_features=True,
-                 target_index=None, n_regressors=None,
-                 boosting_loss=None, line_search_regularization=None,
-                 line_search_options=None):
+                 target_index=None, base_boosting_options=None):
     
         assert isinstance(regressor_choice, str)
         assert isinstance(cv, int) and cv > 1
@@ -81,22 +82,6 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         if target_index is not None:
             assert isinstance(target_index, int)
 
-        if n_regressors is not None:
-            assert isinstance(n_regressors, int)
-            if n_regressors <= 0:
-                raise ValueError(f'{n_regressors} must be greater than zero.')
-
-        if boosting_loss is not None:
-            assert isinstance(boosting_loss, str)
-            if boosting_loss not in LOSS_FUNCTIONS:
-                raise KeyError(f'{boosting_loss} is not an available loss function.')
-
-        if line_search_regularization is not None:
-            assert isinstance(line_search_regularization, float) and line_search_regularization >= 0.0
-
-        if line_search_options is not None:
-            assert isinstance(line_search_options, dict)
-
         self.regressor_choice = _check_model_choice(model_choice=regressor_choice,
                                                     model_type='regression')
         self.cv = cv
@@ -116,10 +101,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         self.stacking_passthrough = stacking_passthrough
         self.stacking_meta_features = stacking_meta_features
         self.target_index = target_index
-        self.n_regressors = n_regressors
-        self.boosting_loss = boosting_loss
-        self.line_search_regularization = line_search_regularization
-        self.line_search_options = line_search_options
+        self.base_boosting_options = base_boosting_options
 
         # Prepare the regressor
         _regressor = RegressorDictionaryInterface(regressor_choice=self.regressor_choice,
@@ -159,8 +141,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             if key not in valid_params:
                 raise ValueError('Invalid parameter %s for regressor %s. '
                                  'Check the list of available parameters '
-                                 'with `regressor.get_params().keys()`.' %
-                                 (key, self))
+                                 'with `regressor.get_params().keys()`.'
+                                 % (key, self))
 
             if delim:
                 nested_params[key][sub_key] = value
@@ -201,11 +183,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                                     memory=self.pipeline_memory,
                                     n_quantiles=n_quantiles,
                                     chain_order=self.chain_order,
-                                    n_estimators=self.n_regressors,
                                     target_index=self.target_index,
-                                    boosting_loss=self.boosting_loss,
-                                    regularization=self.line_search_regularization,
-                                    line_search_options=self.line_search_options)
+                                    base_boosting_options=self.base_boosting_options)
 
     def regattr(self, attr):
         """Get regressor attribute from pipeline."""
@@ -217,8 +196,10 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                    for index, self.pipe
                    in enumerate(self.pipe.named_steps['reg'].estimators_)}
             return attr
-        except AttributeError:
-            print(f'{self.pipe.named_steps["reg"]} needs to have an estimators_ attribute.')
+        except:
+            raise AttributeError('%s needs to have an estimators_ attribute '
+                                 'in order to access the attribute: %s.'
+                                 % (self.pipe.named_steps['reg'], attr))
 
     def _check_target_index(self, y):
         """Automates single-target regression subtask slicing."""
@@ -239,10 +220,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
                 regressor.fit(X=X, y=y, sample_weight=sample_weight)
             except TypeError as exc:
                 if 'unexpected keyword argument sample_weight' in str(exc):
-                    raise TypeError(
-                        f'{regressor.__class__.__name__} does not support sample weights.'
-                    ) from exc
-            raise
+                    raise TypeError('%s does not support sample weights.'
+                                    % (regressor.__class__.__name__)) from exc
         else:
             regressor.fit(X=X, y=y)
 
@@ -317,43 +296,13 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
             try:
                 score = sklearn.metrics.mean_squared_log_error(y_true=y_true, y_pred=y_pred,
                                                                multioutput=multioutput)
-            except ValueError:
+            except:
                 # Sklearn will raise a ValueError if either
                 # statement is true, so we circumvent
                 # this error and score with a NaN.
                 score = np.nan
 
         return score
-
-    def _preprocess_search_params(self, y, search_params, search_taxonomy='parallel'):
-        """Search parameter helper function."""
-
-        assert search_taxonomy in _SEARCH_TAXONOMY
-
-        if search_taxonomy == 'parallel':
-            if sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
-                if self.chain_order is not None:
-                    search_params = _parallel_search_preprocessing(raw_params=search_params,
-                                                                   multi_target=True, chain=True)
-                else:
-                    search_params = _parallel_search_preprocessing(raw_params=search_params,
-                                                                   multi_target=True, chain=False)
-            else:
-                search_params = _parallel_search_preprocessing(raw_params=search_params,
-                                                               multi_target=False, chain=False)
-        elif search_taxonomy == 'sequential':
-            if sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
-                if self.chain_order is not None:
-                    search_params = _sequential_search_preprocessing(raw_pbounds=search_params,
-                                                                     multi_target=True, chain=True)
-                else:
-                    search_params = _sequential_search_preprocessing(raw_pbounds=search_params,
-                                                                     multi_target=True, chain=False)
-            else:
-                search_params = _sequential_search_preprocessing(raw_pbounds=search_params,
-                                                                 multi_target=False, chain=False)
-
-        return search_params
 
     def _modified_cross_validate(self, X, y, return_regressor=False, error_score=np.nan,
                                  return_incumbent_score=False, cv=None):
@@ -493,8 +442,7 @@ class Regressor(BaseRegressor):
                  bayesoptcv_n_iter=20, return_train_score=True,
                  pipeline_transform='quantilenormal', pipeline_memory=None,
                  params=None, chain_order=None, stacking_layer=None,
-                 target_index=None, n_regressors=None, boosting_loss=None,
-                 line_search_regularization=None, line_search_options=None):
+                 target_index=None, base_boosting_options=None):
 
         super().__init__(regressor_choice=regressor_choice,
                          cv=cv,
@@ -510,10 +458,7 @@ class Regressor(BaseRegressor):
                          chain_order=chain_order,
                          stacking_layer=stacking_layer,
                          target_index=target_index,
-                         n_regressors=n_regressors,
-                         boosting_loss=boosting_loss,
-                         line_search_regularization=line_search_regularization,
-                         line_search_options=line_search_options)
+                         base_boosting_options=base_boosting_options)
 
         assert isinstance(refit, bool)
         assert isinstance(randomizedcv_n_iter, int)
@@ -527,7 +472,7 @@ class Regressor(BaseRegressor):
 
     @property
     def check_regressor(self):
-        """Check if regressor adheres to scikit-learn conventions."""
+        """Check if the regressor adheres to the Scikit-learn estimator convention."""
 
         # Sklearn and Mlxtend stacking regressors, as well as 
         # LightGBM, XGBoost, and CatBoost regressor do not
@@ -535,7 +480,8 @@ class Regressor(BaseRegressor):
         try:
             super().check_regressor
         except:
-            print(f'{_MODEL_DICT[self.regressor_choice]} does not adhere to sklearn conventions.')
+            raise TypeError('%s does not adhere to the Scikit-learn estimator convention.'
+                            % (_ESTIMATOR_DICT[self.regressor_choice]))
 
     def get_params(self, deep=True):
         """Retrieve parameters."""
@@ -654,6 +600,30 @@ class Regressor(BaseRegressor):
                                        return_incumbent_score=return_incumbent_score,
                                        cv=cv)
 
+    def _preprocess_search_params(self, y, search_params):
+        """
+        Search parameter helper function, which preprocesses
+        the (hyper)parameter names based on the number of
+        single-targets and the independence assumption,
+        i.e., chaining.
+        """
+
+        if sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
+            if self.chain_order is not None:
+                search_params = _preprocessing(raw_params=search_params,
+                                               multi_target=True,
+                                               chain=True)
+            else:
+                search_params = _preprocessing(raw_params=search_params,
+                                               multi_target=True,
+                                               chain=False)
+        else:
+            search_params = _preprocessing(raw_params=search_params,
+                                           multi_target=False,
+                                           chain=False)
+
+        return search_params
+
     def _search(self, X, y, search_params, search_method='gridsearchcv', cv=None):
         """Helper (hyper)parameter search method."""
 
@@ -661,9 +631,8 @@ class Regressor(BaseRegressor):
         # or parallell. The former method identifies Bayesian
         # optimization, while the latter method identifies
         # grid or randomized search.
-        search_method, search_taxonomy = _check_search_method(search_method=search_method)
-        search_params = super()._preprocess_search_params(y=y, search_params=search_params,
-                                                          search_taxonomy=search_taxonomy)
+        search_method = _check_search_method(search_method=search_method)
+        search_params = self._preprocess_search_params(y=y, search_params=search_params)
         if cv is None:
             cv = self.cv
 
@@ -725,8 +694,11 @@ class Regressor(BaseRegressor):
 
         try:
             self._regressor_search.fit(X=X, y=y)
-        except AttributeError:
-            print('Fit method requires _regressor_search attribute')
+        except:
+            raise AttributeError('Performing the search requires the '
+                                 'attribute: %s. However, the attribute '
+                                 'is not set.'
+                                 % (_regressor_search))
 
         if search_method in ['gridsearchcv', 'randomizedsearchcv']:
             self.best_params_ = pd.Series(self._regressor_search.best_params_)
@@ -735,12 +707,14 @@ class Regressor(BaseRegressor):
             try:
                 self.best_params_ = pd.Series(self.optimization.max['params'])
                 self.best_score_ = pd.Series({'best_score': self.optimization.max['target']})
-            except AttributeError:
-                print('best_params_ and best_score_ require optimization attribute')
+            except:
+                raise AttributeError('In order to set the attributes: %s and %s, '
+                                     'there must be the attribute: %s.'
+                                     % (best_params_, best_score_, optimization))
 
         # Sklearn and bayes-opt return negative MAE and MSE scores,
         # so we restore nonnegativity.
-        if len(self.scoring) > 3 and self.scoring[:3] == 'neg':
+        if re.match('neg', self.scoring):
             self.best_score_.loc['best_score'] *= -1.0
 
         self.search_summary_ = pd.concat([self.best_score_, self.best_params_], axis=0)

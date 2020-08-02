@@ -2,12 +2,13 @@
 Bayesian optimization (hyper)parameter search.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
 import sklearn.model_selection
 
 from bayes_opt import BayesianOptimization
-from ..utils._model_checks import _check_bayesoptcv_parameter_type
+from physlearn.supervised.utils._model_checks import _check_bayesoptcv_parameter_type
 
 
 def _bayesoptcv(X, y, estimator, search_params, cv,

@@ -59,17 +59,24 @@ ls_loss = 'ls'
 # regression subtask: 4. Otherwise, 'huber' is the key for the
 # Huber loss function in the single-target regression subtasks:
 # 1, 2, 3, and 5.
-line_search_regularization = 0.1
 line_search_options_with_lad = dict(init_guess=1, opt_method='minimize',
                                     alg='Nelder-Mead', tol=1e-7,
                                     options={"maxiter": 10000},
-                                    niter=None, T=None,
-                                    loss='lad')
+                                    niter=None, T=None, loss='lad',
+                                    regularization=0.1)
 line_search_options_with_huber = dict(init_guess=1, opt_method='minimize',
                                       alg='Nelder-Mead', tol=1e-7,
                                       options={"maxiter": 10000},
-                                      niter=None, T=None,
-                                      loss='huber')
+                                      niter=None, T=None, loss='huber',
+                                      regularization=0.1)
+
+# We collect the various base boosting (hyper)parameters.
+options_with_lad = dict(n_regressors=n_regressors,
+                        boosting_loss=ls_loss,
+                        line_search_options=line_search_options_with_lad)
+options_with_huber = dict(n_regressors=n_regressors,
+                          boosting_loss=huber_loss,
+                          line_search_options=line_search_options_with_huber)
 
 print('Building scoring DataFrame for each single-target regression subtask.')
 test_error = []
@@ -77,30 +84,23 @@ for index in range(5):
     if index in [0, 1, 4]:
         # We make an instance of Regressor with our choice of stacking
         # for the single-target regression subtasks: 1, 2, and 5.
-        reg = Regressor(regressor_choice=stacking_basis_fn, n_regressors=n_regressors,
-                        boosting_loss=huber_loss, params=paper_params(index),
-                        line_search_regularization=line_search_regularization,
-                        line_search_options=line_search_options_with_huber,
-                        stacking_layer=stack, target_index=index)
+        reg = Regressor(regressor_choice=stacking_basis_fn, params=paper_params(index),
+                        stacking_layer=stack, target_index=index,
+                        base_boosting_options=options_with_huber)
     elif index == 3:
         # We make an instance of Regressor with our choice of stacking
         # for the single-target regression subtask: 4.
-        reg = Regressor(regressor_choice=stacking_basis_fn, n_regressors=n_regressors,
-                        boosting_loss=ls_loss, params=paper_params(index),
-                        line_search_regularization=line_search_regularization,
-                        line_search_options=line_search_options_with_lad,
-                        stacking_layer=stack, target_index=index)
+        reg = Regressor(regressor_choice=stacking_basis_fn, params=paper_params(index),
+                        stacking_layer=stack, target_index=index,
+                        base_boosting_options=options_with_lad)
     else:
         # We make an instance of Regressor with our choice of ridge
         # regression for the single-target regression subtask: 3.
         # The parameter alpha denotes the regularization strength
         # in ridge regression, where the Tikhonov matrix is the
         # scalar alpha times the identity matrix.
-        reg = Regressor(regressor_choice=linear_basis_fn, n_regressors=n_regressors,
-                        boosting_loss=huber_loss, params=dict(alpha=0.1),
-                        line_search_regularization=line_search_regularization,
-                        line_search_options=line_search_options_with_huber,
-                        target_index=index)
+        reg = Regressor(regressor_choice=linear_basis_fn, params=dict(alpha=0.1),
+                        target_index=index, base_boosting_options=options_with_huber)
 
     # We use the baseboostcv method, which utilizes a private
     # inbuilt model selection method to choose either the

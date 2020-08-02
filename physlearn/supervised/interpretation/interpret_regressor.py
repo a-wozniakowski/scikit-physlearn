@@ -2,7 +2,8 @@
 Regressor interpretability with SHAP utilities.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
 import shap
 
@@ -13,10 +14,10 @@ import matplotlib.pyplot as plt
 
 from IPython.display import display
 
-from ..regression import BaseRegressor
-from ..utils._data_checks import _n_targets
-from ..utils._definition import (_MULTI_TARGET, _SHAP_TAXONOMY,
-                                 _SHAP_SUMMARY_PLOT_CHOICE)
+from physlearn.supervised.regression import BaseRegressor
+from physlearn.supervised.utils._data_checks import _n_targets
+from physlearn.supervised.utils._definition import (_MULTI_TARGET, _SHAP_TAXONOMY,
+                                                    _SHAP_SUMMARY_PLOT_CHOICE)
 
 
 class ShapInterpret(BaseRegressor):

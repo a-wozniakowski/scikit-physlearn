@@ -2,21 +2,22 @@
 Utilities for automated model checking.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
-import os
 import Levenshtein
+import os
+import re
 
 import numpy as np
 
-from ._definition import _MODEL_DICT, _SEARCH_METHOD
+from physlearn.loss import LOSS_FUNCTIONS
+
+from ._definition import _ESTIMATOR_DICT, _OPTIMIZE_METHOD, _SEARCH_METHOD
 
 
 def _basic_autocorrect(model_choice, model_choices, model_type):
-    """
-    Choose a model in the model dictionary, which minimizes
-    the edit distance.
-    """
+    """Choose a model in the model dictionary, which minimizes the edit distance."""
 
     assert isinstance(model_choice, str)
     assert isinstance(model_choices, list)
@@ -41,7 +42,7 @@ def _check_model_choice(model_choice, model_type):
 
     assert all(isinstance(arg, str) for arg in [model_choice, model_type])
 
-    model_choices = [choice for choice in _MODEL_DICT[model_type].keys()]
+    model_choices = [choice for choice in _ESTIMATOR_DICT[model_type].keys()]
     model_choice  = _basic_autocorrect(model_choice=model_choice.strip().lower(),
                                        model_choices=model_choices,
                                        model_type=model_type)
@@ -49,16 +50,13 @@ def _check_model_choice(model_choice, model_type):
 
 
 def _check_stacking_layer(stacking_layer, model_type):
-    """
-    Choose the stacking layer models in the model
-    dictionary.
-    """
+    """Choose the stacking layer models in the model dictionary."""
 
     try:
         assert isinstance(stacking_layer, dict)
         assert isinstance(model_type, str)
         
-        model_choices = [choice for choice in _MODEL_DICT[model_type].keys()]
+        model_choices = [choice for choice in _ESTIMATOR_DICT[model_type].keys()]
         if 'regressors' in stacking_layer:
             stacking_layer['regressors'] = [_basic_autocorrect(model_choice=model.strip().lower(),
                                                                model_choices=model_choices,
@@ -74,11 +72,40 @@ def _check_stacking_layer(stacking_layer, model_type):
         return stacking_layer
 
 
+def _check_line_search_options(line_search_options):
+    """
+    Ensure that the specified options are valid for
+    the line search in base boosting.
+    """
+
+    for search_key, search_option in line_search_options.items():
+        if search_key == 'init_guess':
+            assert isinstance(search_option, (int, float))
+        elif search_key == 'opt_method':
+            assert search_option in ['minimize', 'basinhopping']
+        elif search_key == 'alg':
+            assert search_option in _OPTIMIZE_METHOD
+        elif search_key == 'tol':
+            assert isinstance(search_option, float)
+        elif search_key == 'options':
+            assert isinstance(search_option, dict)
+        elif search_key == 'niter':
+            if search_option is not None:
+                assert isinstance(search_option, int)
+        elif search_key == 'T':
+            if search_option is not None:
+                assert isinstance(search_option, float)
+        elif search_key == 'loss':
+            assert search_option in LOSS_FUNCTIONS
+        elif search_key == 'regularization':
+            assert isinstance(search_option, (int, float))
+        else:
+            raise KeyError('The key: %s is not a valid line search option.'
+                           % (search_key))
+
+
 def _check_bayesoptcv_parameter_type(params):
-    """
-    Ensure that the Bayesian optimization utility
-    returns an int for select int parameters.
-    """
+    """Ensure that the Bayesian optimization utility returns an int for select int parameters."""
 
     assert isinstance(params, dict)
 
@@ -92,64 +119,52 @@ def _check_bayesoptcv_parameter_type(params):
     return params
 
 
-def _parallel_search_preprocessing(raw_params, multi_target, chain):
-    """
-    Prepares the search parameters for GridSearchCV and RandomizedSearchCV.
-    """
+def _preprocessing(raw_params, multi_target, chain):
+    """Preprocesses the search parameters based on the multi_target and chain filters."""
 
     assert isinstance(raw_params, (dict))
-    params = {}
+
+    tr_params = {}
+    reg_params = {}
+    pipe_params = {}
     if multi_target and chain:
-        for raw_param, value in raw_params.items():
-            search_key = 'reg__base_estimator__' + raw_param
-            params[search_key] = value
+        for key, value in raw_params.items():
+            if re.match('tr__', key):
+                tr_params[key] = value
+            elif re.match('reg__', key):
+                reg_params['reg__base_estimator__' + key[5:]] = value
+            else:
+                pipe_params[key] = value
     elif multi_target and not chain:
-        for raw_param, value in raw_params.items():
-            search_key = 'reg__estimator__' + raw_param
-            params[search_key] = value
+        for key, value in raw_params.items():
+            if re.match('tr__', key):
+                tr_params[key] = value
+            elif re.match('reg__', key):
+                reg_params['reg__estimator__' + key[5:]] = value
+            else:
+                pipe_params[key] = value
     else:
-        for raw_param, value in raw_params.items():
-            search_key = 'reg__' + raw_param
-            params[search_key] = value
-    return params
+        for key, value in raw_params.items():
+            if re.match('tr__', key):
+                tr_params[key] = value
+            elif re.match('reg__', key):
+                reg_params[key] = value
+            else:
+                pipe_params[key] = value
 
-
-def _sequential_search_preprocessing(raw_pbounds, multi_target, chain):
-    """
-    Prepares the search parameters for BayesianOptimization.
-    """
-
-    assert isinstance(raw_pbounds, (dict))
-    pbounds = {}
-    if multi_target and chain:
-        for raw_pbound, value in raw_pbounds.items():
-            bayesoptcv_search_key = 'reg__base_estimator__' + raw_pbound
-            pbounds[bayesoptcv_search_key] = value
-    elif multi_target and not chain:
-        for raw_pbound, value in raw_pbounds.items():
-            bayesoptcv_search_key = 'reg__estimator__' + raw_pbound
-            pbounds[bayesoptcv_search_key] = value
-    else:
-        for raw_pbound, value in raw_pbounds.items():
-            bayesoptcv_search_key = 'reg__' + raw_pbound
-            pbounds[bayesoptcv_search_key] = value
-    return pbounds
+    return dict(**tr_params, **reg_params, **pipe_params)
 
 
 def _check_search_method(search_method):
     """
-    Differentiates between the Sklearn and Bayesian Optimization package.
+    Ensure that the search method is from either Sklearn
+    or the Bayesian Optimization package.
     """
 
     assert isinstance(search_method, str)
-    assert search_method in _SEARCH_METHOD
-
     search_method = search_method.strip().lower()
-    if search_method in ['gridsearchcv', 'randomizedsearchcv']:
-        search_taxonomy = 'parallel'
-    elif search_method in ['bayesoptcv']:
-        search_taxonomy = 'sequential'
-    return search_method, search_taxonomy
+    assert search_method in _SEARCH_METHOD
+    return search_method
 
 
 def _convert_filename_to_csv_path(filename):

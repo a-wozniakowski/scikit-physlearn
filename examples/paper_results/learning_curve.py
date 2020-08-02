@@ -40,12 +40,16 @@ boosting_loss = 'ls'
 # the optimization algorithm and its parameters. Moreover, we
 # specify the loss function utilized in the line search.
 # Namely, lad is the key for absolute error.
-line_search_regularization = 0.1
 line_search_options = dict(init_guess=1, opt_method='minimize',
                            alg='Nelder-Mead', tol=1e-7,
                            options={"maxiter": 10000},
-                           niter=None, T=None,
-                           loss='lad')
+                           niter=None, T=None, loss='lad',
+                           regularization=0.1)
+
+# We collect the various base boosting (hyper)parameters.
+base_boosting_options = dict(n_regressors=n_regressors,
+                             boosting_loss=boosting_loss,
+                             line_search_options=line_search_options)
 
 # We focus on the third single-target regression subtask,
 # as this is the least difficult subtask for the base regressor.
@@ -62,15 +66,13 @@ plot_learning_curve(regressor_choice=basis_fn,
                     title='Augmented learning curve',
                     X=X_train, y=y_train, verbose=1, cv=5,
                     train_sizes=np.linspace(0.25, 1.0, 40),
-                    alpha=0.1, train_color='b', cv_color='orange',
-                    y_ticks_step=0.15, fill_std=False,
-                    legend_loc='best', save_plot=False, path=None,
+                    alpha=0.1, train_color='b',
+                    cv_color='orange', y_ticks_step=0.15,
+                    fill_std=False, legend_loc='best',
+                    save_plot=False, path=None,
                     pipeline_transform='quantilenormal',
-                    pipeline_memory=None, params=paper_params(index),
-                    chain_order=None, stacking_layer=stack,
-                    target_index=index, n_regressors=n_regressors,
-                    boosting_loss=boosting_loss,
-                    line_search_regularization=line_search_regularization,
-                    line_search_options=line_search_options,
-                    ylabel='Mean absolute error (MHz)',
+                    pipeline_memory=None, chain_order=None,
+                    params=paper_params(index), stacking_layer=stack,
+                    target_index=index, ylabel='Mean absolute error',
+                    base_boosting_options=base_boosting_options,
                     return_incumbent_score=True)
