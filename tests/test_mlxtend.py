@@ -2,7 +2,8 @@
 Unit tests for Mlxtend compatibility.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
 import unittest
 
@@ -11,15 +12,18 @@ import pandas as pd
 from scipy.stats import randint
 
 from sklearn import __version__ as sk_version
+from sklearn.base import clone
 from sklearn.datasets import load_boston, load_linnerud
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import FeatureUnion
 
 from physlearn import Regressor
 from physlearn.datasets import load_benchmark
 from physlearn.supervised import ShapInterpret
 
 
-class TestBasic(unittest.TestCase):
+class TestMlxtend(unittest.TestCase):
 
     def test_stacking_regressor_without_cv_gridsearchcv(self):
         X, y = load_boston(return_X_y=True)
@@ -32,9 +36,10 @@ class TestBasic(unittest.TestCase):
 
         reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
                         pipeline_transform='standardscaler')
-        search_params = {'kneighborsregressor__n_neighbors': [2, 4, 5],
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+        search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params)
         self.assertLess(reg.best_score_.values, 3.0)
         self.assertIn(reg.best_params_['reg__kneighborsregressor__n_neighbors'], [2, 4, 5])
@@ -52,9 +57,10 @@ class TestBasic(unittest.TestCase):
 
         reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
                         pipeline_transform='standardscaler')
-        search_params = {'kneighborsregressor__n_neighbors': [2, 4, 5],
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+        search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params)
         self.assertLess(reg.best_score_.values, 2.8)
         self.assertIn(reg.best_params_['reg__kneighborsregressor__n_neighbors'], [2, 4, 5])
@@ -74,9 +80,10 @@ class TestBasic(unittest.TestCase):
 
         reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
                         pipeline_transform='standardscaler')
-        search_params = {'kneighborsregressor__n_neighbors': [2, 4, 5],
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+        search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params)
         self.assertLess(reg.best_score_.values, 10.0)
         self.assertIn(reg.best_params_['reg__estimator__kneighborsregressor__n_neighbors'],
@@ -97,9 +104,10 @@ class TestBasic(unittest.TestCase):
 
         reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
                         pipeline_transform='standardscaler')
-        search_params = {'kneighborsregressor__n_neighbors': [2, 4, 5],
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+        search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params)
         self.assertLess(reg.best_score_.values, 10.0)
         self.assertIn(reg.best_params_['reg__estimator__kneighborsregressor__n_neighbors'],
@@ -120,11 +128,12 @@ class TestBasic(unittest.TestCase):
 
         reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
                         pipeline_transform='standardscaler', chain_order=[2, 0, 1])
-        search_params = {'kneighborsregressor__n_neighbors': [2, 4, 5],
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+        search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params)
-        self.assertLess(reg.best_score_.values, 10.0)
+        self.assertLess(reg.best_score_.values, 12.0)
         self.assertIn(reg.best_params_['reg__base_estimator__kneighborsregressor__n_neighbors'],
                       [2, 4, 5])
         self.assertIn(reg.best_params_['reg__base_estimator__bayesianridge__alpha_1'],
@@ -145,11 +154,12 @@ class TestBasic(unittest.TestCase):
 
         reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
                         pipeline_transform='standardscaler', chain_order=[2, 0, 1])
-        search_params = {'kneighborsregressor__n_neighbors': [2, 4, 5],
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+        search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params)
-        self.assertLess(reg.best_score_.values, 10.0)
+        self.assertLess(reg.best_score_.values, 12.0)
         self.assertIn(reg.best_params_['reg__base_estimator__kneighborsregressor__n_neighbors'],
                       [2, 4, 5])
         self.assertIn(reg.best_params_['reg__base_estimator__bayesianridge__alpha_1'],
@@ -167,10 +177,11 @@ class TestBasic(unittest.TestCase):
                      final_regressor='lasso')
 
         reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
-        search_params = {'kneighborsregressor__n_neighbors': randint(low=2, high=5),
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+                        pipeline_transform='standardscaler', randomizedcv_n_iter=6)
+        search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
         self.assertLess(reg.best_score_.values, 3.0)
@@ -189,10 +200,11 @@ class TestBasic(unittest.TestCase):
                      final_regressor='lasso')
 
         reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
-        search_params = {'kneighborsregressor__n_neighbors': randint(low=2, high=5),
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+                        pipeline_transform='standardscaler', randomizedcv_n_iter=6)
+        search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
         self.assertLess(reg.best_score_.values, 2.8)
@@ -213,13 +225,14 @@ class TestBasic(unittest.TestCase):
                      final_regressor='lasso')
 
         reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
-        search_params = {'kneighborsregressor__n_neighbors': randint(low=2, high=5),
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+                        pipeline_transform='standardscaler', randomizedcv_n_iter=6)
+        search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 10.4)
+        self.assertLess(reg.best_score_.values, 12.0)
         self.assertLessEqual(reg.best_params_['reg__estimator__kneighborsregressor__n_neighbors'],
                              5)
         self.assertGreaterEqual(reg.best_params_['reg__estimator__kneighborsregressor__n_neighbors'],
@@ -239,13 +252,14 @@ class TestBasic(unittest.TestCase):
                      final_regressor='lasso')
 
         reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
-        search_params = {'kneighborsregressor__n_neighbors': randint(low=2, high=5),
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+                        pipeline_transform='standardscaler', randomizedcv_n_iter=6)
+        search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 10.0)
+        self.assertLess(reg.best_score_.values, 12.0)
         self.assertLessEqual(reg.best_params_['reg__estimator__kneighborsregressor__n_neighbors'],
                              5)
         self.assertGreaterEqual(reg.best_params_['reg__estimator__kneighborsregressor__n_neighbors'],
@@ -265,13 +279,15 @@ class TestBasic(unittest.TestCase):
                      final_regressor='lasso')
 
         reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', chain_order=[2, 0, 1])
-        search_params = {'kneighborsregressor__n_neighbors': randint(low=2, high=5),
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+                        pipeline_transform='standardscaler', randomizedcv_n_iter=6,
+                        chain_order=[2, 0, 1])
+        search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 10.8)
+        self.assertLess(reg.best_score_.values, 12.0)
         self.assertLessEqual(reg.best_params_['reg__base_estimator__kneighborsregressor__n_neighbors'],
                              5)
         self.assertGreaterEqual(reg.best_params_['reg__base_estimator__kneighborsregressor__n_neighbors'],
@@ -293,13 +309,15 @@ class TestBasic(unittest.TestCase):
                      final_regressor='lasso')
 
         reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', chain_order=[2, 0, 1])
-        search_params = {'kneighborsregressor__n_neighbors': randint(low=2, high=5),
-                         'bayesianridge__alpha_1': [1e-7, 1e-6],
-                         'meta_regressor__alpha': [1.0]}
+                        pipeline_transform='standardscaler', randomizedcv_n_iter=6,
+                        chain_order=[2, 0, 1])
+        search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
+                             reg__bayesianridge__alpha_1=[1e-7, 1e-6],
+                             reg__meta_regressor__alpha=[1.0],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 10.0)
+        self.assertLess(reg.best_score_.values, 12.0)
         self.assertLessEqual(reg.best_params_['reg__base_estimator__kneighborsregressor__n_neighbors'],
                              5)
         self.assertGreaterEqual(reg.best_params_['reg__base_estimator__kneighborsregressor__n_neighbors'],
@@ -426,6 +444,54 @@ class TestBasic(unittest.TestCase):
         self.assertGreaterEqual(score['mse'], 0.0)
         self.assertLess(score['mae'], 7.0)
         self.assertLess(score['mse'], 110.0)
+
+    def test_without_cv_pipeline_clone_fit_score(self):
+        X, y = load_boston(return_X_y=True)
+        X, y = pd.DataFrame(X), pd.Series(y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            random_state=42)
+        transformer_list = [('pca', PCA(n_components=1)),
+                            ('svd', TruncatedSVD(n_components=2))]
+        union = FeatureUnion(transformer_list=transformer_list, n_jobs=-1)
+        stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
+                     final_regressor='lasso')
+        reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
+                        pipeline_transform=('tr', union))
+        reg.get_pipeline(y=y_train)
+        _class_before_clone = reg.pipe.__class__
+        reg.pipe = clone(reg.pipe)
+        y_pred = reg.fit(X_train, y_train).predict(X_test)
+        score = reg.score(y_test, y_pred)
+        self.assertEqual(_class_before_clone, reg.pipe.__class__)
+        self.assertCountEqual(y_pred.index, y_test.index)
+        self.assertGreaterEqual(score['mae'].values, 0.0)
+        self.assertGreaterEqual(score['mse'].values, 0.0)
+        self.assertLess(score['mae'].values, 11.0)
+        self.assertLess(score['mse'].values, 232.0)
+
+    def test_with_cv_pipeline_clone_fit_score(self):
+        X, y = load_boston(return_X_y=True)
+        X, y = pd.DataFrame(X), pd.Series(y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            random_state=42)
+        transformer_list = [('pca', PCA(n_components=1)),
+                            ('svd', TruncatedSVD(n_components=2))]
+        union = FeatureUnion(transformer_list=transformer_list, n_jobs=-1)
+        stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
+                     final_regressor='lasso')
+        reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
+                        pipeline_transform=('tr', union))
+        reg.get_pipeline(y=y_train)
+        _class_before_clone = reg.pipe.__class__
+        reg.pipe = clone(reg.pipe)
+        y_pred = reg.fit(X_train, y_train).predict(X_test)
+        score = reg.score(y_test, y_pred)
+        self.assertEqual(_class_before_clone, reg.pipe.__class__)
+        self.assertCountEqual(y_pred.index, y_test.index)
+        self.assertGreaterEqual(score['mae'].values, 0.0)
+        self.assertGreaterEqual(score['mse'].values, 0.0)
+        self.assertLess(score['mae'].values, 11.0)
+        self.assertLess(score['mse'].values, 232.0)
 
     def test_without_cv_shap_explainer(self):
         X_train, _, y_train, _ = load_benchmark(return_split=True)

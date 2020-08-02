@@ -2,7 +2,8 @@
 Unit tests for XGBoost compatibility.
 """
 
-# Author: Alex Wozniakowski <wozn0001@e.ntu.edu.sg>
+# Author: Alex Wozniakowski
+# License: MIT
 
 import unittest
 
@@ -11,8 +12,11 @@ import pandas as pd
 from scipy.stats import randint
 
 from sklearn import __version__ as sk_version
+from sklearn.base import clone
 from sklearn.datasets import load_boston, load_linnerud
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import FeatureUnion
 
 from xgboost import __version__ as xgb_version
 
@@ -21,7 +25,7 @@ from physlearn.datasets import load_benchmark
 from physlearn.supervised import ShapInterpret
 
 
-class TestBasic(unittest.TestCase):
+class TestXGBoost(unittest.TestCase):
 
     def test_regressor_gridsearchcv(self):
         X, y = load_boston(return_X_y=True)
@@ -32,7 +36,8 @@ class TestBasic(unittest.TestCase):
         params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
         reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
                         params=params)
-        search_params = dict(n_estimators=[3, 5, 10])
+        search_params = dict(reg__n_estimators=[3, 5, 10],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params)
         self.assertLess(reg.best_score_.values, 9.0)
         self.assertIn(reg.best_params_['reg__n_estimators'], [3, 5, 10])
@@ -48,7 +53,8 @@ class TestBasic(unittest.TestCase):
         params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
         reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
                         params=params)
-        search_params = dict(n_estimators=[3, 5, 10])
+        search_params = dict(reg__n_estimators=[3, 5, 10],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params)
         self.assertLess(reg.best_score_.values, 37.0)
         self.assertIn(reg.best_params_['reg__estimator__n_estimators'], [3, 5, 10])
@@ -64,7 +70,8 @@ class TestBasic(unittest.TestCase):
         params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
         reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
                         params=params, chain_order=[2, 0, 1])
-        search_params = dict(n_estimators=[3, 5, 10])
+        search_params = dict(reg__n_estimators=[3, 5, 10],
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params)
         self.assertLess(reg.best_score_.values, 37.0)
         self.assertIn(reg.best_params_['reg__base_estimator__n_estimators'], [3, 5, 10])
@@ -77,8 +84,9 @@ class TestBasic(unittest.TestCase):
 
         params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
         reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
-                        params=params)
-        search_params = dict(n_estimators=randint(low=3, high=10))
+                        params=params, randomizedcv_n_iter=6)
+        search_params = dict(reg__n_estimators=randint(low=3, high=10),
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
         self.assertLess(reg.best_score_.values, 10.0)
@@ -95,8 +103,9 @@ class TestBasic(unittest.TestCase):
 
         params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
         reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
-                        params=params)
-        search_params = dict(n_estimators=randint(low=3, high=10))
+                        params=params, randomizedcv_n_iter=6)
+        search_params = dict(reg__n_estimators=randint(low=3, high=10),
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
         self.assertLess(reg.best_score_.values, 40.0)
@@ -113,8 +122,9 @@ class TestBasic(unittest.TestCase):
 
         params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
         reg = Regressor(regressor_choice='xgbregressor', pipeline_transform='standardscaler',
-                        params=params, chain_order=[2, 0, 1])
-        search_params = dict(n_estimators=randint(low=3, high=10))
+                        params=params, randomizedcv_n_iter=6, chain_order=[2, 0, 1])
+        search_params = dict(reg__n_estimators=randint(low=3, high=10),
+                             tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
         self.assertLess(reg.best_score_.values, 42.0)
@@ -177,8 +187,31 @@ class TestBasic(unittest.TestCase):
         self.assertLess(score['mae'], 37.0)
         self.assertLess(score['mse'], 2080.0)
 
-    # xgboost >= 1.1.0 causes an issue with TreeExplainer; see issue #1215 in SHAP
-    @unittest.skipIf(xgb_version < '1.1.0', 'xgboost version is less than 1.1.0')
+    def test_pipeline_clone_fit_score(self):
+        X, y = load_boston(return_X_y=True)
+        X, y = pd.DataFrame(X), pd.Series(y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            random_state=42)
+        transformer_list = [('pca', PCA(n_components=1)),
+                            ('svd', TruncatedSVD(n_components=2))]
+        union = FeatureUnion(transformer_list=transformer_list, n_jobs=-1)
+        params = dict(n_estimators=10, objective='reg:squarederror', booster='gbtree')
+        reg = Regressor(regressor_choice='xgbregressor', pipeline_transform=('tr', union),
+                        params=params)
+        reg.get_pipeline(y=y_train)
+        _class_before_clone = reg.pipe.__class__
+        reg.pipe = clone(reg.pipe)
+        y_pred = reg.fit(X_train, y_train).predict(X_test)
+        score = reg.score(y_test, y_pred)
+        self.assertEqual(_class_before_clone, reg.pipe.__class__)
+        self.assertCountEqual(y_pred.index, y_test.index)
+        self.assertGreaterEqual(score['mae'].values, 0.0)
+        self.assertGreaterEqual(score['mse'].values, 0.0)
+        self.assertLess(score['mae'].values, 11.0)
+        self.assertLess(score['mse'].values, 232.0)
+
+    # xgboost > 1.1.0 causes an issue with TreeExplainer; see issue #1215 in SHAP
+    @unittest.skipIf(xgb_version > '1.1.0', 'xgboost version is greater than 1.1.0')
     def test_shap_explainer(self):
         X_train, _, y_train, _ = load_benchmark(return_split=True)
         index = 3
