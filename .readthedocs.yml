@@ -4,6 +4,8 @@ python:
   version: 3
   install:
     - requirements: docs/source/requirements_rtd.txt
+    - method: pip
+      path: .
 
 sphinx:
   builder: html

@@ -1,3 +1,2 @@
-physlearn
 sphinx >= 3.2
 stanford_theme >= 1.0
