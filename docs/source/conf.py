@@ -14,11 +14,12 @@ author = 'Alex Wozniakowski'
 
 # -- General configuration ---------------------------------------------------
 
-# If your documentation needs a minimal Sphinx version, state it here.
-min_version = '1.3'  # Due to sphinx.ext.napoleon
-if min_version > sphinx.__version__:
-    raise VersionRequirementError('The Sphinx version is less than the minimum version: %s'
-                                  % (min_version))
+# Minimum version of sphinx required due to sphinx.ext.napoleon.
+needs_sphinx = '1.3'
+if needs_sphinx > sphinx.__version__:
+    raise VersionRequirementError('The Sphinx version is less than the '
+                                  'minimum version: %s.'
+                                  % (needs_sphinx))
 
 # Add any Sphinx extension module names here, as strings.
 extensions = ['sphinx.ext.autodoc',

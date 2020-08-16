@@ -1,3 +1,2 @@
-sphinx >= 3.0.2,<3.2
-sphinx_rtd_theme >= 0.3
-mock; python_version < '3'
+sphinx >= 3.2
+stanford_theme >= 1.0
