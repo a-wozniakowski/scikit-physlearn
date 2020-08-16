@@ -1,2 +1,2 @@
 sphinx >= 3.1
-guzzle_sphinx_theme >= 1.0
+guzzle_sphinx_theme
