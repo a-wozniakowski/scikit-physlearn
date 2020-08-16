@@ -1,6 +1,6 @@
 # Configuration file for the Sphinx documentation builder.
 
-import os
+import guzzle_sphinx_theme
 import sphinx
 
 from packaging.version import parse
@@ -61,17 +61,12 @@ exclude_patterns = ['_build']
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+html_theme_path = guzzle_sphinx_theme.html_theme_path()
+html_theme = 'guzzle_sphinx_theme'
+extensions.append("guzzle_sphinx_theme")
+html_theme_options = {'project_nav_name': 'Scikit-physlearn'}
 
-if on_rtd:
-    import sphinx_theme
-    html_theme = 'stanford_theme'
-    html_theme_path = [sphinx_theme.get_html_theme_path('stanford_theme')]
-else:
-    import sphinx_theme
-    html_theme = 'stanford_theme'
-    html_theme_path = [sphinx_theme.get_html_theme_path('stanford_theme')]
+html_sidebars = {'**': ['logo-text.html', 'globaltoc.html', 'searchbox.html']}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
