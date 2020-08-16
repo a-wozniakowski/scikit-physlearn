@@ -1,3 +1,19 @@
+"""
+The :mod:`physlearn.datasets.google.model_persistence._paper_params` module 
+stores the (hyper)parameters used in Boosting on the shoulders of giants in
+quantum device calibration. Moreover, it provides utilities for retrieving
+these (hyper)parameters.
+
+References
+----------
+Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+"Boosting on the shoulders of giants in quantum device calibration",
+arXiv preprint arXiv:2005.06194 (2020).
+"""
+
+# Author: Alex Wozniakowski
+# License: MIT
+
 import copy
 
 
@@ -77,11 +93,18 @@ paper_params_dict = dict(target_1=[[mlp_params_1, gbm_params_1], meta_params_1],
                          target_4=[[mlp_params_4, gbm_params_4], meta_params_4],
                          target_5=[[mlp_params_5, gbm_params_5], meta_params_5])
 
-def paper_params(index=0):
-    """Retrieves a list for StackingRegressor."""
+def paper_params(index=0) -> list:
+    """
+    Retrieves a list for StackingRegressor.
 
-    # Change from python index convention
-    # to paper index convention
+    Parameters
+    ----------
+    index : int
+        Specifies the single-target regression subtask,
+        using the Python indexing convention.
+    """
+
+    # Changes to the paper's index convention.
     index += 1
     assert index >=1 and index <=5
     return paper_params_dict[f'target_{index}']
@@ -128,11 +151,18 @@ supplementary_dict = dict(target_1=mlp_params_1,
                           target_4=mlp_params_4,
                           target_5=mlp_params_5)
 
-def supplementary_params(index=0):
-    """Retrieves a dictionary for MLPRegressor."""
+def supplementary_params(index=0) -> dict:
+    """
+    Retrieves a dict for MLPRegressor.
 
-    # Change from python index convention
-    # to supplementary information index convention
+    Parameters
+    ----------
+    index : int
+        Specifies the single-target regression subtask,
+        using the Python indexing convention.
+    """
+    
+    # Changes to the paper's index convention.
     index += 1
     assert index >=1 and index <=5
     return supplementary_dict[f'target_{index}']

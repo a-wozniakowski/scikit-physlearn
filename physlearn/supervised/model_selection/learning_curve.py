@@ -29,8 +29,8 @@ class LearningCurve(BaseRegressor):
     def __init__(self, regressor_choice='ridge', cv=5, verbose=1,
                  n_jobs=-1, scoring='neg_mean_absolute_error',
                  return_train_score=True, pipeline_transform='quantilenormal',
-                 pipeline_memory=None, params=None, chain_order=None,
-                 stacking_layer=None, target_index=None,
+                 pipeline_memory=None, params=None, target_index=None,
+                 chain_order=None, stacking_options=None,
                  base_boosting_options=None):
 
         super().__init__(regressor_choice=regressor_choice,
@@ -42,9 +42,9 @@ class LearningCurve(BaseRegressor):
                          pipeline_transform=pipeline_transform,
                          pipeline_memory=pipeline_memory,
                          params=params,
-                         chain_order=chain_order,
-                         stacking_layer=stacking_layer,
                          target_index=target_index,
+                         chain_order=chain_order,
+                         stacking_options=stacking_options,
                          base_boosting_options=base_boosting_options)
 
     def _modified_learning_curve(self, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
@@ -155,17 +155,17 @@ def plot_learning_curve(regressor_choice, title, X, y, verbose=0, cv=5,
                         train_color='b', cv_color='orange', y_ticks_step=0.15,
                         fill_std=False, legend_loc='best', save_plot=False,
                         path=None, pipeline_transform='quantilenormal',
-                        pipeline_memory=None, params=None, chain_order=None,
-                        stacking_layer=None, target_index=None, ylabel=None,
+                        pipeline_memory=None, params=None, target_index=None,
+                        chain_order=None, ylabel=None, stacking_options=None,
                         base_boosting_options=None, return_incumbent_score=False):
 
     lcurve = LearningCurve(regressor_choice=regressor_choice,
                            verbose=verbose, cv=cv,
                            pipeline_transform=pipeline_transform,
                            pipeline_memory=pipeline_memory,
-                           params=params, chain_order=chain_order,
-                           stacking_layer=stacking_layer,
-                           target_index=target_index,
+                           params=params, target_index=target_index,
+                           chain_order=chain_order,
+                           stacking_options=stacking_options,
                            base_boosting_options=base_boosting_options)
 
     ret = lcurve._modified_learning_curve(X=X, y=y,

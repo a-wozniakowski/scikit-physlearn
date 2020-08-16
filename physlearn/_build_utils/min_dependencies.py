@@ -1,4 +1,10 @@
-"""All minimum dependencies for scikit-physlearn."""
+"""
+The :mod:`physlearn._build_utils.min_dependencies` module contains all of the
+minimum dependencies for scikit-physlearn.
+"""
+
+# Author: Alex Wozniakowski
+# License: MIT
 
 import platform
 
@@ -53,4 +59,4 @@ tag_to_packages: dict = {
 }
 for package, (min_version, extras) in dependent_packages.items():
     for extra in extras.split(', '):
-        tag_to_packages[extra].append("{}>={}".format(package, min_version))
+        tag_to_packages[extra].append('{}>={}'.format(package, min_version))

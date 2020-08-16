@@ -13,7 +13,7 @@ import pandas as pd
 from sklearn.datasets import load_boston, load_linnerud
 
 from physlearn import Regressor
-from physlearn.datasets import load_benchmark, paper_params
+from physlearn.datasets import load_benchmark
 from physlearn.loss import LOSS_FUNCTIONS
 from physlearn.supervised import ShapInterpret
 
@@ -36,10 +36,10 @@ class TestBaseBoost(unittest.TestCase):
         n_regressors = 1
         boosting_loss = 'ls'
         line_search_options = dict(init_guess=1, opt_method='minimize',
-                           alg='Nelder-Mead', tol=1e-7,
-                           options={"maxiter": 10000},
-                           niter=None, T=None, loss='lad',
-                           regularization=0.1)
+                                   method='Nelder-Mead', tol=1e-7,
+                                   options={"maxiter": 10000},
+                                   niter=None, T=None, loss='lad',
+                                   regularization=0.1)
 
         base_boosting_options = dict(n_regressors=n_regressors,
                                      boosting_loss=boosting_loss,
@@ -49,6 +49,29 @@ class TestBaseBoost(unittest.TestCase):
                         target_index=index, base_boosting_options=base_boosting_options)
         y_pred = reg.baseboostcv(X_train.iloc[:10, :], y_train.iloc[:10, :]).predict(X_test)
         self.assertHasAttr(reg, 'return_incumbent_')
+
+    def test_baseboostcv_score(self):
+        X_train, X_test, y_train, y_test = load_benchmark(return_split=True)
+        stack = dict(regressors=['ridge', 'lgbmregressor'],
+                     final_regressor='ridge')
+        line_search_options = dict(init_guess=1, opt_method='minimize',
+                                   method='Nelder-Mead', tol=1e-7,
+                                   options={"maxiter": 10000},
+                                   niter=None, T=None, loss='lad',
+                                   regularization=0.1)
+        base_boosting_options = dict(n_regressors=3,
+                                     boosting_loss='ls',
+                                     line_search_options=line_search_options)
+        reg = Regressor(regressor_choice='stackingregressor', target_index=0,
+                        stacking_options=dict(layers=stack),
+                        base_boosting_options=base_boosting_options)
+        y_pred = reg.baseboostcv(X_train, y_train).predict(X_test)
+        score = reg.score(y_test, y_pred)
+        self.assertNotHasAttr(reg, 'return_incumbent_')
+        self.assertGreaterEqual(score['mae'].values, 0.0)
+        self.assertGreaterEqual(score['mse'].values, 0.0)
+        self.assertLess(score['mae'].values, 2.0)
+        self.assertLess(score['mse'].values, 6.2)
 
     def test_squared_error(self):
         X, y = load_boston(return_X_y=True)
@@ -182,7 +205,12 @@ class TestBaseBoost(unittest.TestCase):
     def assertHasAttr(self, obj, attr):
         testBool = hasattr(obj, attr)
         self.assertTrue(testBool,
-                        msg='obj lacking an attribute. obj: %s, attr: %s' % (obj, attr))
+                        msg='object: %s lacks attribute: %s' % (obj, attr))
+
+    def assertNotHasAttr(self, obj, attr):
+        testBool = hasattr(obj, attr)
+        self.assertFalse(testBool,
+                         msg='object: %s has attribute: %s' % (obj, attr))
 
 
 if __name__ == '__main__':

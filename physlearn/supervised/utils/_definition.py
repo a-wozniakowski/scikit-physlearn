@@ -5,6 +5,8 @@ Collection of definitions used in the package.
 # Author: Alex Wozniakowski
 # License: MIT
 
+import typing
+
 import catboost as cat
 import lightgbm as lgb
 import xgboost as xgb
@@ -37,57 +39,57 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.preprocessing import PowerTransformer, QuantileTransformer, StandardScaler
 
 
-_REGRESSION_DICT = dict(linearregression=LinearRegression,
-                        ridge=Ridge,
-                        ridgecv=RidgeCV,
-                        sgdregressor=SGDRegressor,
-                        elasticnet=ElasticNet,
-                        elasticnetcv=ElasticNetCV,
-                        lars=Lars,
-                        larscv=LarsCV,
-                        lasso=Lasso,
-                        lassocv=LassoCV,
-                        lassolars=LassoLars,
-                        lassolarscv=LassoLarsCV,
-                        lassolarsic=LassoLarsIC,
-                        orthogonalmatchingpursuit=OrthogonalMatchingPursuit,
-                        orthogonalmatchingpursuitcv=OrthogonalMatchingPursuitCV,
-                        ardregression=ARDRegression,
-                        bayesianridge=BayesianRidge,
-                        multitaskelasticnet=MultiTaskElasticNet,
-                        multitaskelasticnetcv=MultiTaskElasticNetCV,
-                        multitasklasso=MultiTaskLasso,
-                        multitasklassocv=MultiTaskLassoCV,
-                        huberregressor=HuberRegressor,
-                        ransacregressor=RANSACRegressor,
-                        theilsenregressor=TheilSenRegressor,
-                        kernelridge=KernelRidge,
-                        decisiontreeregressor=DecisionTreeRegressor,
-                        adaboostregressor=AdaBoostRegressor,
-                        baggingregressor=BaggingRegressor,
-                        extratreesregressor=ExtraTreesRegressor,
-                        gradientboostingregressor=GradientBoostingRegressor,
-                        randomforestregressor=RandomForestRegressor,
-                        histgradientboostingregressor=HistGradientBoostingRegressor,
-                        xgbregressor=xgb.XGBRegressor,
-                        lgbmregressor=lgb.LGBMRegressor,
-                        catboostregressor=cat.CatBoostRegressor,
-                        svr=SVR,
-                        gaussianprocessregressor=GaussianProcessRegressor,
-                        kneighborsregressor=KNeighborsRegressor,
-                        mlpregressor=MLPRegressor,
-                        stackingregressor=StackingRegressor,
-                        mlxtendstackingregressor=StackingRegressor,
-                        mlxtendstackingcvregressor=StackingCVRegressor,
-                        votingregressor=VotingRegressor)
+_REGRESSOR_DICT = dict(linearregression=LinearRegression,
+                       ridge=Ridge,
+                       ridgecv=RidgeCV,
+                       sgdregressor=SGDRegressor,
+                       elasticnet=ElasticNet,
+                       elasticnetcv=ElasticNetCV,
+                       lars=Lars,
+                       larscv=LarsCV,
+                       lasso=Lasso,
+                       lassocv=LassoCV,
+                       lassolars=LassoLars,
+                       lassolarscv=LassoLarsCV,
+                       lassolarsic=LassoLarsIC,
+                       orthogonalmatchingpursuit=OrthogonalMatchingPursuit,
+                       orthogonalmatchingpursuitcv=OrthogonalMatchingPursuitCV,
+                       ardregression=ARDRegression,
+                       bayesianridge=BayesianRidge,
+                       multitaskelasticnet=MultiTaskElasticNet,
+                       multitaskelasticnetcv=MultiTaskElasticNetCV,
+                       multitasklasso=MultiTaskLasso,
+                       multitasklassocv=MultiTaskLassoCV,
+                       huberregressor=HuberRegressor,
+                       ransacregressor=RANSACRegressor,
+                       theilsenregressor=TheilSenRegressor,
+                       kernelridge=KernelRidge,
+                       decisiontreeregressor=DecisionTreeRegressor,
+                       adaboostregressor=AdaBoostRegressor,
+                       baggingregressor=BaggingRegressor,
+                       extratreesregressor=ExtraTreesRegressor,
+                       gradientboostingregressor=GradientBoostingRegressor,
+                       randomforestregressor=RandomForestRegressor,
+                       histgradientboostingregressor=HistGradientBoostingRegressor,
+                       xgbregressor=xgb.XGBRegressor,
+                       lgbmregressor=lgb.LGBMRegressor,
+                       catboostregressor=cat.CatBoostRegressor,
+                       svr=SVR,
+                       gaussianprocessregressor=GaussianProcessRegressor,
+                       kneighborsregressor=KNeighborsRegressor,
+                       mlpregressor=MLPRegressor,
+                       stackingregressor=StackingRegressor,
+                       mlxtendstackingregressor=StackingRegressor,
+                       mlxtendstackingcvregressor=StackingCVRegressor,
+                       votingregressor=VotingRegressor)
+
+
+_ESTIMATOR_DICT = dict(regression=_REGRESSOR_DICT)
 
 
 _KERNEL_DICT = dict(dotproduct=DotProduct,
                     rbf=RBF,
                     whitekernel=WhiteKernel)
-
-
-_ESTIMATOR_DICT = dict(regression=_REGRESSION_DICT)
 
 
 # We need to identify chaining as the fit method capitilizes
@@ -117,6 +119,9 @@ _OPTIMIZE_METHOD = ['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'Newton-CG',
 
 
 _SCORE_CHOICE = ['mae', 'mse', 'rmse', 'r2', 'ev', 'msle']
+
+
+_PIPELINE_PARAMS = ['steps', 'memory', 'verbose', 'n_jobs', 'base_boosting_options']
 
 
 _PIPELINE_TRANSFORM_CHOICE = ['standardscaler', 'boxcox', 'yeojohnson',
@@ -172,3 +177,6 @@ _SHAP_TAXONOMY = dict(linearregression='linear',
 
 
 _SHAP_SUMMARY_PLOT_CHOICE = ['dot', 'violin', 'bar']
+
+
+_BAYESOPTCV_INIT_PARAMS = ['max_iter', 'n_estimators', 'max_depth']

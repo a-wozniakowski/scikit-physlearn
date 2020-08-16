@@ -8,7 +8,7 @@ Bayesian optimization (hyper)parameter search.
 import sklearn.model_selection
 
 from bayes_opt import BayesianOptimization
-from physlearn.supervised.utils._model_checks import _check_bayesoptcv_parameter_type
+from physlearn.supervised.utils._estimator_checks import _check_bayesoptcv_parameter_type
 
 
 def _bayesoptcv(X, y, estimator, search_params, cv,
@@ -16,9 +16,8 @@ def _bayesoptcv(X, y, estimator, search_params, cv,
                 init_points, n_iter):
 
     def regressor_cross_val_mean(**pbounds):
-        pbounds = _check_bayesoptcv_parameter_type(pbounds)
-        estimator.set_params(**pbounds)
-        cross_val = sklearn.model_selection.cross_val_score(estimator=estimator,
+        pbounds = _check_bayesoptcv_parameter_type(pbounds=pbounds)
+        cross_val = sklearn.model_selection.cross_val_score(estimator=estimator.set_params(**pbounds),
                                                             X=X, y=y, scoring=scoring,
                                                             cv=cv, n_jobs=n_jobs)
         return cross_val.mean()

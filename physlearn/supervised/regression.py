@@ -1,5 +1,7 @@
 """
-Single-target and multi-target regression.
+The :mod:`physlearn.supervised.regression` module provides a base regressor
+object and the main regressor object. The latter object is designed to unify
+regressors from Scikit-learn, LightGBM, XGBoost, CatBoost, and Mlxtend.
 """
 
 # Author: Alex Wozniakowski
@@ -10,8 +12,6 @@ import re
 
 import numpy as np
 import pandas as pd
-
-import scipy.linalg
 
 import sklearn.base
 import sklearn.metrics
@@ -32,58 +32,30 @@ from physlearn.loss import LOSS_FUNCTIONS
 from physlearn.pipeline import _make_pipeline
 from physlearn.supervised.interface import RegressorDictionaryInterface
 from physlearn.supervised.model_selection.bayesian_search import _bayesoptcv
-from physlearn.supervised.utils._data_checks import (_n_features, _n_targets, _n_samples,
-                                                     _validate_data)
-from physlearn.supervised.utils._definition import (_ESTIMATOR_DICT, _MULTI_TARGET,
+from physlearn.supervised.utils._data_checks import (_n_features, _n_targets,
+                                                     _n_samples, _validate_data)
+from physlearn.supervised.utils._definition import (_MULTI_TARGET, _REGRESSOR_DICT,
                                                     _SEARCH_METHOD, _SCORE_CHOICE)
-from physlearn.supervised.utils._model_checks import (_check_bayesoptcv_parameter_type,
-                                                      _check_model_choice, _check_search_method,
-                                                      _check_stacking_layer,
-                                                      _convert_filename_to_csv_path,
-                                                      _preprocessing)
+from physlearn.supervised.utils._estimator_checks import (_check_bayesoptcv_parameter_type,
+                                                          _check_estimator_choice,
+                                                          _check_search_method,
+                                                          _check_stacking_layer,
+                                                          _preprocess_hyperparams)
 
 
-_ESTIMATOR_DICT = _ESTIMATOR_DICT['regression']
-
-
-class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, AdditionalRegressorMixin):
-    """
-    Base class for main regressor object.
+class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
+                    AdditionalRegressorMixin):
+    """Base class for main regressor object.
     """
 
     def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
                  verbose=0, n_jobs=-1, score_multioutput='raw_values',
                  scoring='neg_mean_absolute_error', return_train_score=True,
                  pipeline_transform=None, pipeline_memory=None,
-                 params=None, chain_order=None, stacking_layer=None,
-                 stacking_cv_shuffle=True, stacking_cv_refit=True,
-                 stacking_passthrough=True, stacking_meta_features=True,
-                 target_index=None, base_boosting_options=None):
-    
-        assert isinstance(regressor_choice, str)
-        assert isinstance(cv, int) and cv > 1
-        assert isinstance(random_state, int) and random_state >= 0
-        assert isinstance(verbose, int) and verbose >= 0
-        assert isinstance(n_jobs, int)
-        assert isinstance(score_multioutput, str)
-        assert isinstance(scoring, str)
-        assert isinstance(return_train_score, bool)
-        assert isinstance(stacking_cv_shuffle, bool)
-        assert isinstance(stacking_cv_refit, bool)
-        assert isinstance(stacking_passthrough, bool)
-        assert isinstance(stacking_meta_features, bool)
+                 params=None, target_index=None, chain_order=None,
+                 stacking_options=None, base_boosting_options=None):
 
-        if pipeline_memory is not None:
-            assert isinstance(pipeline_memory, bool)
-
-        if chain_order is not None:
-            assert isinstance(chain_order, list)
-
-        if target_index is not None:
-            assert isinstance(target_index, int)
-
-        self.regressor_choice = _check_model_choice(model_choice=regressor_choice,
-                                                    model_type='regression')
+        self.regressor_choice = regressor_choice
         self.cv = cv
         self.random_state = random_state
         self.verbose = verbose
@@ -93,27 +65,68 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         self.return_train_score = return_train_score
         self.pipeline_transform = pipeline_transform
         self.pipeline_memory = pipeline_memory
-        self.chain_order = chain_order
-        self.stacking_layer = _check_stacking_layer(stacking_layer=stacking_layer,
-                                                    model_type='regression')
-        self.stacking_cv_shuffle = stacking_cv_shuffle
-        self.stacking_cv_refit = stacking_cv_refit
-        self.stacking_passthrough = stacking_passthrough
-        self.stacking_meta_features = stacking_meta_features
+        self.params = params
         self.target_index = target_index
+        self.chain_order = chain_order
+        self.stacking_options = stacking_options
         self.base_boosting_options = base_boosting_options
+        self._validate_regressor_options()
+        self._get_regressor()
 
-        # Prepare the regressor
-        _regressor = RegressorDictionaryInterface(regressor_choice=self.regressor_choice,
-                                                  params=params, stacking_layer=self.stacking_layer)
+    def _validate_regressor_options(self):
+        self.regressor_choice = _check_estimator_choice(estimator_choice=self.regressor_choice,
+                                                        estimator_type='regression')
 
-        self._regressor, self.params = _regressor.set_params(cv=self.cv, verbose=self.verbose,
-                                                             random_state=self.random_state,
-                                                             n_jobs=self.n_jobs, 
-                                                             shuffle=self.stacking_cv_shuffle,
-                                                             refit=self.stacking_cv_refit,
-                                                             passthrough=self.stacking_passthrough,
-                                                             meta_features=self.stacking_meta_features)
+        assert isinstance(self.cv, int) and self.cv > 1
+        assert isinstance(self.random_state, int) and self.random_state >= 0
+        assert isinstance(self.verbose, int) and self.verbose >= 0
+        assert isinstance(self.n_jobs, int)
+        assert isinstance(self.score_multioutput, str)
+        assert isinstance(self.scoring, str)
+        assert isinstance(self.return_train_score, bool)
+        assert any(isinstance(self.pipeline_transform, built_in) for built_in in (str, list, tuple))
+
+        if self.pipeline_memory is not None:
+            assert isinstance(self.pipeline_memory, bool)
+
+        if self.params is not None:
+            assert isinstance(self.params, (dict, list))
+
+        if self.target_index is not None:
+            assert isinstance(self.target_index, int)
+
+        if self.chain_order is not None:
+            assert isinstance(self.chain_order, list)
+
+        if self.stacking_options is not None:
+            for key, option in self.stacking_options.items():
+                if key == 'layers':
+                    self.stacking_options[key] = _check_stacking_layer(stacking_layer=option,
+                                                                       estimator_type='regression')
+                elif key not in ['shuffle', 'refit', 'passthrough', 'meta_features']:
+                    raise KeyError('The key: %s is not a stacking option.'
+                                   % (key))
+
+        if self.base_boosting_options is not None:
+            # The options are checked in the
+            # ModifiedPipeline constructor.
+            assert isinstance(self.base_boosting_options, dict)
+
+    def _get_regressor(self):
+        reg = RegressorDictionaryInterface(regressor_choice=self.regressor_choice,
+                                           params=self.params,
+                                           stacking_options=self.stacking_options)
+
+        kwargs = dict(cv=self.cv,
+                      verbose=self.verbose,
+                      random_state=self.random_state,
+                      n_jobs=self.n_jobs,
+                      stacking_options=self.stacking_options)
+
+        # The (hyper)parameters must be set
+        # before retrieval.
+        self._regressor = reg.set_params(**kwargs)
+        self.params = reg.get_params(regressor=self._regressor)
 
     @property
     def check_regressor(self):
@@ -155,6 +168,32 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
 
         return self
 
+    def _validate_data(self, X=None, y=None):
+        """Checks the validity of the data representation(s)."""
+
+        if X is not None and y is not None:
+            if not hasattr(self, '_validated_data'):
+                out = _validate_data(X=X, y=y)
+                setattr(self, '_validated_data', True)
+            else:
+                out = X, y
+        elif X is not None:
+            if not hasattr(self, '_validated_data'):
+                out = _validate_data(X=X)
+            else:
+                out = X
+        elif y is not None:
+            if not hasattr(self, '_validated_data'):
+                out = _validate_data(y=y)
+            else:
+                out = y
+        else:
+            raise ValueError('Both the data matrix X and the target matrix y are None. '
+                             'Thus, there is no data to validate.')
+
+        return out
+
+
     def dump(self, value, filename):
         """Save a file in joblib format."""
 
@@ -170,21 +209,26 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
     def get_pipeline(self, y, n_quantiles=None):
         """Create pipe attribute for downstream tasks."""
 
-        if n_quantiles is None:
-            n_quantiles = _n_samples(y)
+        y = self._validate_data(y=y)
+
+        if n_quantiles is None and isinstance(self.pipeline_transform, str):
+            if re.search('quantile', self.pipeline_transform):
+                n_quantiles = _n_samples(y)
+
+        kwargs = dict(random_state=self.random_state,
+                      verbose=self.verbose,
+                      n_jobs=self.n_jobs,
+                      cv=self.cv,
+                      memory=self.pipeline_memory,
+                      target_index=self.target_index,
+                      target_type = sklearn.utils.multiclass.type_of_target(y),
+                      n_quantiles=n_quantiles,
+                      chain_order=self.chain_order,
+                      base_boosting_options=self.base_boosting_options)
 
         self.pipe =  _make_pipeline(estimator=self._regressor,
                                     transform=self.pipeline_transform,
-                                    n_targets=_n_targets(y),
-                                    random_state=self.random_state,
-                                    verbose=self.verbose,
-                                    n_jobs=self.n_jobs,
-                                    cv=self.cv,
-                                    memory=self.pipeline_memory,
-                                    n_quantiles=n_quantiles,
-                                    chain_order=self.chain_order,
-                                    target_index=self.target_index,
-                                    base_boosting_options=self.base_boosting_options)
+                                    **kwargs)
 
     def regattr(self, attr):
         """Get regressor attribute from pipeline."""
@@ -203,6 +247,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
 
     def _check_target_index(self, y):
         """Automates single-target regression subtask slicing."""
+
+        y = self._validate_data(y=y)
 
         if self.target_index is not None and \
         sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
@@ -228,11 +274,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
     def fit(self, X, y, sample_weight=None):
         """Fit regressor."""
 
-        if not hasattr(self, 'validated_data'):
-            X, y = _validate_data(X=X, y=y)
-            setattr(self, 'validated_data', True)
+        X, y = self._validate_data(X=X, y=y)
 
-        # Automates single-target slicing
+        # Automates single-target slicing.
         y = self._check_target_index(y=y)
 
         if not hasattr(self, 'pipe'):
@@ -246,20 +290,10 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
     def predict(self, X):
         """Generate predictions."""
 
-        if not hasattr(self, 'validated_data'):
-            X = _validate_data(X=X)
+        assert hasattr(self, 'pipe')
+        X = self._validate_data(X=X)
 
-        if hasattr(self, 'return_incumbent_'):
-            # Generate predictions with the incumbent
-            if self.target_index is not None:
-                y_pred = X.iloc[:, self.target_index]
-            else:
-                y_pred = X
-        else:
-            assert hasattr(self, 'pipe')
-            y_pred = self.pipe.predict(X=X)
-
-        return y_pred
+        return self.pipe.predict(X=X)
 
     def score(self, y_true, y_pred, scoring, multioutput):
         """Compute score in supervised fashion."""
@@ -311,11 +345,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin, Add
         if return_incumbent_score is True.
         """
 
-        if not hasattr(self, 'validated_data'):
-            X, y = _validate_data(X=X, y=y)
-            setattr(self, 'validated_data', True)
+        X, y = self._validate_data(X=X, y=y)
 
-        # Automates single-target slicing
+        # Automates single-target slicing.
         y = self._check_target_index(y=y)
 
         X, y, groups = sklearn.utils.validation.indexable(X, y, None)
@@ -441,8 +473,8 @@ class Regressor(BaseRegressor):
                  randomizedcv_n_iter=20, bayesoptcv_init_points=2,
                  bayesoptcv_n_iter=20, return_train_score=True,
                  pipeline_transform='quantilenormal', pipeline_memory=None,
-                 params=None, chain_order=None, stacking_layer=None,
-                 target_index=None, base_boosting_options=None):
+                 params=None, target_index=None, chain_order=None,
+                 stacking_options=None, base_boosting_options=None):
 
         super().__init__(regressor_choice=regressor_choice,
                          cv=cv,
@@ -455,20 +487,22 @@ class Regressor(BaseRegressor):
                          pipeline_transform=pipeline_transform,
                          pipeline_memory=pipeline_memory,
                          params=params,
-                         chain_order=chain_order,
-                         stacking_layer=stacking_layer,
                          target_index=target_index,
+                         chain_order=chain_order,
+                         stacking_options=stacking_options,
                          base_boosting_options=base_boosting_options)
-
-        assert isinstance(refit, bool)
-        assert isinstance(randomizedcv_n_iter, int)
-        assert isinstance(bayesoptcv_init_points, int)
-        assert isinstance(bayesoptcv_n_iter, int)
 
         self.refit = refit
         self.randomizedcv_n_iter = randomizedcv_n_iter
         self.bayesoptcv_init_points = bayesoptcv_init_points
         self.bayesoptcv_n_iter = bayesoptcv_n_iter
+        self._validate_search_options()
+
+    def _validate_search_options(self):
+        assert isinstance(self.refit, bool)
+        assert isinstance(self.randomizedcv_n_iter, int)
+        assert isinstance(self.bayesoptcv_init_points, int)
+        assert isinstance(self.bayesoptcv_n_iter, int)
 
     @property
     def check_regressor(self):
@@ -481,7 +515,7 @@ class Regressor(BaseRegressor):
             super().check_regressor
         except:
             raise TypeError('%s does not adhere to the Scikit-learn estimator convention.'
-                            % (_ESTIMATOR_DICT[self.regressor_choice]))
+                            % (_REGRESSOR_DICT[self.regressor_choice]))
 
     def get_params(self, deep=True):
         """Retrieve parameters."""
@@ -504,12 +538,12 @@ class Regressor(BaseRegressor):
         return super().load(filename=filename)
 
     def regattr(self, attr):
-        """Get regressor attribute from pipeline."""
+        """Gets the regressor's attribute from the pipeline."""
 
         return super().regattr(attr=attr)
 
     def fit(self, X, y, sample_weight=None):
-        """Fit regressor."""
+        """Fits a regressor."""
 
         return super().fit(X=X, y=y, sample_weight=sample_weight)
 
@@ -525,11 +559,9 @@ class Regressor(BaseRegressor):
             setattr(self, '_return_incumbent', True)
 
     def baseboostcv(self, X, y, sample_weight=None):
-        """Base boosting with inbuilt cross-validation"""
+        """Base boosting with inbuilt cross-validation."""
 
-        if not hasattr(self, 'validated_data'):
-            X, y = _validate_data(X=X, y=y)
-            setattr(self, 'validated_data', True)
+        X, y = super()._validate_data(X=X, y=y)
 
         # Automates single-target slicing
         y = super()._check_target_index(y=y)
@@ -542,8 +574,8 @@ class Regressor(BaseRegressor):
             super().get_pipeline(y=y)
 
         if not hasattr(self, '_return_incumbent'):
-            # Base boosting improves performance,
-            # so we fit the candidate.
+            # This checks if the candidate was chosen
+            # in model selection.
             super().fit(X=X, y=y, sample_weight=sample_weight)
             return self.pipe
         else:
@@ -551,78 +583,99 @@ class Regressor(BaseRegressor):
             return self
 
     def predict(self, X):
-        """Generate predictions."""
+        """Generates predictions."""
 
-        return super().predict(X=X)
+        X = self._validate_data(X=X)
 
-    def score(self, y_true, y_pred, filename=None):
-        """Compute score DataFrame in supervised fashion."""
+        if hasattr(self, 'return_incumbent_'):
+            # This checks if the incumbent was chosen in
+            # the inbuilt model selection step in the
+            # cross-validated version of base boosting.
+            if self.target_index is not None:
+                y_pred = X.iloc[:, self.target_index]
+            else:
+                y_pred = X
+        else:
+            assert hasattr(self, 'pipe')
+            y_pred = self.pipe.predict(X=X)
 
-        if filename is not None:
-            assert isinstance(filename, str)
+        return y_pred
+
+    def score(self, y_true, y_pred, path=None):
+        """Computes the DataFrame of scores."""
 
         score_summary = {}
         for scoring in _SCORE_CHOICE:
             score_summary[scoring] = super().score(y_true=y_true, y_pred=y_pred,
-                                                   scoring=scoring, multioutput=self.score_multioutput)
+                                                   scoring=scoring,
+                                                   multioutput=self.score_multioutput)
 
         score_summary_df = pd.DataFrame(score_summary).dropna(how='any', axis=1)
         score_summary_df.index.name = 'target'
         
-        # Shifts the index origin by one
+        # Shifts the index origin by one.
         if self.target_index is not None:
             score_summary_df.index = pd.RangeIndex(start=self.target_index + 1,
-                                                   stop=self.target_index + 2, step=1)
+                                                   stop=self.target_index + 2,
+                                                   step=1)
 
-        if filename is not None:
-            path = _convert_filename_to_csv_path(filename=filename)
+        if path is not None:
+            assert isinstance(path, str)
             score_summary_df.to_csv(path_or_buf=path)
 
         return score_summary_df
 
     def cross_validate(self, X, y, return_incumbent_score=False, cv=None):
-        """
-        Retrieve cross-validation results for regressor and incumbent,
-        if return_incumbent_score is True.
-        """
+        """Retrieves the cross-validation results."""
 
         return super().cross_validate(X=X, y=y,
                                       return_incumbent_score=return_incumbent_score,
                                       cv=cv)
 
     def cross_val_score(self, X, y, return_incumbent_score=False, cv=None):
-        """
-        Retrieve withheld fold errors for regressor and incumbent,
-        if return_incumbent_score is True.
-        """
+        """Retrieves the cross-validation score."""
 
         return super().cross_val_score(X=X, y=y,
                                        return_incumbent_score=return_incumbent_score,
                                        cv=cv)
 
     def _preprocess_search_params(self, y, search_params):
-        """
-        Search parameter helper function, which preprocesses
-        the (hyper)parameter names based on the number of
-        single-targets and the independence assumption,
-        i.e., chaining.
+        """Helper method preprocesses the (hyper)parameters.
+
+        Preprocesses the (hyper)parameter names for exhaustive search.
+        This requires checking whether the task is single-target or
+        multi-target regression. If the task is multi-target regression,
+        then this further requires checking whether the single-target
+        regression subtasks are assumed to be independent or chained. 
         """
 
         if sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
             if self.chain_order is not None:
-                search_params = _preprocessing(raw_params=search_params,
-                                               multi_target=True,
-                                               chain=True)
+                search_params = _preprocess_hyperparams(raw_params=search_params,
+                                                        multi_target=True,
+                                                        chain=True)
             else:
-                search_params = _preprocessing(raw_params=search_params,
-                                               multi_target=True,
-                                               chain=False)
+                search_params = _preprocess_hyperparams(raw_params=search_params,
+                                                        multi_target=True,
+                                                        chain=False)
         else:
-            search_params = _preprocessing(raw_params=search_params,
-                                           multi_target=False,
-                                           chain=False)
+            search_params = _preprocess_hyperparams(raw_params=search_params,
+                                                    multi_target=False,
+                                                    chain=False)
 
         return search_params
+
+    def _estimate_fold_size(self, y, cv):
+        """Helper method to estimate cross-validation fold size."""
+
+        n_samples = _n_samples(y)
+        if isinstance(cv, int):
+            fold_size =  np.full(shape=n_samples, fill_value=n_samples // cv,
+                                 dtype=np.int)
+        else:
+            fold_size =  np.full(shape=n_samples, fill_value=n_samples // cv.n_splits,
+                                 dtype=np.int)
+        return n_samples - (np.max(fold_size) + 1)
 
     def _search(self, X, y, search_params, search_method='gridsearchcv', cv=None):
         """Helper (hyper)parameter search method."""
@@ -637,15 +690,8 @@ class Regressor(BaseRegressor):
             cv = self.cv
 
         if not hasattr(self, 'pipe'):
-            n_samples = _n_samples(y)
-            if isinstance(cv, int):
-                fold_size =  np.full(shape=n_samples, fill_value=n_samples // cv,
-                                 dtype=np.int)
-            else:
-                fold_size =  np.full(shape=n_samples, fill_value=n_samples // cv.n_splits,
-                                     dtype=np.int)
-            estimate_fold_size = n_samples - (np.max(fold_size) + 1)
-            self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
+            self.get_pipeline(y=y,
+                              n_quantiles=self._estimate_fold_size(y=y, cv=cv))
 
         if search_method == 'gridsearchcv':
             self._regressor_search = sklearn.model_selection.GridSearchCV(
@@ -676,17 +722,12 @@ class Regressor(BaseRegressor):
                 self._regressor_search = self.pipe.set_params(**get_best_params_)
 
     def search(self, X, y, search_params, search_method='gridsearchcv',
-               filename=None, cv=None):
+               cv=None, path=None):
         """(Hyper)parameter search method."""
 
-        if filename is not None:
-            assert isinstance(filename, str)
+        X, y = super()._validate_data(X=X, y=y)
 
-        if not hasattr(self, 'validated_data'):
-            X, y = _validate_data(X=X, y=y)
-            setattr(self, 'validated_data', True)
-
-        # Automates single-target slicing
+        # Automates single-target slicing.
         y = self._check_target_index(y=y)
 
         self._search(X=X, y=y, search_params=search_params,
@@ -712,14 +753,15 @@ class Regressor(BaseRegressor):
                                      'there must be the attribute: %s.'
                                      % (best_params_, best_score_, optimization))
 
-        # Sklearn and bayes-opt return negative MAE and MSE scores,
-        # so we restore nonnegativity.
+        # Sklearn and bayes-opt return negative
+        # MAE and MSE scores, so we restore
+        # nonnegativity.
         if re.match('neg', self.scoring):
             self.best_score_.loc['best_score'] *= -1.0
 
         self.search_summary_ = pd.concat([self.best_score_, self.best_params_], axis=0)
 
-        # Filter based on sklearn model search attributes
+        # Filter based on sklearn model search attributes.
         _sklearn_list = ['best_estimator_', 'cv_results_', 'refit_time_']
         if all(hasattr(self._regressor_search, attr) for attr in _sklearn_list):
             self.pipe = self._regressor_search.best_estimator_
@@ -729,22 +771,24 @@ class Regressor(BaseRegressor):
             self.refit_time_ = pd.Series({'refit_time':self._regressor_search.refit_time_})
             self.search_summary_ = pd.concat([self.search_summary_, self.refit_time_], axis=0)
 
-        if filename is not None:
-            path = _convert_filename_to_csv_path(filename=filename)
+        if path is not None:
+            assert isinstance(path, str)
             self.search_summary_.to_csv(path_or_buf=path, header=True)
 
     def _search_and_score(self, estimator, X, y, scorer, train, test, verbose,
                           search_params, search_method='gridsearchcv', cv=None):
-        """
-        Helper method for nested cross-validation, which exhaustively searches over the
-        specified (hyper)parameters in the inner loop then scores the best performing
-        regressor in the outer loop.
+        """Helper method for nested cross-validation.
+
+        Exhaustively searches over the specified (hyper)parameters in the inner
+        loop then scores the best performing regressor in the outer loop.
         """
 
         X_train, y_train = sklearn.utils.metaestimators._safe_split(estimator=estimator,
-                                                                    X=X, y=y, indices=train)
+                                                                    X=X, y=y,
+                                                                    indices=train)
         X_test, y_test = sklearn.utils.metaestimators._safe_split(estimator=estimator,
-                                                                  X=X, y=y, indices=test,
+                                                                  X=X, y=y,
+                                                                  indices=test,
                                                                   train_indices=train)
 
         self.search(X=X_train, y=y_train, search_params=search_params,
@@ -756,15 +800,15 @@ class Regressor(BaseRegressor):
             self.pipe._fit(X=X_train, y=y_train)
 
         test_score = sklearn.model_selection._validation._score(estimator=self.pipe,
-                                                                X_test=X_test, y_test=y_test,
+                                                                X_test=X_test,
+                                                                y_test=y_test,
                                                                 scorer=scorer)
 
         return (self.best_score_.values, test_score)
 
     def nested_cross_validate(self, X, y, search_params, search_method='gridsearchcv', outer_cv=None,
                               inner_cv=None, return_inner_loop_score=False):
-        """
-        Performs a nested cross-validation procedure.
+        """Performs a nested cross-validation procedure.
 
         Notes
         -----
@@ -772,15 +816,13 @@ class Regressor(BaseRegressor):
         loop may return a different set of optimal (hyper)parameters.
 
         References
-        ---------
+        ----------
         Jacques Wainer and Gavin Cawley. "Nested cross-validation when selecting
         classifiers is overzealous for most practical applications," arXiv preprint
         arXiv:1809.09446 (2018).
         """
 
-        if not hasattr(self, 'validated_data'):
-            X, y = _validate_data(X=X, y=y)
-            setattr(self, 'validated_data', True)
+        X, y = super()._validate_data(X=X, y=y)
 
         # Automates single-target slicing
         y = self._check_target_index(y=y)
@@ -794,17 +836,11 @@ class Regressor(BaseRegressor):
             inner_cv = self.cv
 
         if not hasattr(self, 'pipe'):
-            n_samples = _n_samples(y)
-            if isinstance(outer_cv, int):
-                fold_size =  np.full(shape=n_samples, fill_value=n_samples // outer_cv,
-                                     dtype=np.int)
-            else:
-                fold_size =  np.full(shape=n_samples, fill_value=n_samples // outer_cv.n_splits,
-                                     dtype=np.int)
-            estimate_fold_size = n_samples - (np.max(fold_size) + 1)
-            self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
+            self.get_pipeline(y=y,
+                              n_quantiles=self._estimate_fold_size(y=y, cv=outer_cv))
 
-        outer_cv = sklearn.model_selection._split.check_cv(cv=outer_cv, y=y, classifier=False)
+        outer_cv = sklearn.model_selection._split.check_cv(cv=outer_cv, y=y,
+                                                           classifier=False)
 
         scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
                                                                         scoring=self.scoring)
@@ -817,8 +853,8 @@ class Regressor(BaseRegressor):
         # the performance of this regressor is evaluated in the outer loop.
         scores = parallel(
             joblib.delayed(self._search_and_score)(
-                estimator=sklearn.base.clone(self.pipe), X=X, y=y, scorer=scorers, train=train,
-                test=test, verbose=self.verbose, search_params=search_params,
+                estimator=sklearn.base.clone(self.pipe), X=X, y=y, scorer=scorers,
+                train=train, test=test, verbose=self.verbose, search_params=search_params,
                 search_method='gridsearchcv', cv=inner_cv)
             for train, test in outer_cv.split(X, y, groups))
 

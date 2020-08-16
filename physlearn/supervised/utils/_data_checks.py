@@ -14,14 +14,20 @@ import sklearn.utils.multiclass
 
 
 def _check_X(X):
-    """Check if the data matrix is using a pandas data representation."""
+    """Check if the data matrix uses a pandas data representation."""
 
     assert isinstance(X, (pd.Series, pd.DataFrame))
     return X
 
+def _check_y(y):
+    """Check if the target matrix uses a pandas data representation."""
+
+    assert isinstance(y, (pd.Series, pd.DataFrame))
+    return y
+
 
 def _check_X_y(X, y):
-    """Check if the data matrix and the target(s) are using pandas data representations."""
+    """Check if the data matrix and the target(s) use a pandas data representations."""
 
     assert all(isinstance(var, (pd.Series, pd.DataFrame)) for var in [X, y])
     assert X.index.equals(y.index)
@@ -40,13 +46,18 @@ def _check_X_y(X, y):
         return data.iloc[:, :n_features], data.iloc[:, n_features:].squeeze()
 
 
-def _validate_data(X, y=None):
-    """Bundles the pandas data checks."""
+def _validate_data(X=None, y=None):
+    """Bundles the pandas data checks together."""
 
-    if y is not None:
-        out = _check_X_y(X, y)
+    if X is not None and y is not None:
+        out = _check_X_y(X=X, y=y)
+    elif X is not None:
+        out = _check_X(X=X)
+    elif y is not None:
+        out = _check_y(y=y)
     else:
-        out = _check_X(X)
+        raise ValueError('Both the data matrix X and the target matrix y are None. '
+                         'Thus, there is no data to validate.')
     return out
 
 

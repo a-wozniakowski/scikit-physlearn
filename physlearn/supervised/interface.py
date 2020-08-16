@@ -1,5 +1,7 @@
 """
-Automatic regressor retrieval from the model dictionary with stacking support.
+The :mod:`physlearn.supervised.interface` provides an interface object, which
+abstracts regressors and enables their amalgamation into a unified regressor
+object.
 """
 
 # Author: Alex Wozniakowski
@@ -12,80 +14,216 @@ import mlxtend.regressor
 import sklearn.ensemble
 
 from physlearn.base import AbstractEstimatorDictionaryInterface
-from physlearn.supervised.utils._definition import _ESTIMATOR_DICT
-
-
-_ESTIMATOR_DICT = _ESTIMATOR_DICT['regression']
+from physlearn.supervised.utils._definition import _REGRESSOR_DICT
 
         
 class RegressorDictionaryInterface(AbstractEstimatorDictionaryInterface):
     """
-    Interface between the model dictionary and regressor object.
+    Interface between the base regressor object and the regressor dictionary.
+
+    Parameters
+    ----------
+    regressor_choice : str
+        The dictionary key for lookup in the dictionary of regressors.
+        The key is case-sensitive, e.g., the Scikit-learn regressor
+        Ridge has key ``'ridge'``.
+
+    params : dict, list, or None, optional (default=None)
+        The choice of (hyper)parameters.
+
+    stacking_options : dict or None, optional (default=None)
+        A dictionary of stacking options, whereby ``layers``
+        must be specified:
+
+        layers : dict
+            A dictionary of stacking layer(s).
+        shuffle : bool or None
+            Determines whether to shuffle the training data in
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+        refit : bool or None
+            Determines whether to clone and refit the regressors in
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+        passthrough : bool or None
+            Determines whether to concatenate the original features with
+            the first stacking layer predictions in
+            :class:`sklearn.ensemble.StackingRegressor`,
+            :class:`mlxtend.regressor.StackingRegressor`, or
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+        meta_features : bool or None
+            Determines whether to make the concatenated features
+            accessible through the attribute ``train_meta_features_``
+            in :class:`mlxtend.regressor.StackingRegressor` and
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+        voting_weights : ndarray of shape (n_regressors,) or None
+            Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
     """
 
-    def __init__(self, regressor_choice, params=None, stacking_layer=None):
+    def __init__(self, regressor_choice: str, params=None,
+                 stacking_options=None):
+
         self.regressor_choice = regressor_choice
         self.params = params
-        self.stacking_layer = stacking_layer
+        self.stacking_options = stacking_options
 
-    def set_params(self, cv=5, verbose=0, random_state=0, n_jobs=-1,
-                   shuffle=True, refit=True, passthrough=True,
-                   meta_features=True, voting_weights=None):
+    def get_params(self, regressor):
+        """
+        Retrieves the (hyper)parameters.
 
-        model = {}
-        if self.params is not None:
-            if self.stacking_layer is not None:
-                if any(self.regressor_choice == choice for choice in ['stackingregressor', 'votingregressor']):
-                    model['regressors'] = [
-                        (str(index), _ESTIMATOR_DICT[choice]().set_params(**self.params[0][index]))
-                        for index, choice
-                        in enumerate(self.stacking_layer['regressors'])]
-                else:
-                    model['regressors'] = [_ESTIMATOR_DICT[choice]().set_params(**self.params[0][index])
-                                          for index, choice
-                                          in enumerate(self.stacking_layer['regressors'])]
-                if self.regressor_choice != 'votingregressor':
-                    final_regressor = _ESTIMATOR_DICT[self.stacking_layer['final_regressor']]()
-                    model['final_regressor'] = final_regressor.set_params(**self.params[1])
-            else:
-                model['regressor'] = _ESTIMATOR_DICT[self.regressor_choice]().set_params(**self.params)
+        Notes
+        -----
+        The :meth:`physlearn.RegressorDictionaryInterface.set_params` must be
+        called beforehand.
+        """
+
+        if not hasattr(self, '_set_params'):
+            raise AttributeError('In order to retrieve the (hyper)parameters '
+                                 'call set_params beforehand.')
         else:
-            # Retrieve default params, since params was None
-            if self.stacking_layer is not None:
-                if any(self.regressor_choice == choice for choice in ['stackingregressor', 'votingregressor']):
-                    model['regressors'] = [(str(index), _ESTIMATOR_DICT[choice]())
-                                          for index, choice
-                                          in enumerate(self.stacking_layer['regressors'])]
-                else:
-                    model['regressors'] = [_ESTIMATOR_DICT[choice]()
-                                          for choice
-                                          in self.stacking_layer['regressors']]
-                if self.regressor_choice != 'votingregressor':
-                    model['final_regressor'] = _ESTIMATOR_DICT[self.stacking_layer['final_regressor']]()
-            else:
-                model['regressor'] = _ESTIMATOR_DICT[self.regressor_choice]()
+            return regressor.get_params()
 
-        if 'regressor' in model:
-            out = model['regressor']
-        elif 'regressors' in model:
-            regressors = model['regressors']
-            if 'final_regressor' in model:
-                final_regressor = model['final_regressor']
+    def set_params(self, **kwargs):
+        """
+        Sets the (hyper)parameters.
+
+        If ``params`` is ``None``, then the default (hyper)parameters
+        will be set.
+
+        cv : int, cross-validation generator, an iterable, or None
+            Determines the cross-validation strategy in
+            :class:`sklearn.ensemble.StackingRegressor`,
+            :class:`mlxtend.regressor.StackingRegressor`, or
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        verbose : int or None
+            Determines verbosity in
+            :class:`mlxtend.regressor.StackingRegressor` and
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        random_state : int, RandomState instance, or None
+            Determines the random number generation in
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        n_jobs : int or None
+            The number of jobs to run in parallel.
+
+        stacking_options : dict or None, optional (default=None)
+            A dictionary of stacking options, whereby ``layers``
+            must be specified:
+
+            layers : dict
+                A dictionary of stacking layer(s).
+            shuffle : bool or None, (default=True)
+                Determines whether to shuffle the training data in
+                :class:`mlxtend.regressor.StackingCVRegressor`.
+            refit : bool or None, (default=True)
+                Determines whether to clone and refit the regressors in
+                :class:`mlxtend.regressor.StackingCVRegressor`.
+            passthrough : bool or None, (default=True)
+                Determines whether to concatenate the original features with
+                the first stacking layer predictions in
+                :class:`sklearn.ensemble.StackingRegressor`,
+                :class:`mlxtend.regressor.StackingRegressor`, or
+                :class:`mlxtend.regressor.StackingCVRegressor`.
+            meta_features : bool or None, (default=True)
+                Determines whether to make the concatenated features
+                accessible through the attribute ``train_meta_features_``
+                in :class:`mlxtend.regressor.StackingRegressor` and
+                :class:`mlxtend.regressor.StackingCVRegressor`.
+            voting_weights : ndarray of shape (n_regressors,) or None, (default=None)
+                Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
+        """
+        cv = kwargs.pop('cv', None)
+        verbose = kwargs.pop('verbose', None)
+        random_state = kwargs.pop('random_state', None)
+        n_jobs = kwargs.pop('n_jobs', None)
+        stacking_options = kwargs.pop('stacking_options', None)
+        if isinstance(stacking_options, dict):
+            # Check if the user specified the
+            # various stacking options and set
+            # the default behavior if unspecified.
+            if 'layers' not in stacking_options:
+                raise KeyError('The layers key is necessary for stacking. '
+                               'Without its specification the stacking '
+                               'layers are ambiguous.')
+            else:
+                layers = stacking_options['layers']
+            if 'shuffle' in stacking_options:
+                shuffle = stacking_options['shuffle']
+            else:
+                shuffle = True
+            if 'refit' in stacking_options:
+                refit = stacking_options['refit']
+            else:
+                refit = True
+            if 'passthrough' in stacking_options:
+                passthrough = stacking_options['passthrough']
+            else:
+                passthrough = True
+            if 'meta_features' in stacking_options:
+                meta_features = stacking_options['meta_features']
+            else:
+                meta_features = True
+            if 'voting_weights' in stacking_options:
+                voting_weights = stacking_options['voting_weights']
+            else:
+                voting_weights = None
+        if kwargs:
+            raise TypeError('Unknown keyword arguments: %s'
+                            % (list(kwargs.keys())[0]))
+
+        reg = {}
+        if self.params is not None:
+            if self.stacking_options is not None:
+                if any(self.regressor_choice == choice for choice in ['stackingregressor', 'votingregressor']):
+                    reg['regressors'] = [(str(index), _REGRESSOR_DICT[choice]().set_params(
+                                         **self.params[0][index]))
+                                        for index, choice
+                                        in enumerate(layers['regressors'])]
+                else:
+                    reg['regressors'] = [_REGRESSOR_DICT[choice]().set_params(
+                                         **self.params[0][index])
+                                        for index, choice
+                                        in enumerate(layers['regressors'])]
+                if self.regressor_choice != 'votingregressor':
+                    reg['final_regressor'] = _REGRESSOR_DICT[layers['final_regressor']]().set_params(
+                                             **self.params[1])
+            else:
+                reg['regressor'] = _REGRESSOR_DICT[self.regressor_choice]().set_params(**self.params)
+        else:
+            # Retrieve default (hyper)parameters.
+            if self.stacking_options is not None:
+                if any(self.regressor_choice == choice for choice in ['stackingregressor', 'votingregressor']):
+                    reg['regressors'] = [(str(index), _REGRESSOR_DICT[choice]())
+                                        for index, choice
+                                        in enumerate(layers['regressors'])]
+                else:
+                    reg['regressors'] = [_REGRESSOR_DICT[choice]()
+                                        for choice 
+                                        in layers['regressors']]
+                if self.regressor_choice != 'votingregressor':
+                    reg['final_regressor'] = _REGRESSOR_DICT[layers['final_regressor']]()
+            else:
+                reg['regressor'] = _REGRESSOR_DICT[self.regressor_choice]()
+
+        if 'regressor' in reg:
+            out = reg['regressor']
+        elif 'regressors' in reg:
+            if 'final_regressor' in reg:
                 if self.regressor_choice == 'stackingregressor':
-                    out = sklearn.ensemble.StackingRegressor(estimators=regressors, 
-                                                             final_estimator=final_regressor,
+                    out = sklearn.ensemble.StackingRegressor(estimators=reg['regressors'], 
+                                                             final_estimator=reg['final_regressor'],
                                                              cv=cv,
                                                              n_jobs=n_jobs,
                                                              passthrough=passthrough)
                 elif self.regressor_choice == 'mlxtendstackingregressor':
-                    out = mlxtend.regressor.StackingRegressor(regressors=regressors,
-                                                              meta_regressor=final_regressor,
+                    out = mlxtend.regressor.StackingRegressor(regressors=reg['regressors'],
+                                                              meta_regressor=reg['final_regressor'],
                                                               verbose=verbose,
                                                               use_features_in_secondary=passthrough,
                                                               store_train_meta_features=meta_features)
                 elif self.regressor_choice == 'mlxtendstackingcvregressor':
-                    out = mlxtend.regressor.StackingCVRegressor(regressors=regressors,
-                                                                meta_regressor=final_regressor,
+                    out = mlxtend.regressor.StackingCVRegressor(regressors=reg['regressors'],
+                                                                meta_regressor=reg['final_regressor'],
                                                                 cv=cv,
                                                                 shuffle=shuffle,
                                                                 random_state=random_state,
@@ -95,8 +233,12 @@ class RegressorDictionaryInterface(AbstractEstimatorDictionaryInterface):
                                                                 use_features_in_secondary=passthrough,
                                                                 store_train_meta_features=meta_features)
             else:
-                out = sklearn.ensemble.VotingRegressor(estimators=regressors,
+                out = sklearn.ensemble.VotingRegressor(estimators=reg['regressors'],
                                                        weights=voting_weights,
                                                        n_jobs=n_jobs)
 
-        return out, out.get_params()
+        # This attribute is used in get_params to check
+        # if the (hyper)parameters have been set.
+        setattr(self, '_set_params', True)
+
+        return out

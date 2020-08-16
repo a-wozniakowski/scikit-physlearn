@@ -1,14 +1,16 @@
 """
 The :mod:`physlearn.pipeline` module enhances the original Scikit-learn
-pipeline with an implementation of base boosting. Thereby, enabling the
-transfer of prior domain knowledge to gradient boosting.
+pipeline with an implementation of base boosting.
 """
 
 # Author: Alex Wozniakowski
 # License: MIT
 
+from __future__ import annotations
+
 import copy
 import joblib
+import typing
 
 import numpy as np
 import pandas as pd
@@ -23,184 +25,100 @@ import sklearn.utils
 import sklearn.utils.metaestimators
 import sklearn.utils.multiclass
 
-from .loss import LOSS_FUNCTIONS
-
+from physlearn.loss import LOSS_FUNCTIONS
 from physlearn.supervised.utils._data_checks import _n_targets
 from physlearn.supervised.utils._definition import (_CATBOOST_FLAG, _CHAIN_FLAG,
                                                     _MULTI_TARGET,
                                                     _PIPELINE_TRANSFORM_CHOICE,
                                                     _XGBOOST_FLAG)
-from physlearn.supervised.utils._model_checks import _check_line_search_options
+from physlearn.supervised.utils._estimator_checks import _check_line_search_options
 
-
-def _make_pipeline(estimator, transform, n_targets,
-                   random_state, verbose, n_jobs=-1,
-                   cv=5, memory=None, n_quantiles=None,
-                   chain_order=None, target_index=None,
-                   base_boosting_options=None):
-    """Construct a ModifiedPipeline from the given estimator.
-
-    Parameters
-    ----------
-    estimator : An estimator that supports the Scikit-learn API.
-
-    transform : str, list, or tuple
-        Choice of transform(s).
-
-    n_targets : int
-        Number of targets in the supervised learning task. If greater than
-        one, then sklearn.multioutput.RegressorChain is utilized if chain_order
-        is not None otherwise sklearn.multioutput.MultiOutputRegressor is utilized.
-
-    random_state : int, RandomState instance or None.
-        Determines random number generation in sklearn.preprocessing.QuantileTransformer
-        or sklearn.multioutput.RegressorChain.
-
-    verbose : int
-        Determines verbosity.
-
-    n_jobs : int or None, optional (default=-1)
-        The number of jobs to run in parallel for fit.
-
-    cv : int, cross-validation generator or an iterable, optional (default=None)
-        Determines which targets are utilized in sklearn.multioutput.RegressorChain.
-
-    memory : str or object with the joblib.Memory interface, default=None
-        Enables fitted transform caching.
-
-    n_quantiles : int or None, optional (default=None)
-        Number of quantiles in sklearn.preprocessing.QuantileTransformer.
-
-    chain_order : list or None, optional (default=None)
-        Target order used in chaining.
-
-    target_index : int or None, optional (default=None)
-        Index of single-target slice in the multi-target task.
-
-    base_boosting_options : dict or None, optional (default=None)
-        The required keys are n_estimators :int: which specifies
-        the number of basis functions in the noise term,
-        boosting_loss :str: which specifies the loss function
-        utilized in the pseudo-residual computation-- 'ls' denotes
-        the squared error loss function, 'lad' denotes the absolute
-        error loss function, 'huber' denotes the Huber loss function,
-        and 'quantile' denotes the quantile loss function, and
-        line_search_options :dict: which specifies the line search
-        algorithm and its parameters.
-    """
-
-    if isinstance(transform, (list, tuple)):
-        # Allows custom transform options.
-        if not hasattr(transform, 'append'):
-            # Wrap a list around transform as downstream
-            # tasks require append.
-            steps = [transform]
-        else:
-            steps = transform
-    elif transform in _PIPELINE_TRANSFORM_CHOICE:
-        # Utulize the in-built transforma options.
-        if transform == 'standardscaler':
-            transform = sklearn.preprocessing.StandardScaler()
-        elif transform == 'boxcox':
-            transform = sklearn.preprocessing.PowerTransformer(method='box-cox')
-        elif transform == 'yeojohnson':
-            transform = sklearn.preprocessing.PowerTransformer(method='yeo-johnson')
-        elif transform == 'quantileuniform':
-            transform = sklearn.preprocessing.QuantileTransformer(n_quantiles=n_quantiles,
-                                                                  output_distribution='uniform',
-                                                                  random_state=random_state)
-        elif transform == 'quantilenormal':  
-            transform = sklearn.preprocessing.QuantileTransformer(n_quantiles=n_quantiles,
-                                                                  output_distribution='normal',
-                                                                  random_state=random_state)
-        steps = [('tr', transform)]
-    else:
-        # No transform steps were provided.
-        steps = []
-
-    # Automatically prepares pipeline for single-target
-    # or multi-target regression task
-    if n_targets == 1:
-        steps.append(('reg', estimator))
-    elif n_targets > 1:
-        if chain_order is not None:
-            estimator = sklearn.multioutput.RegressorChain(base_estimator=estimator,
-                                                           order=chain_order, cv=cv,
-                                                           random_state=random_state)
-            steps.append(('reg', estimator))
-        else:
-            estimator = sklearn.multioutput.MultiOutputRegressor(estimator=estimator,
-                                                                 n_jobs=n_jobs)
-            steps.append(('reg', estimator))
-
-    return ModifiedPipeline(steps=steps,
-                            memory=memory,
-                            verbose=verbose,
-                            n_jobs=n_jobs,
-                            target_index=target_index,
-                            base_boosting_options=base_boosting_options)
+DataFrame_or_Series = typing.Union[pd.DataFrame, pd.Series]
+pandas_or_numpy = typing.Union[pd.DataFrame, pd.Series, np.ndarray]
 
 
 class ModifiedPipeline(sklearn.pipeline.Pipeline):
     """Custom pipeline object that supports base boosting.
 
-    The object inherits from the Scikit-learn Pipeline object, so it retains
-    the ability to sequentially assemble several steps of transforms and a
-    final estimator that can be cross-validated together, while setting
-    different parameters. Further, it supports base boosting, which enables
-    the transfer of prior domain knowledge to gradient boosting.
+    The object inherits from the original Scikit-learn Pipeline, thus it is
+    designed to sequentially compose a list of named transforms and a final
+    estimator into a new estimator. The modification extends this
+    functionality such that the composed estimator supports base boosting.
+    In other words, the ``base_boosting_options`` parameter enables a user
+    to boost an explicit model of the domain by fitting an additive
+    expansion, wherein the intercept term is generated by the explicit
+    model. As such, the final estimator may be any estimator contained
+    in the dictionary of estimators, i.e., the final estimator is not
+    restricted to the decision tree hypothesis class.
 
     Parameters
     ----------
-    steps: list
-        List of tuples, wherein the last tuple (name, estimator) is an estimator
-        and the preceding tuple(s) (name, transform) are transform(s).
+    steps : list
+        List of tuples, wherein the preceding tuple(s) (name, transform) are transform(s)
+        and the last tuple (name, estimator) is an estimator
 
-    memory: str or object with the joblib.Memory interface, default=None
+    memory : str or object with the joblib.Memory interface, default=None
         Enables fitted transform caching.
 
     verbose : int
         Determines verbosity.
 
     n_jobs : int or None, optional (default=-1)
-        The number of jobs to run in parallel for fit.
+        The number of jobs to run in parallel.
 
     target_index : int or None, optional (default=None)
-        Index of single-target slice in the multi-target task.
+        Specifies the single-target subtask in the multi-target task.
 
     base_boosting_options : dict or None, optional (default=None)
-        The required keys are n_estimators :int: which specifies
-        the number of basis functions in the noise term,
-        boosting_loss :str: which specifies the loss function
-        utilized in the pseudo-residual computation-- 'ls' denotes
-        the squared error loss function, 'lad' denotes the absolute
-        error loss function, 'huber' denotes the Huber loss function,
-        and 'quantile' denotes the quantile loss function, and
-        line_search_options :dict: which specifies the line search
-        algorithm and its parameters.
+        A dictionary of base boosting options, wherein the following options
+        must be specified for base boosting:
+
+            n_estimators :obj:`int`
+                The number of basis functions in the noise term of the additive expansion.
+            boosting_loss :obj:`str` 
+                The loss function utilized in the pseudo-residual computation, where 'ls'
+                denotes the squared error loss function, 'lad' denotes the absolute error
+                loss function, 'huber' denotes the Huber loss function, and 'quantile'
+                denotes the quantile loss function. 
+            line_search_options :obj:`dict` 
+                The line search solver and its options. See the method:
+                :meth:`physlearn.pipeline.ModifiedPipeline.line_search`.
 
     Attributes
-    -----------
-    named_steps : :class:`sklearn.utils.Bunch 
-    <https://scikit-learn.org/stable/modules/generated/sklearn.utils.Bunch.html>`_
+    ----------
+    named_steps : :class:`sklearn.utils.Bunch`
         Dictionary-like object, wherein the keys are the user provided
         step names and the values are the steps parameters.
 
     See Also
     --------
-    physlearn.pipeline.make_pipeline : Convenience function for modified pipeline construction.
+    physlearn.pipeline.make_pipeline : Convenience function for constructing a modified pipeline.
+    physlearn.supervised.utils._definition : Dictionary of final estimator options.
 
     References
     ----------
-    Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-    "Boosting on the shoulders of giants in quantum device calibration",
-    arXiv preprint arXiv:2005.06194 (2020).
+    - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+      "Boosting on the shoulders of giants in quantum device calibration",
+      arXiv preprint arXiv:2005.06194 (2020).
+
+    - John Tukey. "Exploratory Data Analysis", Addison-Wesley (1977).
+    
+    - Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
+      Annals of Statistics, 29(5):1189–1232 (2001).
+    
+    - Trevor Hastie, Robert Tibshirani, and Jerome Friedman.
+      "The Elements of Statistical Learning", Springer (2009).
+
+    - Lars Buitinck et al.
+      "API design for machine learning software: experiences from the scikit-learn project"
+      arXiv preprint arXiv:1309.0238 (2013).
     """
 
     _required_parameters = ['steps']
 
-    def __init__(self, steps, memory=None, verbose=False,
-                 n_jobs=None, target_index=None,
+    def __init__(self, steps: list, memory=None,
+                 verbose=False, n_jobs=None,
+                 target_index=None,
                  base_boosting_options=None):
 
         self.steps = steps
@@ -210,15 +128,14 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         self.target_index = target_index
         self.base_boosting_options = base_boosting_options
         self._validate_steps()
-        self._validate_base_boosting_options()
 
     def _validate_base_boosting_options(self):
         if self.base_boosting_options is not None:
-            for key, boosting_option in self.base_boosting_options.items():
+            for key, option in self.base_boosting_options.items():
                 if key in ['n_estimators', 'n_regressors']:
-                    if boosting_option is not None:
-                        assert isinstance(boosting_option, int) and boosting_option > 0
-                        self.n_estimators = boosting_option
+                    if option is not None:
+                        assert isinstance(option, int) and option > 0
+                        self.n_estimators = option
                     else:
                         raise ValueError('The value of key: %s cannot be None. '
                                          'Specify a positive integer for the number '
@@ -226,19 +143,19 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                                          'expansion.'
                                          % (key))
                 elif key == 'boosting_loss':
-                    if boosting_option is not None:
-                        assert boosting_option in LOSS_FUNCTIONS
-                        self.boosting_loss = boosting_option
+                    if option is not None:
+                        assert option in LOSS_FUNCTIONS
+                        self.boosting_loss = option
                     else:
                         raise ValueError('The value of key: %s cannot be None. '
                                          'The choice of loss function is required '
                                          'in the pseudo-residual computation.'
                                          % (key))
                 elif key == 'line_search_options':
-                    if boosting_option is not None:
-                        assert isinstance(boosting_option, dict)
-                        _check_line_search_options(line_search_options=boosting_option)
-                        self.line_search_options = boosting_option
+                    if option is not None:
+                        assert isinstance(option, dict)
+                        _check_line_search_options(line_search_options=option)
+                        self.line_search_options = option
                     else:
                         raise ValueError('The value of key: %s cannot be None. '
                                          'These options determine the line search '
@@ -255,12 +172,11 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             setattr(self, '_default_fit', True)
 
     @staticmethod
-    def line_search(function, init_guess, opt_method,
-                    alg=None, tol=None, options=None,
-                    niter=None, T=None):
-        """Optimization method used within a stage of the
-        greedy stagewise algorithm, which computes an 
-        expansion coefficient.
+    def line_search(function: typing.Callable[[np.ndarray], float],
+                    init_guess: typing.Union[int, float],
+                    opt_method: str, method=None, tol=None,
+                    options=None, niter=None, T=None) -> np.ndarray:
+        """Computes the expansion coefficient in :meth:`physlearn.pipeline.ModifiedPipeline._fit_stages`.
 
         Parameters
         ----------
@@ -272,9 +188,11 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             The initial guess for the expansion coefficient.
 
         opt_method : str
-            Choice of optimization method.
+            Choice of optimization method. If ``'minimize'``, then
+            :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
+            then :class:`scipy.optimize.basinhopping`.
 
-        alg : str, callable, or None, optional (default=None)
+        method : str, callable, or None, optional (default=None)
             The type of solver utilized in the optimization method.
 
         tol : float or None, optional (default=None)
@@ -289,40 +207,52 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         T : float or None, optional (default=None)
             The temperature paramter utilized in basin-hopping,
             which determines the accept or reject criterion.
+
+        Returns
+        -------
+        res.x[0] : float
+            The expansion coefficient, i.e., the first element in the solution array.
+
+        Notes
+        -----
+        The supported optimization methods include: :class:`scipy.optimize.minimize`
+        and :class:`scipy.optimize.basinhopping`; see the Scipy optimization
+        `documentation <https://docs.scipy.org/doc/scipy/reference/optimize.html>`_ for
+        further details.
         """
 
         if opt_method == 'minimize':
-            assert alg is not None and tol is not None
-            minimize_object = scipy.optimize.minimize(fun=function, x0=init_guess,
-                                                      method=alg, tol=tol,
+            assert method is not None and tol is not None
+            minimize_object = scipy.optimize.minimize(fun=function,
+                                                      x0=init_guess,
+                                                      method=method,
+                                                      tol=tol,
                                                       options=options)            
         elif opt_method == 'basinhopping':
             assert niter is not None and T is not None
             minimize_object = scipy.optimize.basinhopping(func=function,
                                                           x0=init_guess,
-                                                          niter=niter, T=T)
+                                                          niter=niter,
+                                                          T=T)
         else:
-            raise ValueError('The argument: %s is not an implemented optimization method.'
+            raise ValueError('The optimization method: %s has not been implemented.'
                              % (opt_method))
 
-        return minimize_object.x
+        return minimize_object.x[0]
 
-    def _fit_stage(self, X, pseudo_residual, current_expansion, **fit_params_last_step):
-        """Fit a stage of the stagewise additive expansion.
+    def _fit_stage(self, X: DataFrame_or_Series, pseudo_residual: pandas_or_numpy,
+                   **fit_params_last_step) -> None:
+        """Induces a basis function, which is a map from the domain to the pseudo-residual space.
 
         Parameters
         ----------
 
-        X : DataFrame or Series
-        The design matrix, where each row corresponds to an example and the
-        column(s) correspond to the feature(s).
+        X : array-like of shape = [n_samples, n_features]
+            The design matrix, where each row corresponds to an example and the
+            column(s) correspond to the feature(s).
 
-        pseudo_residual : DataFrame or Series
-        The negative gradient of the loss function.
-
-        current_expansion : DataFrame or Series
-        The current estimate of the training target(s). This data is invariant
-        during the call to _fit_stage.
+        pseudo_residual : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
+            The negative gradient of the loss function.
 
         **fit_params_last_step : dict of string -> object
             Parameters passed to the estimator's ``fit`` method during the stage.
@@ -334,45 +264,48 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             else:
                 self._final_estimator.fit(X=X, y=pseudo_residual, **fit_params_last_step)
 
-        return current_expansion
+    def _fit_stages(self, X: DataFrame_or_Series, y: pandas_or_numpy,
+                    init_expansion: pandas_or_numpy,
+                    **fit_params_last_step) -> None:
+        """Fits the additive expansion in a greedy stagewise fashion.
 
-    def _fit_stages(self, X, y, init_expansion, **fit_params_last_step):
-        """
-        Fit the additive expansion in a stagewise fashion.
+        This method transfers prior domain knowledge to gradient boosting through the
+        ``init_expansion`` parameter, and it is designed to be utilized within
+        :meth:`physlearn.pipeline.ModifiedPipeline.fit`. The induced basis functions
+        and the learned expansion coefficients can be retrieved with the ``estimators_``
+        and the ``coefs_`` attributes, respectively.
 
         Parameters
         ----------
 
-        X : DataFrame or Series
+        X : array-like of shape = [n_samples, n_features]
             The design matrix, where each row corresponds to an example and the
             column(s) correspond to the feature(s).
 
-        y : DataFrame or Series
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
-        init_expansion : DataFrame or Series
+        init_expansion : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The smooth term in the additive expansion, i.e., the initial guess
             in gradient boosting.
 
         **fit_params_last_step : dict of string -> object
             Parameters passed to the estimator's ``fit`` method during the stage.
 
+        Attributes
+        ----------
+        estimators_ : list
+            A list of induced basis functions.
+        coefs_ : list
+            A list of learned expansion coefficients.
+
         Notes
         -----
         This greedy stagewise algorithm fits an additive expansion, which differs
         from the standard additve expansion. Namely, the constant term is a random
-        variable, which depends upon the input example, e.g., init_expansion.
-
-        References
-        ---------
-        Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-        "Boosting on the shoulders of giants in quantum device calibration",
-        arXiv preprint arXiv:2005.06194 (2020).
-        Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
-        Annals of Statistics, 29(5):1189–1232 (2001).
-        Trevor Hastie, Robert Tibshirani, and Jerome Friedman. "The Elements of
-        Statistical Learning", Springer (2009).
+        variable, which depends upon the input example, e.g., an element in
+        ``init_expansion``.
         """
 
         self._estimators = []
@@ -391,15 +324,12 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                                                       raw_predictions=init_expansion)
 
         # Greedily builds the additive expansion in a stagewise fashion,
-        # wherein we initialize with init_expansion. This modification of
-        # the initialization step enables the transfer of prior domain
-        # knowledge to gradient boosting.
+        # wherein gradient boosting initializes with init_expansion. Thereby,
+        # enabling the transfer of prior domain knowledge to gradient boosting.
         current_expansion = init_expansion
         for k in range(self.n_estimators):
-            # The current expansion is invariant during the fit stage.
-            current_expansion = self._fit_stage(X=X, pseudo_residual=pseudo_residual,
-                                                current_expansion=current_expansion,
-                                                **fit_params_last_step)
+            self._fit_stage(X=X, pseudo_residual=pseudo_residual,
+                            **fit_params_last_step)
 
             # Copy the basis function for the predict method.
             # We use deepcopy instead of clone, since a clone
@@ -426,38 +356,38 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             coef = self.line_search(function=regularized_loss,
                                     init_guess=self.line_search_options['init_guess'],
                                     opt_method=self.line_search_options['opt_method'],
-                                    alg=self.line_search_options['alg'],
+                                    method=self.line_search_options['method'],
                                     tol=self.line_search_options['tol'],
                                     options=self.line_search_options['options'],
                                     niter=self.line_search_options['niter'],
                                     T=self.line_search_options['T'])
             
             # Store the learned expansion coefficient for the predict method.
-            self._coefs.append(coef[0])
+            self._coefs.append(coef)
 
             # These computations are not required in the last stage.
             if self.n_estimators - 1 > k:
-                current_expansion = current_expansion.add(coef[0]*y_pred)
+                current_expansion = current_expansion.add(coef*y_pred)
                 pseudo_residual = self.loss.negative_gradient(y=pseudo_residual,
                                                               raw_predictions=current_expansion)
 
         self.estimators_ = self._estimators
         self.coefs_ = self._coefs
 
-    def fit(self, X, y, **fit_params):
-        """
-        Fit the model, wherein transforms are seqeuntially fit,
-        then the final estimator is fit. This method supports
-        base boosting.
+    def fit(self, X: DataFrame_or_Series, y: pandas_or_numpy,
+            **fit_params) -> ModifiedPipeline:
+        """Sequentially fit the transform(s), then the final estimator.
+
+        This method supports base boosting.
 
         Parameters
         ----------
 
-        X : DataFrame or Series
+        X : array-like of shape = [n_samples, n_features]
             The design matrix, where each row corresponds to an example and the
             column(s) correspond to the feature(s).
 
-        y : DataFrame or Series
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
@@ -465,15 +395,10 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             Parameters passed to the ``fit`` method of each step or the stagewise
             ``_fit_stage`` method.
 
-        References
-        ---------
-        Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-        "Boosting on the shoulders of giants in quantum device calibration",
-        arXiv preprint arXiv:2005.06194 (2020).
-        Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
-        Annals of Statistics, 29(5):1189–1232 (2001).
-        Trevor Hastie, Robert Tibshirani, and Jerome Friedman. "The Elements of
-        Statistical Learning", Springer (2009).
+        Returns
+        -------
+        self : ModifiedPipeline
+            The induced pipeline object.
         """
 
         fit_params_steps = self._check_fit_params(**fit_params)
@@ -485,9 +410,11 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         
         with sklearn.utils._print_elapsed_time('Pipeline',
                                                self._log_message(len(self.steps) - 1)):
+            # This check additionally distinguishes between
+            # a default fit and base boosting.
+            self._validate_base_boosting_options()
             if self._final_estimator != 'passthrough':
                 fit_params_last_step = fit_params_steps[self.steps[-1][0]]
-                # Start checks for base boosting.
                 if not hasattr(self, '_default_fit'):
                     if self.target_index is not None and \
                     sklearn.utils.multiclass.type_of_target(y) == 'continuous':
@@ -504,17 +431,17 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         return self
 
-    def _predict(self, estimator, Xt, coef, **predict_params):
-        """
-        Helper method for generating the noise term predictions in parallel.
+    def _predict(self, estimator, Xt: pandas_or_numpy, coef: float,
+                 **predict_params) -> np.ndarray:
+        """Helper method for parallelizing the noise term predictions.
 
         Parameters
         ----------
 
-        estimator : estimator object
-            An estimator object implementing :term:`fit` and :term:`predict`.
+        estimator : estimator
+            An estimator that follows the Scikit-learn API.
 
-        Xt : DataFrame or Series
+        Xt : array-like of shape = [n_samples, n_features]
             The transformed design matrix.
 
         coef : float
@@ -523,20 +450,25 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         **predict_params : dict of string -> object
             Parameters to the ``predict`` called at the end of all
             transformations in the pipeline.
+
+        Returns
+        -------
+        y_pred : ndarray
+            A Numpy array of predictions.
         """
 
         return coef * estimator.steps[-1][-1].predict(X=Xt, **predict_params)
 
     @sklearn.utils.metaestimators.if_delegate_has_method(delegate='_final_estimator')
-    def predict(self, X, **predict_params):
-        """
-        Apply transforms to the data, then predict with the final estimator.
+    def predict(self, X: DataFrame_or_Series, **predict_params) -> DataFrame_or_Series:
+        """Applies transform(s) to the data, then predicts with the final estimator.
+
         The method supports base boosting.
 
         Parameters
         ----------
 
-        X : DataFrame or Series
+        X : array-like of shape = [n_samples, n_features]
             The design matrix, where each row corresponds to an example and the
             column(s) correspond to the feature(s).
 
@@ -544,17 +476,15 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             Parameters to the ``predict`` called at the end of all
             transformations in the pipeline.
 
+        Returns
+        -------
+        y_pred : DataFrame or Series
+            A pandas DataFrame or Series of predictions.
+
         Notes
         -----
-        The prediction decomposition in base boosting emanates from
-        Tukey's reroughing, whereby data = smooth + rough.
-
-        References
-        ---------
-        Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-        "Boosting on the shoulders of giants in quantum device calibration",
-        arXiv preprint arXiv:2005.06194 (2020).
-        John Tukey. "Exploratory Data Analysis", Addison-Wesley (1977).
+        The decomposition of the predictions in base boosting emanates from
+        Tukey's notion of reroughing. Namely, data = smooth + rough.
         """
 
         Xt = X
@@ -591,9 +521,162 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             else:
                 if self._final_estimator.__class__ in [_CATBOOST_FLAG, _XGBOOST_FLAG]:
                     y_pred = pd.DataFrame(self.steps[-1][-1].predict(data=Xt, **predict_params),
-                                      index=X.index)
+                                          index=X.index)
                 else:
                     y_pred = pd.DataFrame(self.steps[-1][-1].predict(X=Xt, **predict_params),
                                           index=X.index)
 
         return y_pred
+
+
+def _make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
+    """Constructs a ModifiedPipeline from the given base estimator.
+
+    Parameters
+    ----------
+    estimator : estimator
+        A base estimator that follows the Scikit-learn API.
+
+    transform : str, list, tuple, or None, optional (default=None)
+        Choice of transform(s). If the specified choice is a string,
+        then it must be a default option, where ``'standardscaler'``,
+        ``'boxcox'``, ``'yeojohnson'``, ``'quantileuniform'``, and
+        ``'quantilenormal'`` denote :class:`sklearn.preprocessing.StandardScaler`,
+        :class:`sklearn.preprocessing.PowerTransformer` with ``method='box-cox'``
+        or ``method='yeo-johnson'``, and :class:`sklearn.preprocessing.QuantileTransformer`
+        with ``output_distribution='uniform'`` or ``output_distribution='normal'``,
+        respectively.
+
+    memory : str or object with the joblib.Memory interface, default=None
+        Enables fitted transform caching.
+
+    verbose : int
+        Determines verbosity.
+
+    n_jobs : int or None
+        The number of jobs to run in parallel.
+
+    target_index : int or None
+        Specifies the single-target subtask in the multi-target task.
+
+    target_type : str
+        Specifies the type of target according to :class:`sklearn.utils.multiclass.type_of_target`.
+
+    base_boosting_options : dict or None, optional (default=None)
+        A dictionary of base boosting options, wherein the following options
+        must be specified for base boosting:
+
+            n_estimators :obj:`int`
+                The number of basis functions in the noise term of the additive expansion.
+            boosting_loss :obj:`str` 
+                The loss function utilized in the pseudo-residual computation, where 'ls'
+                denotes the squared error loss function, 'lad' denotes the absolute error
+                loss function, 'huber' denotes the Huber loss function, and 'quantile'
+                denotes the quantile loss function. 
+            line_search_options :obj:`dict` 
+                The line search solver and its options. See the method:
+                :meth:`physlearn.pipeline.ModifiedPipeline.line_search`.               
+
+    random_state : int, RandomState instance, or None.
+        Determines the random number generation in
+        :class:`sklearn.preprocessing.QuantileTransformer`, if ``pipeline_transform``
+        is either ```quantileuniform``` or ```quantilenormal```, and also in
+        :class:`sklearn.multioutput.RegressorChain`.
+
+    n_quantiles : int or None
+        Number of quantiles in :class:`sklearn.preprocessing.QuantileTransformer`, if
+        ``pipeline_transform`` is either ```quantileuniform``` or ```quantilenormal```.
+
+    cv : int, cross-validation generator, an iterable, or None
+        Determines which targets are utilized in :class:`sklearn.multioutput.RegressorChain`.
+
+    chain_order : list or None
+        Determines the target order in :class:`sklearn.multioutput.RegressorChain`.
+
+    Returns
+    -------
+    pipe : ModifiedPipeline
+
+    See Also
+    --------
+    physlearn.pipeline.ModifiedPipeline : Class for creating a modified pipeline of
+        transforms with a final estimator, which supports base boosting.
+
+    References
+    ----------
+    - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+      "Boosting on the shoulders of giants in quantum device calibration",
+      arXiv preprint arXiv:2005.06194 (2020).
+
+    - Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
+      Annals of Statistics, 29(5):1189–1232 (2001).
+    
+    - Trevor Hastie, Robert Tibshirani, and Jerome Friedman.
+      "The Elements of Statistical Learning", Springer (2009).
+    """
+
+    memory = kwargs.pop('memory', None)
+    verbose = kwargs.pop('verbose', None)
+    n_jobs = kwargs.pop('n_jobs', None)
+    target_index = kwargs.pop('target_index', None)
+    target_type = kwargs.pop('target_type', None)
+    base_boosting_options = kwargs.pop('base_boosting_options', None)
+    random_state = kwargs.pop('random_state', None)
+    n_quantiles = kwargs.pop('n_quantiles', None)
+    cv = kwargs.pop('cv', None)
+    chain_order = kwargs.pop('chain_order', None)
+    if kwargs:
+        raise TypeError('Unknown keyword arguments: %s'
+                        % (list(kwargs.keys())[0]))
+
+    if transform is not None:
+        if isinstance(transform, tuple):
+            steps = [transform]
+        elif isinstance(transform, list):
+            steps = transform
+        elif transform in _PIPELINE_TRANSFORM_CHOICE:
+            # Utulize the in-built transforma options.
+            if transform == 'standardscaler':
+                transform = sklearn.preprocessing.StandardScaler()
+            elif transform == 'boxcox':
+                transform = sklearn.preprocessing.PowerTransformer(method='box-cox')
+            elif transform == 'yeojohnson':
+                transform = sklearn.preprocessing.PowerTransformer(method='yeo-johnson')
+            elif transform == 'quantileuniform':
+                transform = sklearn.preprocessing.QuantileTransformer(n_quantiles=n_quantiles,
+                                                                      output_distribution='uniform',
+                                                                      random_state=random_state)
+            elif transform == 'quantilenormal':  
+                transform = sklearn.preprocessing.QuantileTransformer(n_quantiles=n_quantiles,
+                                                                      output_distribution='normal',
+                                                                      random_state=random_state)
+            steps = [('tr', transform)]
+        else:
+            raise TypeError('The transform: %s was not a default str option, '
+                            'tuple with (name, transform), or a list of such '
+                            'tuple(s).'
+                            % (transform))
+    else:
+        steps = []
+
+    # Distinguishes between single-target and multi-target regression.
+    if target_type in _MULTI_TARGET:
+        if chain_order is not None:
+            estimator = sklearn.multioutput.RegressorChain(base_estimator=estimator,
+                                                           order=chain_order,
+                                                           cv=cv,
+                                                           random_state=random_state)
+            steps.append(('reg', estimator))
+        else:
+            estimator = sklearn.multioutput.MultiOutputRegressor(estimator=estimator,
+                                                                 n_jobs=n_jobs)
+            steps.append(('reg', estimator))
+    else:
+        steps.append(('reg', estimator))
+
+    return ModifiedPipeline(steps=steps,
+                            memory=memory,
+                            verbose=verbose,
+                            n_jobs=n_jobs,
+                            target_index=target_index,
+                            base_boosting_options=base_boosting_options)

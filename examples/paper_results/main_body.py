@@ -41,7 +41,7 @@ boosting_loss = 'ls'
 # specify the loss function utilized in the line search.
 # Namely, lad is the key for absolute error.
 line_search_options = dict(init_guess=1, opt_method='minimize',
-                           alg='Nelder-Mead', tol=1e-7,
+                           method='Nelder-Mead', tol=1e-7,
                            options={"maxiter": 10000},
                            niter=None, T=None, loss='lad',
                            regularization=0.1)
@@ -57,7 +57,7 @@ for index in range(5):
     # We make an instance of Regressor with our choice of stacking
     # for each single-target regression subtask.
     reg = Regressor(regressor_choice=basis_fn, params=paper_params(index),
-                    stacking_layer=stack, target_index=index,
+                    target_index=index, stacking_options=dict(layers=stack),
                     base_boosting_options=base_boosting_options)
 
     # We use the baseboostcv method, which utilizes a private

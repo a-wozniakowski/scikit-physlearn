@@ -13,12 +13,16 @@ __version__ = '0.1.4'
 
 
 try:
-    from .supervised.regression import Regressor
+    from .supervised.regression import BaseRegressor, Regressor
+    from .supervised.interface import RegressorDictionaryInterface
+    from .supervised.model_selection.bayesian_search import _bayesoptcv
+    from .supervised.model_selection.learning_curve import LearningCurve, plot_learning_curve
+    from .supervised.interpretation.interpret_regressor import ShapInterpret
 except ImportError:
     pass
 
 try:
-    from .pipeline import ModifiedPipeline
+    from .pipeline import _make_pipeline, ModifiedPipeline
 except ImportError:
     pass
 
@@ -29,6 +33,10 @@ except ImportError:
     pass
 
 
-__all__ = ['Regressor', 'ModifiedPipeline',
-           'LeastSquaresError', 'LeastAbsoluteError', 'HuberLossFunction',
-           'QuantileLossFunction']
+__all__ = ['BaseRegressor', 'Regressor',
+           'RegressorDictionaryInterface',
+           '_bayesoptcv', 'LearningCurve',
+           'plot_learning_curve', 'ShapInterpret',
+           '_make_pipeline', 'ModifiedPipeline',
+           'LeastSquaresError', 'LeastAbsoluteError',
+           'HuberLossFunction', 'QuantileLossFunction']
