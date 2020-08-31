@@ -7,4 +7,3 @@ Loss API
   :local:
 
 .. automodule:: physlearn.loss
-   :members:

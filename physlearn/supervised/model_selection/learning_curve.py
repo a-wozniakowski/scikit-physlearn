@@ -1,6 +1,8 @@
 """
 The :mod:`physlearn.supervised.model_selection.learning_curve` module provides
-a learning curve object and an augmented learning curve plotting function.
+utilities for plotting augmented learning curves. It includes the 
+:class:`physlearn.LearningCurve` class and the :func:`physlearn.plot_learning_curve`
+function.
 """
 
 # Author: Alex Wozniakowski

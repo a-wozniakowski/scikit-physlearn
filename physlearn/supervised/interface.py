@@ -1,7 +1,7 @@
 """
 The :mod:`physlearn.supervised.interface` provides an interface object, which
 abstracts regressors and enables their amalgamation into a unified regressor
-object.
+object. It includes the :class:`physlearn.RegressorDictionaryInterface` class.
 """
 
 # Author: Alex Wozniakowski

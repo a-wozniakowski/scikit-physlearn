@@ -14,7 +14,7 @@ __version__ = '0.1.4'
 
 from .supervised.interface import RegressorDictionaryInterface
 from .supervised.regression import BaseRegressor, Regressor
-from .pipeline import ModifiedPipeline, _make_pipeline
+from .pipeline import ModifiedPipeline, make_pipeline
 from .loss import (LeastSquaresError, LeastAbsoluteError,
                    HuberLossFunction, QuantileLossFunction)
 from .supervised.interpretation.interpret_regressor import ShapInterpret
@@ -22,7 +22,7 @@ from .supervised.model_selection.learning_curve import (LearningCurve,
                                                         plot_learning_curve)
 
 
-__all__ = ['ModifiedPipeline', '_make_pipeline',
+__all__ = ['ModifiedPipeline', 'make_pipeline',
            'LeastSquaresError', 'LeastAbsoluteError',
            'HuberLossFunction', 'QuantileLossFunction',
            'BaseRegressor', 'Regressor',

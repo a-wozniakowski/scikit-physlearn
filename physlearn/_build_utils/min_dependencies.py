@@ -17,8 +17,6 @@ else:
     NUMPY_MIN_VERSION = '1.13.3'
 
 JOBLIB_MIN_VERSION = '0.11'
-THREADPOOLCTL_MIN_VERSION = '2.0.0'
-CYTHON_MIN_VERSION = '0.28.5'
 SCIKIT_LEARN_MIN_VERSION = '0.23.0'
 PANDAS_MIN_VERSION = '1.0.0'
 SHAP_MIN_VERSION = '0.35.0'
@@ -31,21 +29,19 @@ MLXTEND_MIN_VERSION = '0.17.0'
 PYTHON_LEVENSHTEIN_WHEELS_MIN_VERSION = '0.13.1'
 
 dependent_packages = {
-    'numpy': (NUMPY_MIN_VERSION, 'build, docs, install'),
-    'scipy': (SCIPY_MIN_VERSION, 'build, docs, install'),
-    'scikit-learn': (SCIKIT_LEARN_MIN_VERSION, 'build, docs, install'),
-    'pandas': (PANDAS_MIN_VERSION, 'build, docs, install'),
-    'shap': (SHAP_MIN_VERSION, 'build, docs, install'),
-    'ipython': (IPYTHON_MIN_VERSION, 'build, docs, install'),
-    'bayesian-optimization': (BAYESIAN_OPTIMIZATION_MIN_VERSION, 'build, docs, install'),
+    'numpy': (NUMPY_MIN_VERSION, 'build, install'),
+    'scipy': (SCIPY_MIN_VERSION, 'build, install'),
+    'scikit-learn': (SCIKIT_LEARN_MIN_VERSION, 'build, install'),
+    'pandas': (PANDAS_MIN_VERSION, 'build, install'),
+    'shap': (SHAP_MIN_VERSION, 'build, install'),
+    'ipython': (IPYTHON_MIN_VERSION, 'build, install'),
+    'bayesian-optimization': (BAYESIAN_OPTIMIZATION_MIN_VERSION, 'build, install'),
     'catboost': (CATBOOST_MIN_VERSION, 'build, install'),
     'xgboost': (XGBOOST_MIN_VERSION, 'build, install'),
     'lightgbm': (LIGHTGBM_MIN_VERSION, 'build, install'),
-    'mlxtend': (MLXTEND_MIN_VERSION, 'build, docs, install'),
-    'joblib': (JOBLIB_MIN_VERSION, 'build, docs, install'),
-    'threadpoolctl': (THREADPOOLCTL_MIN_VERSION, 'install'),
-    'cython': (CYTHON_MIN_VERSION, 'install'),
-    'python-levenshtein-wheels': (PYTHON_LEVENSHTEIN_WHEELS_MIN_VERSION, 'build, docs, install'),
+    'mlxtend': (MLXTEND_MIN_VERSION, 'build, install'),
+    'joblib': (JOBLIB_MIN_VERSION, 'build, install'),
+    'python-levenshtein-wheels': (PYTHON_LEVENSHTEIN_WHEELS_MIN_VERSION, 'build, install'),
     'sphinx': ('3.0.3', 'docs'),
     'sphinx-gallery': ('0.7.0', 'docs')
 }

@@ -2,8 +2,10 @@
 The :mod:`physlearn.loss` module enables computation of the average loss
 or the negative gradient in either the single-target or the multi-target
 regression setting, whereby data can be represented heterogeneously with
-Numpy or Pandas. The choice of loss functions are: squared error,
-absolute error, Huber, or quantile.
+Numpy or Pandas. It includes the :class:`physlearn.LeastSquaresError`,
+:class:`physlearn.LeastAbsoluteError`, :class:`physlearn.HuberLossFunction`,
+:class:`physlearn.QuantileLossFunction` classes, and the helper
+:func:`physlearn.loss._difference` function.
 """
 
 # Author: Alex Wozniakowski

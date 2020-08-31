@@ -1,6 +1,8 @@
 """
-The :mod:`physlearn.supervised.regression` module provides a base regressor
-object and the main regressor object.
+The :mod:`physlearn.supervised.regression` module provides machine learning
+utilities, which solve single-target and multi-target regression tasks. It
+includes the :class:`physlearn.BaseRegressor` and :class:`physlearn.Regressor`
+classes.
 """
 
 # Author: Alex Wozniakowski
@@ -31,7 +33,7 @@ from collections import defaultdict
 
 from physlearn.base import AdditionalRegressorMixin
 from physlearn.loss import LOSS_FUNCTIONS
-from physlearn.pipeline import _make_pipeline
+from physlearn.pipeline import make_pipeline
 from physlearn.supervised.interface import RegressorDictionaryInterface
 from physlearn.supervised.utils._data_checks import (_n_features, _n_targets,
                                                      _n_samples, _validate_data)
@@ -477,9 +479,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
                       chain_order=self.chain_order,
                       base_boosting_options=self.base_boosting_options)
 
-        self.pipe =  _make_pipeline(estimator=self._regressor,
-                                    transform=self.pipeline_transform,
-                                    **kwargs)
+        self.pipe =  make_pipeline(estimator=self._regressor,
+                                   transform=self.pipeline_transform,
+                                   **kwargs)
 
     def regattr(self, attr: str) -> str:
         """Gets a regressor's attribute from the ModifiedPipeline object.

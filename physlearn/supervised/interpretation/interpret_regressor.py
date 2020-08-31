@@ -1,6 +1,7 @@
 """
 The :mod:`physlearn.supervised.interpretation.interpret_regressor` module provides
-a SHAP object for regressor interpretability.
+SHAP utilities for regressor interpretability. It includes the 
+:class:`physlearn.ShapInterpret` class.
 """
 
 # Author: Alex Wozniakowski

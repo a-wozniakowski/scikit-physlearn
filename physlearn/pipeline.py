@@ -1,6 +1,9 @@
 """
 The :mod:`physlearn.pipeline` module enhances the original Scikit-learn
-pipeline with an implementation of base boosting.
+pipeline with an implementation of base boosting. It includes a
+:class:`physlearn.pipeline.ModifiedPipeline` class, as well as a
+:func:`physlearn.pipeline.make_pipeline` convenience
+function.
 """
 
 # Author: Alex Wozniakowski
@@ -555,7 +558,7 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         return y_pred
 
 
-def _make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
+def make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
     """Constructs a ModifiedPipeline from the given base estimator.
 
     Parameters
