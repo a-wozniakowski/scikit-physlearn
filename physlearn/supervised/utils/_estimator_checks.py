@@ -1,6 +1,6 @@
 """
 The :mod:`physlearn.supervised.utils._estimator_checks` module provides
-basic utilities for estimator checking automation. 
+basic utilities for automated estimator checking. 
 """
 
 # Author: Alex Wozniakowski
@@ -20,9 +20,7 @@ from physlearn.supervised.utils._definition import (_BAYESOPTCV_INIT_PARAMS, _ES
 
 
 def _basic_autocorrect(init_choice: str, candidate_choices: list) -> str:
-    """
-    Chooses the string from the given list of strings, which minimizes
-    the edit distance.
+    """Chooses the candidate string that minimizes the edit distance.
 
     Parameters
     ----------
@@ -32,6 +30,10 @@ def _basic_autocorrect(init_choice: str, candidate_choices: list) -> str:
 
     candidate_choices : list
         A list of candidate choices, where each candidate is a string.
+
+    Returns
+    -------
+    out_choice : str
 
     Notes
     -----
@@ -59,10 +61,7 @@ def _basic_autocorrect(init_choice: str, candidate_choices: list) -> str:
 
 def _check_estimator_choice(estimator_choice: str, estimator_type: str,
                             estimator_choices=None) -> str:
-    """
-    Chooses an estimator from the estimator dictionary, whereby the
-    returned estimator has the minimal edit distance among the estimator
-    candidates that satisfy the given estimator type.
+    """Chooses the candidate estimator that minimizes the edit distance.
 
     Parameters
     ----------
@@ -75,6 +74,10 @@ def _check_estimator_choice(estimator_choice: str, estimator_type: str,
 
     estimator_choices : list or None, optional (default=None)
         A list of estimator choices, where each estimator is a string.
+
+    Returns
+    -------
+    estimator_choice : str
     """
 
     assert all(isinstance(arg, str) for arg in [estimator_choice, estimator_type])
@@ -91,9 +94,7 @@ def _check_estimator_choice(estimator_choice: str, estimator_type: str,
 
 
 def _check_stacking_layer(stacking_layer: dict, estimator_type: str) -> dict:
-    """
-    Chooses the estimators in the first and second stacking layers from the
-    estimator dictionary.
+    """Chooses the the first and second stacking layer estimators.
 
     Parameters
     ----------
@@ -103,6 +104,10 @@ def _check_stacking_layer(stacking_layer: dict, estimator_type: str) -> dict:
 
     estimator_type : str
         Specify the supervised learning task, e.g., regression.
+
+    Returns
+    -------
+    stacking_layer : dict
     """
 
     assert isinstance(stacking_layer, dict)
@@ -131,27 +136,47 @@ def _check_stacking_layer(stacking_layer: dict, estimator_type: str) -> dict:
 
 
 def _check_line_search_options(line_search_options: dict) -> None:
-    """
-    Ensure that the specified options are valid for
-    the line search computation in base boosting.
+    """Checks the line search computation options for base boosting.
 
     Parameters
     ----------
-    line_search_options : dict
-        The options include init_guess, which is the initial guess,
-        opt_method, which is either minimize or basinhopping, method,
-        which is the type of solver used in minimize, tol, which is
-        the tolerance for terminating the optimization method, options,
-        which is a dictionary of solver options, niter, which is the
-        number of iterations in basin-hopping, T, which is the
-        temperature paramter utilized in basin-hopping, loss, which
-        is the loss function, and regularization, which is the
-        regularization strength. 
+    init_guess : int, float, or ndarray
+        The initial guess for the expansion coefficient.
+
+    opt_method : str
+        Choice of optimization method. If ``'minimize'``, then
+        :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
+        then :class:`scipy.optimize.basinhopping`.
+
+    method : str or None
+        The type of solver utilized in the optimization method.
+
+    tol : float or None
+        The epsilon tolerance for terminating the optimization method.
+
+    options : dict or None
+        A dictionary of solver options.
+
+    niter : int or None
+        The number of iterations in basin-hopping.
+
+    T : float or None
+        The temperature paramter utilized in basin-hopping,
+        which determines the accept or reject criterion.
+
+    loss : str
+        The loss function utilized in the line search computation, where 'ls'
+        denotes the squared error loss function, 'lad' denotes the absolute error
+        loss function, 'huber' denotes the Huber loss function, and 'quantile'
+        denotes the quantile loss function.
+
+    regularization : int or float
+        The regularization strength in the line search computation.
     """
 
     for search_key, search_option in line_search_options.items():
         if search_key == 'init_guess':
-            assert isinstance(search_option, (int, float))
+            assert isinstance(search_option, (int, float, np.array))
         elif search_key == 'opt_method':
             assert search_option in ['minimize', 'basinhopping']
         elif search_key == 'method':
@@ -176,9 +201,7 @@ def _check_line_search_options(line_search_options: dict) -> None:
 
 
 def _check_bayesoptcv_parameter_type(pbounds: dict) -> dict:
-    """
-    Ensure that the Bayesian optimization utility returns
-    an int if the parameter type is supposed to be int.
+    """Checks if the Bayesian optimization utility changed the (hyper)parameter type.
 
     Parameters
     ----------
@@ -186,10 +209,15 @@ def _check_bayesoptcv_parameter_type(pbounds: dict) -> dict:
         A dictionary, wherein the keys are the (hyper)parameter names
         and the values are the (hyper)parameter values.
 
+    Returns
+    -------
+    pbounds : dict
+
     Notes
     -----
     During the sequential Bayesian optimization, the utility occasionally sets
-    the value of a (hyper)parameter with type int to a value with type float."""
+    the value of a (hyper)parameter with type int to a value with type float.
+    """
 
     assert isinstance(pbounds, dict)
 
@@ -200,10 +228,10 @@ def _check_bayesoptcv_parameter_type(pbounds: dict) -> dict:
 
 
 def _preprocess_hyperparams(raw_params: dict, multi_target: bool, chain: bool) -> dict:
-    """
-    Preprocesses the (hyper)parameters for single-target regression,
-    multi-target regression with independent single-target regression
-    subtasks, or multi-target regression with chaining.
+    """Preprocesses the (hyper)parameters.
+
+    The preprocessing is determined by the regression task, and the assumption
+    on the single-targets, if the task is multi-target regression.
 
     Parameters
     ----------
@@ -218,6 +246,10 @@ def _preprocess_hyperparams(raw_params: dict, multi_target: bool, chain: bool) -
         Distinguishes between independent single-target regression
         subtasks and chaining. If true, then the expected multi-target
         combination is chaining.
+
+    Returns
+    -------
+    out_params : dict
     """
 
     assert isinstance(raw_params, (dict))
@@ -261,10 +293,7 @@ def _preprocess_hyperparams(raw_params: dict, multi_target: bool, chain: bool) -
 
 
 def _check_search_method(search_method: str) -> str:
-    """
-    Chooses the (hyper)parameter search method from either Scikit-learn
-    or the Bayesian optimization utility, whereby the returned method
-    has the minimal edit distance among the available methods.
+    """Chooses the (hyper)parameter search method that minimizes the edit distance.
 
     Parameters
     ----------
@@ -272,6 +301,10 @@ def _check_search_method(search_method: str) -> str:
     search_method : str
         Specifies the Scikit-learn or Bayesian optimization
         (hyper)parameter search method.
+
+    Returns
+    -------
+    search_method : str
     """
 
     return _basic_autocorrect(init_choice=search_method.strip().lower(),

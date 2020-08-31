@@ -2,37 +2,13 @@
 Python API
 ==========
 
-.. currentmodule:: physlearn
+This page contains the links for each aspect of the scikit-physlearn Python API.
 
-Pipeline API
-============
+.. toctree::
+   :maxdepth: 1
 
-.. autosummary::
-    :toctree: pythonapi/
-
-    _make_pipeline
-    ModifiedPipeline
-
-Loss API
-========
-
-.. autosummary::
-    :toctree: pythonapi/
-
-    LeastSquaresError
-    LeastAbsoluteError
-    HuberLossFunction
-    QuantileLossFunction
-
-Supervised API
-==============
-
-.. autosummary::
-    :toctree: pythonapi/
-
-    BaseRegressor
-    Regressor
-    RegressorDictionaryInterface
-    ShapInterpret
-    LearningCurve
-    _bayesoptcv
+   Pipeline API <pipeline>
+   Loss Function API <loss>
+   Regression API <regression>
+   SHAP API <shap>
+   Learning Curve API <learning_curve>

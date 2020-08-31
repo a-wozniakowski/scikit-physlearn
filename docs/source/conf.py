@@ -1,5 +1,6 @@
 # Configuration file for the Sphinx documentation builder.
 
+import datetime
 import guzzle_sphinx_theme
 import sphinx
 
@@ -9,7 +10,7 @@ from sphinx.errors import VersionRequirementError
 # -- Project information -----------------------------------------------------
 
 project = 'Scikit-physlearn'
-copyright = '2020, Alex Wozniakowski (MIT License)'
+copyright = '%s, Alex Wozniakowski (MIT License)' % str(datetime.datetime.now().year)
 author = 'Alex Wozniakowski'
 
 # -- General configuration ---------------------------------------------------
@@ -24,11 +25,8 @@ if needs_sphinx > sphinx.__version__:
 # Add any Sphinx extension module names here, as strings.
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
-              'sphinx.ext.autodoc.typehints',
               'sphinx.ext.napoleon',
-              'sphinx.ext.doctest',
-              'sphinx.ext.intersphinx',
-              'sphinx.ext.imgconverter']
+              'sphinx.ext.viewcode']
 
 autodoc_default_options = {'members': True,
                            'inherited-members': True,
@@ -37,7 +35,7 @@ autodoc_default_options = {'members': True,
                            'private-members': True,
                            'special-members': '__call__'}
 
-autodoc_typehints = 'description'
+autodoc_typehints = 'none'
 
 autosummary_generate = True
 

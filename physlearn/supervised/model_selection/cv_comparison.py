@@ -10,9 +10,7 @@ import matplotlib.pyplot as plt
 
 def plot_cv_comparison(non_nested_scores, nested_scores, n_trials, fontsize='14',
                        save_plot=False, path=None):
-    """
-    Generate plots that illustrate nested versus non-nested cross-validation.
-    """
+    """Generate plots that illustrate nested versus non-nested cross-validation."""
 
     score_difference = non_nested_scores - nested_scores
     mean = score_difference.mean()

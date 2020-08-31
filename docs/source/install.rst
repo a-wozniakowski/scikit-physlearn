@@ -2,7 +2,7 @@
 Installation Guide
 ==================
 
-There are different ways to install scikit-physlearn. They include
+There are different ways to install scikit-physlearn. They include:
 
 - `Installing the latest stable release hosted on PyPI <#Installing-from-PyPI>`_.
 
@@ -12,8 +12,9 @@ There are different ways to install scikit-physlearn. They include
 Installing from PyPI
 ====================
 
-The scikit-physlearn package is hosted on `PyPI <https://pypi.org/project/scikit-physlearn/>`_,
-so it is installable with ``pip``:
+The scikit-physlearn pre-built binary wheel is available from Python
+Package Index `(PyPI) <https://pypi.org/project/scikit-physlearn/>`_.
+You may download and install it by running:
 
 .. code-block:: bash
 
@@ -37,3 +38,27 @@ Then, build the project with ``pip`` in
 .. code-block:: bash
 
     pip install -e
+
+The global editable option ``-e`` invokes the setuptools develop mode:
+``setup.py develop``. In other words, the build places a
+``scikit_physlearn.egg-info`` directory adjacent to the code and resources.
+
+Moreover, all of the dependencies are automatically managed by the build:
+
+.. code-block:: bash
+
+    numpy>=1.13.3
+    scipy>=0.19.1
+    scikit-learn>=0.23.0
+    pandas>=1.0.0
+    shap>=0.35.0
+    ipython>=7.11.0
+    bayesian-optimization>=1.2.0
+    catboost>=0.23.2
+    xgboost>=1.1.0
+    lightgbm>=2.3.0
+    mlxtend>=0.17.0
+    joblib>=0.11
+    threadpoolctl>=2.0.0
+    cython>=0.28.5
+    python-levenshtein-wheels>=0.13.1

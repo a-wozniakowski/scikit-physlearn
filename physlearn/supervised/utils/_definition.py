@@ -1,5 +1,6 @@
 """
-Collection of definitions used in the package.
+The :mod:`physlearn.supervised.utils._definition` module collects the 
+assortment of library definitions.
 """
 
 # Author: Alex Wozniakowski

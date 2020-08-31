@@ -71,18 +71,50 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
     base_boosting_options : dict or None, optional (default=None)
         A dictionary of base boosting options, wherein the following options
-        must be specified for base boosting:
+        must be specified:
 
             n_estimators :obj:`int`
                 The number of basis functions in the noise term of the additive expansion.
+
             boosting_loss :obj:`str` 
                 The loss function utilized in the pseudo-residual computation, where 'ls'
                 denotes the squared error loss function, 'lad' denotes the absolute error
                 loss function, 'huber' denotes the Huber loss function, and 'quantile'
-                denotes the quantile loss function. 
+                denotes the quantile loss function.
+
             line_search_options :obj:`dict` 
-                The line search solver and its options. See the method:
-                :meth:`physlearn.pipeline.ModifiedPipeline.line_search`.
+                init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
+                    The initial guess for the expansion coefficient.
+
+                opt_method :obj:`str`
+                    Choice of optimization method. If ``'minimize'``, then
+                    :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
+                    then :class:`scipy.optimize.basinhopping`.
+
+                method :obj:`str` or None
+                    The type of solver utilized in the optimization method.
+
+                tol :obj:`float` or None
+                    The epsilon tolerance for terminating the optimization method.
+
+                options :obj:`dict` or None
+                    A dictionary of solver options.
+
+                niter :obj:`int` or None
+                    The number of iterations in basin-hopping.
+
+                T :obj:`float` or None
+                    The temperature paramter utilized in basin-hopping,
+                    which determines the accept or reject criterion.
+
+                loss :obj:`str`
+                    The loss function utilized in the line search computation, where 'ls'
+                    denotes the squared error loss function, 'lad' denotes the absolute error
+                    loss function, 'huber' denotes the Huber loss function, and 'quantile'
+                    denotes the quantile loss function.
+
+                regularization :obj:`int` or :obj:`float`
+                    The regularization strength in the line search computation.
 
     Attributes
     ----------
@@ -92,8 +124,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
     See Also
     --------
-    physlearn.pipeline.make_pipeline : Convenience function for constructing a modified pipeline.
-    physlearn.supervised.utils._definition : Dictionary of final estimator options.
+    :func:`physlearn.pipeline.make_pipeline` : Convenience function for constructing a modified pipeline.
+    :mod:`physlearn.supervised.utils._definition` : Dictionary of final estimator options.
 
     References
     ----------
@@ -180,11 +212,10 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         Parameters
         ----------
-
         function : callable
             The objective function for the line search.
 
-        init_guess : int, float, ndarray
+        init_guess : int, float, or ndarray
             The initial guess for the expansion coefficient.
 
         opt_method : str
@@ -192,7 +223,7 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
             then :class:`scipy.optimize.basinhopping`.
 
-        method : str, callable, or None, optional (default=None)
+        method : str or None, optional (default=None)
             The type of solver utilized in the optimization method.
 
         tol : float or None, optional (default=None)
@@ -246,7 +277,6 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         Parameters
         ----------
-
         X : array-like of shape = [n_samples, n_features]
             The design matrix, where each row corresponds to an example and the
             column(s) correspond to the feature(s).
@@ -277,7 +307,6 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         Parameters
         ----------
-
         X : array-like of shape = [n_samples, n_features]
             The design matrix, where each row corresponds to an example and the
             column(s) correspond to the feature(s).
@@ -376,13 +405,12 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
     def fit(self, X: DataFrame_or_Series, y: pandas_or_numpy,
             **fit_params) -> ModifiedPipeline:
-        """Sequentially fit the transform(s), then the final estimator.
+        """Sequentially fits the transform(s) then the final estimator.
 
         This method supports base boosting.
 
         Parameters
         ----------
-
         X : array-like of shape = [n_samples, n_features]
             The design matrix, where each row corresponds to an example and the
             column(s) correspond to the feature(s).
@@ -410,8 +438,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         
         with sklearn.utils._print_elapsed_time('Pipeline',
                                                self._log_message(len(self.steps) - 1)):
-            # This check additionally distinguishes between
-            # a default fit and base boosting.
+            # This check distinguishes between a
+            # default fit and base boosting.
             self._validate_base_boosting_options()
             if self._final_estimator != 'passthrough':
                 fit_params_last_step = fit_params_steps[self.steps[-1][0]]
@@ -437,7 +465,6 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         Parameters
         ----------
-
         estimator : estimator
             An estimator that follows the Scikit-learn API.
 
@@ -467,7 +494,6 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         Parameters
         ----------
-
         X : array-like of shape = [n_samples, n_features]
             The design matrix, where each row corresponds to an example and the
             column(s) correspond to the feature(s).
@@ -483,8 +509,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         Notes
         -----
-        The decomposition of the predictions in base boosting emanates from
-        Tukey's notion of reroughing. Namely, data = smooth + rough.
+        In base boosting, we decompose the predictions in accord with Tukey's
+        notion of reroughing. Namely, data = smooth + rough.
         """
 
         Xt = X
@@ -547,7 +573,7 @@ def _make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
         with ``output_distribution='uniform'`` or ``output_distribution='normal'``,
         respectively.
 
-    memory : str or object with the joblib.Memory interface, default=None
+    memory : str or object with the joblib.Memory interface
         Enables fitted transform caching.
 
     verbose : int
@@ -562,22 +588,54 @@ def _make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
     target_type : str
         Specifies the type of target according to :class:`sklearn.utils.multiclass.type_of_target`.
 
-    base_boosting_options : dict or None, optional (default=None)
+    base_boosting_options : dict or None
         A dictionary of base boosting options, wherein the following options
-        must be specified for base boosting:
+        must be specified:
 
             n_estimators :obj:`int`
                 The number of basis functions in the noise term of the additive expansion.
+
             boosting_loss :obj:`str` 
                 The loss function utilized in the pseudo-residual computation, where 'ls'
                 denotes the squared error loss function, 'lad' denotes the absolute error
                 loss function, 'huber' denotes the Huber loss function, and 'quantile'
-                denotes the quantile loss function. 
-            line_search_options :obj:`dict` 
-                The line search solver and its options. See the method:
-                :meth:`physlearn.pipeline.ModifiedPipeline.line_search`.               
+                denotes the quantile loss function.
 
-    random_state : int, RandomState instance, or None.
+            line_search_options :obj:`dict` 
+                init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
+                    The initial guess for the expansion coefficient.
+
+                opt_method :obj:`str`
+                    Choice of optimization method. If ``'minimize'``, then
+                    :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
+                    then :class:`scipy.optimize.basinhopping`.
+
+                method :obj:`str` or None
+                    The type of solver utilized in the optimization method.
+
+                tol :obj:`float` or None
+                    The epsilon tolerance for terminating the optimization method.
+
+                options :obj:`dict` or None
+                    A dictionary of solver options.
+
+                niter :obj:`int` or None
+                    The number of iterations in basin-hopping.
+
+                T :obj:`float` or None
+                    The temperature paramter utilized in basin-hopping,
+                    which determines the accept or reject criterion.
+
+                loss :obj:`str`
+                    The loss function utilized in the line search computation, where 'ls'
+                    denotes the squared error loss function, 'lad' denotes the absolute error
+                    loss function, 'huber' denotes the Huber loss function, and 'quantile'
+                    denotes the quantile loss function.
+
+                regularization :obj:`int` or :obj:`float`
+                    The regularization strength in the line search computation.
+
+    random_state : int, RandomState instance, or None
         Determines the random number generation in
         :class:`sklearn.preprocessing.QuantileTransformer`, if ``pipeline_transform``
         is either ```quantileuniform``` or ```quantilenormal```, and also in
@@ -599,7 +657,7 @@ def _make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
 
     See Also
     --------
-    physlearn.pipeline.ModifiedPipeline : Class for creating a modified pipeline of
+    :class:`physlearn.pipeline.ModifiedPipeline` : Class for creating a modified pipeline of
         transforms with a final estimator, which supports base boosting.
 
     References

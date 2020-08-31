@@ -1,10 +1,7 @@
 from __future__ import absolute_import
 
 
-try:
-    from .interpret_regressor import ShapInterpret
-except ImportError:
-    pass
+from .interpret_regressor import ShapInterpret
 
 
 __all__ = ['ShapInterpret']

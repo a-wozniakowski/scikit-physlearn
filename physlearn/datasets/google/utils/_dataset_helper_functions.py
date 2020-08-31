@@ -21,8 +21,7 @@ DataFrame_or_Series = typing.Union[pd.DataFrame, pd.Series]
 
 
 def _json_dump(train_test_data: dict, folder: str, n_qubits=None) -> None:
-    """
-    Serializes the training and test data dictionary as a JSON formatted stream.
+    """Serializes the training and test data dictionary as a JSON formatted stream.
 
     Parameters
     ----------
@@ -60,9 +59,10 @@ def _json_dump(train_test_data: dict, folder: str, n_qubits=None) -> None:
 
 
 def _json_load(filename: str) -> dict:
-    """
-    Deserializes the training and test data dictionary, which was serialized
-    as a JSON formatted stream.
+    """Deserializes the training and test data dictionary.
+
+    The training and test data dictionary were serialized as a
+    JSON formatted stream.
 
     Parameters
     ----------
@@ -84,9 +84,9 @@ def _json_load(filename: str) -> dict:
 
 def _train_test_split(X: DataFrame_or_Series, y: DataFrame_or_Series, test_size: float,
                       random_state: int) -> dict:
-    """
-    Splits the X and y data intro training and test data according to the specified
-    fraction of the test size.
+    """Splits the X and y data intro training and test data.
+
+    The split is determined by the fraction of the test size.
 
     Parameters
     ----------
@@ -119,8 +119,7 @@ def _train_test_split(X: DataFrame_or_Series, y: DataFrame_or_Series, test_size:
 
 
 def _shuffle(data: DataFrame_or_Series, drop=True) -> DataFrame_or_Series:
-    """
-    Shuffles the pandas data object.
+    """Shuffles the pandas data object.
 
     Parameters
     ----------
@@ -136,9 +135,7 @@ def _shuffle(data: DataFrame_or_Series, drop=True) -> DataFrame_or_Series:
     
 
 def _iqr_outlier_mask(data: DataFrame_or_Series) -> DataFrame_or_Series:
-    """
-    Computes the interquartile range for the pandas data object,
-    then it masks the outliers.
+    """Computes the interquartile range, then it masks the outliers.
 
     Parameters
     ----------
@@ -154,19 +151,14 @@ def _iqr_outlier_mask(data: DataFrame_or_Series) -> DataFrame_or_Series:
 
 
 def _path_to_google_data() -> str:
-    """
-    Finds the path to the Google quantum computer calibration data.
-    """
+    """Finds the path to the Google quantum computer calibration data."""
 
     root = os.path.dirname(__file__).replace('utils', '')
     return os.path.join(root, 'data', 'google_5q_random.csv')
 
 
 def _path_to_google_json_folder() -> str:
-    """
-    Finds the path to the folder, which contains the serialized Google
-    quantum computer calibration data.
-    """
+    """Finds the path to the folder with the serialized Google data."""
 
     root = os.path.dirname(__file__).replace('utils', '')
     return os.path.join(root, 'google_json')

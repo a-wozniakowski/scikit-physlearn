@@ -47,9 +47,7 @@ dependent_packages = {
     'cython': (CYTHON_MIN_VERSION, 'install'),
     'python-levenshtein-wheels': (PYTHON_LEVENSHTEIN_WHEELS_MIN_VERSION, 'install'),
     'sphinx': ('3.0.3', 'docs'),
-    'sphinx-gallery': ('0.7.0', 'docs'),
-    'numpydoc': ('1.0.0', 'docs'),
-    'Pillow': ('7.1.2', 'docs'),
+    'sphinx-gallery': ('0.7.0', 'docs')
 }
 
 

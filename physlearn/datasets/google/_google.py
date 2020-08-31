@@ -33,9 +33,7 @@ from physlearn.datasets.google.utils._dataset_helper_functions import (_shuffle,
 
 
 class GoogleDataFrame(BaseDataFrame):
-    """
-    Represents the Google quantum computer calibration data with a DataFrame.
-    """
+    """Represents the Google quantum computer calibration data with a DataFrame."""
 
     def __init__(self, n_qubits, path):
         super().__init__(path=path)
@@ -74,9 +72,7 @@ class GoogleDataFrame(BaseDataFrame):
 
 
 class GoogleData(GoogleDataFrame):
-    """
-    Wrangles the Google quantum computer calibration data for multi-target regression.
-    """
+    """Wrangles the Google quantum computer calibration data for multi-target regression."""
 
     def __init__(self, n_qubits=5, test_split=0.3, random_state=0,
                  remove_outliers=False, shuffle=True):
@@ -101,9 +97,7 @@ class GoogleData(GoogleDataFrame):
         assert isinstance(self.shuffle, bool)
 
     def _train_test_split(self) -> dict:
-        """
-        Get the DataFrame, then split it into training and test data.
-        """
+        """Get the DataFrame, then split it into training and test data."""
 
         if self.shuffle:
             df = _shuffle(data=self.get_df_with_correct_columns)
@@ -127,9 +121,9 @@ class GoogleData(GoogleDataFrame):
                                  random_state=self.random_state)
 
     def save_train_test_split_to_json(self) -> None:
-        """
-        Serializes the training and test data as a JSON formatted stream,
-        and it automatically dumps the data into the Google JSON folder.
+        """Serializes the training and test data as a JSON formatted stream.
+
+        It automatically dumps the data into the Google JSON folder.
         """
 
         _json_dump(train_test_data=self._train_test_split(),
@@ -138,17 +132,15 @@ class GoogleData(GoogleDataFrame):
 
     @property    
     def load_benchmark(self) -> dict:
-        """
-        Deserializes the benchmark dataset.
-        """
+        """Deserializes the benchmark dataset."""
 
         folder = _path_to_google_json_folder()
         return _json_load(filename=os.path.join(folder, '_{}'.format(self.n_qubits) + 'q.json'))
 
 
 def load_benchmark(return_split=False) -> typing.Union[sklearn.model_selection.train_test_split, dict]:
-    """
-    Deserializes the benchmark dataset for the multi-target regression task.
+    """Deserializes the benchmark dataset for the multi-target regression task.
+    
     If the return split parameter is true, then the benchmark dataset is
     returned in the familiar X_train, X_test, y_train, and y_test format.
 

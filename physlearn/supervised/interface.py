@@ -18,15 +18,24 @@ from physlearn.supervised.utils._definition import _REGRESSOR_DICT
 
         
 class RegressorDictionaryInterface(AbstractEstimatorDictionaryInterface):
-    """
-    Interface between the base regressor object and the regressor dictionary.
+    """BaseRegressor and regressor dictionary interface.
+
+    This interface enables the regressor abstraction, which amalgamates
+    regressors from 
+    `Scikit-learn <https://scikit-learn.org/>`_,
+    `LightGBM <https://lightgbm.readthedocs.io/en/latest/index.html>`_,
+    `XGBoost <https://xgboost.readthedocs.io/en/latest/>`_,
+    `CatBoost <https://catboost.ai/>`_,
+    and `Mlxtend <http://rasbt.github.io/mlxtend/>`_ into a unified framework.
+    It links the :class:`physlearn.supervised.regression.BaseRegressor` and
+    the regressor dictionary, which contains the regressor classes. 
 
     Parameters
     ----------
     regressor_choice : str
         The dictionary key for lookup in the dictionary of regressors.
-        The key is case-sensitive, e.g., the Scikit-learn regressor
-        Ridge has key ``'ridge'``.
+        The key must be in lower case letter, e.g., the Scikit-learn
+        regressor Ridge has key ``'ridge'``.
 
     params : dict, list, or None, optional (default=None)
         The choice of (hyper)parameters.
@@ -35,27 +44,27 @@ class RegressorDictionaryInterface(AbstractEstimatorDictionaryInterface):
         A dictionary of stacking options, whereby ``layers``
         must be specified:
 
-        layers : dict
-            A dictionary of stacking layer(s).
-        shuffle : bool or None
-            Determines whether to shuffle the training data in
-            :class:`mlxtend.regressor.StackingCVRegressor`.
-        refit : bool or None
-            Determines whether to clone and refit the regressors in
-            :class:`mlxtend.regressor.StackingCVRegressor`.
-        passthrough : bool or None
-            Determines whether to concatenate the original features with
-            the first stacking layer predictions in
-            :class:`sklearn.ensemble.StackingRegressor`,
-            :class:`mlxtend.regressor.StackingRegressor`, or
-            :class:`mlxtend.regressor.StackingCVRegressor`.
-        meta_features : bool or None
-            Determines whether to make the concatenated features
-            accessible through the attribute ``train_meta_features_``
-            in :class:`mlxtend.regressor.StackingRegressor` and
-            :class:`mlxtend.regressor.StackingCVRegressor`.
-        voting_weights : ndarray of shape (n_regressors,) or None
-            Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
+            layers :obj:`dict`
+                A dictionary of stacking layer(s).
+            shuffle :obj:`bool` or None, (default=True)
+                Determines whether to shuffle the training data in
+                :class:`mlxtend.regressor.StackingCVRegressor`.
+            refit :obj:`bool` or None, (default=True)
+                Determines whether to clone and refit the regressors in
+                :class:`mlxtend.regressor.StackingCVRegressor`.
+            passthrough :obj:`bool` or None, (default=True)
+                Determines whether to concatenate the original features with
+                the first stacking layer predictions in
+                :class:`sklearn.ensemble.StackingRegressor`,
+                :class:`mlxtend.regressor.StackingRegressor`, or
+                :class:`mlxtend.regressor.StackingCVRegressor`.
+            meta_features : :obj:`bool` or None, (default=True)
+                Determines whether to make the concatenated features
+                accessible through the attribute ``train_meta_features_``
+                in :class:`mlxtend.regressor.StackingRegressor` and
+                :class:`mlxtend.regressor.StackingCVRegressor`.
+            voting_weights : :obj:`ndarray` of shape (n_regressors,) or None, (default=None)
+                Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
     """
 
     def __init__(self, regressor_choice: str, params=None,
@@ -69,10 +78,15 @@ class RegressorDictionaryInterface(AbstractEstimatorDictionaryInterface):
         """
         Retrieves the (hyper)parameters.
 
+        Parameters
+        ----------
+        regressor : estimator
+            A regressor that follows the Scikit-learn API.
+
         Notes
         -----
-        The :meth:`physlearn.RegressorDictionaryInterface.set_params` must be
-        called beforehand.
+        The method :meth:`physlearn.RegressorDictionaryInterface.set_params`
+        must be called beforehand.
         """
 
         if not hasattr(self, '_set_params'):
@@ -82,12 +96,13 @@ class RegressorDictionaryInterface(AbstractEstimatorDictionaryInterface):
             return regressor.get_params()
 
     def set_params(self, **kwargs):
-        """
-        Sets the (hyper)parameters.
+        """Sets the (hyper)parameters.
 
         If ``params`` is ``None``, then the default (hyper)parameters
-        will be set.
+        are utilized.
 
+        Parameters
+        ----------
         cv : int, cross-validation generator, an iterable, or None
             Determines the cross-validation strategy in
             :class:`sklearn.ensemble.StackingRegressor`,
@@ -110,27 +125,27 @@ class RegressorDictionaryInterface(AbstractEstimatorDictionaryInterface):
             A dictionary of stacking options, whereby ``layers``
             must be specified:
 
-            layers : dict
-                A dictionary of stacking layer(s).
-            shuffle : bool or None, (default=True)
-                Determines whether to shuffle the training data in
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            refit : bool or None, (default=True)
-                Determines whether to clone and refit the regressors in
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            passthrough : bool or None, (default=True)
-                Determines whether to concatenate the original features with
-                the first stacking layer predictions in
-                :class:`sklearn.ensemble.StackingRegressor`,
-                :class:`mlxtend.regressor.StackingRegressor`, or
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            meta_features : bool or None, (default=True)
-                Determines whether to make the concatenated features
-                accessible through the attribute ``train_meta_features_``
-                in :class:`mlxtend.regressor.StackingRegressor` and
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            voting_weights : ndarray of shape (n_regressors,) or None, (default=None)
-                Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
+                layers :obj:`dict`
+                    A dictionary of stacking layer(s).
+                shuffle :obj:`bool` or None, (default=True)
+                    Determines whether to shuffle the training data in
+                    :class:`mlxtend.regressor.StackingCVRegressor`.
+                refit :obj:`bool` or None, (default=True)
+                    Determines whether to clone and refit the regressors in
+                    :class:`mlxtend.regressor.StackingCVRegressor`.
+                passthrough :obj:`bool` or None, (default=True)
+                    Determines whether to concatenate the original features with
+                    the first stacking layer predictions in
+                    :class:`sklearn.ensemble.StackingRegressor`,
+                    :class:`mlxtend.regressor.StackingRegressor`, or
+                    :class:`mlxtend.regressor.StackingCVRegressor`.
+                meta_features : :obj:`bool` or None, (default=True)
+                    Determines whether to make the concatenated features
+                    accessible through the attribute ``train_meta_features_``
+                    in :class:`mlxtend.regressor.StackingRegressor` and
+                    :class:`mlxtend.regressor.StackingCVRegressor`.
+                voting_weights : :obj:`ndarray` of shape (n_regressors,) or None, (default=None)
+                    Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
         """
         cv = kwargs.pop('cv', None)
         verbose = kwargs.pop('verbose', None)
