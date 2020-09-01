@@ -37,8 +37,6 @@ autodoc_default_options = {'members': True,
 
 autodoc_typehints = 'none'
 
-autodoc_mock_imports = ['joblib']
-
 autosummary_generate = True
 
 import physlearn

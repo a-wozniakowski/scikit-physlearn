@@ -31,9 +31,8 @@ SETUPTOOLS_COMMANDS = set(['develop', 'release', 'bdist_egg', 'bdist_rpm',
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     extra_setuptools_args = dict(zip_safe=False,
                                  include_package_data=True,
-                                 extras_require={
-                                 key: min_deps.tag_to_packages[key] for 
-                                 key in ['examples', 'docs', 'tests']})
+                                 extras_require={key: min_deps.tag_to_packages[key]
+                                                 for key in ['docs', 'tests']})
 else:
     extra_setuptools_args = dict()
 

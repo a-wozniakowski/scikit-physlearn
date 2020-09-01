@@ -48,8 +48,7 @@ dependent_packages = {
 
 
 tag_to_packages: dict = {
-    extra: [] for extra in ['build', 'install', 'docs', 'examples',
-                            'tests']
+    extra: [] for extra in ['build', 'install', 'docs', 'tests']
 }
 for package, (min_version, extras) in dependent_packages.items():
     for extra in extras.split(', '):
