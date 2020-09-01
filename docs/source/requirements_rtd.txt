@@ -4,3 +4,6 @@ joblib
 mlxtend
 sklearn
 python-levenshtein-wheels
+catboost
+lightgbm
+xgboost

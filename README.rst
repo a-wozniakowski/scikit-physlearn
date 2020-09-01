@@ -1,12 +1,15 @@
 .. -*- mode: rst -*-
 
-.. image:: https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/boosting-on-the-shoulders-of-giants-in/multi-target-regression-on-google-5-qubit
-:target: https://paperswithcode.com/sota/multi-target-regression-on-google-5-qubit?p=boosting-on-the-shoulders-of-giants-in
-:alt: SOTA
+|SOTA|_ |DOCS|_ |PyPI|_
 
-.. image:: https://readthedocs.org/projects/scikit-physlearn/badge/?version=latest
-:target: https://scikit-physlearn.readthedocs.io/en/latest/?badge=latest
-:alt: Documentation Status
+.. |SOTA| image:: https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/boosting-on-the-shoulders-of-giants-in/multi-target-regression-on-google-5-qubit
+.. _SOTA: https://paperswithcode.com/sota/multi-target-regression-on-google-5-qubit?p=boosting-on-the-shoulders-of-giants-in
+
+.. |DOCS|:: https://readthedocs.org/projects/scikit-physlearn/badge/?version=latest
+.. _DOCS: https://scikit-physlearn.readthedocs.io/en/latest/?badge=latest
+
+.. |PyPI| image:: https://badge.fury.io/py/scikit-physlearn.svg
+.. _PyPI: https://badge.fury.io/py/scikit-physlearn
 
 ################
 Scikit-physlearn
@@ -25,13 +28,15 @@ regressors into a flexible framework that:
 - Solves single-target and multi-target regression tasks.
 - Interprets regressors with SHAP.
 
-Additionally, the library contains the official implementation of
-`base boosting <https://arxiv.org/abs/2005.06194>`_. This modification
-of the `gradient boosting machine <https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451>`_
-supplants a weak learning algorithm with an explict model of the domain,
-which provides gradient boosting with an inductive bias in scientific applications;
+Additionally, the library contains the official implementation of *base boosting*.
+This modification of the
+`gradient boosting machine <https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451>`_
+supplants a weak learning algorithm with an explict model of the domain.
+As such, it provides the gradient boosting machine with an inductive bias in
+scientific applications;
 see the `documentation <https://scikit-physlearn.readthedocs.io/en/latest/baseboosting.html>`_
-and the `paper results <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results>`_.
+as well as the paper results
+`directory <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results>`_.
 
 The `library <https://github.com/a-wozniakowski/scikit-physlearn>`_ was
 started by Alex Wozniakowski during his graduate studies at Nanyang Technological

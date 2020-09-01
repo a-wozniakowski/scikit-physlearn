@@ -2,6 +2,7 @@
 
 [![SOTA](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/boosting-on-the-shoulders-of-giants-in/multi-target-regression-on-google-5-qubit)](https://paperswithcode.com/sota/multi-target-regression-on-google-5-qubit?p=boosting-on-the-shoulders-of-giants-in)
 [![Documentation Status](https://readthedocs.org/projects/scikit-physlearn/badge/?version=latest)](https://scikit-physlearn.readthedocs.io/en/latest/?badge=latest)
+[![PyPI](https://badge.fury.io/py/scikit-physlearn.svg)](https://badge.fury.io/py/scikit-physlearn)
 
 [Documentation](https://scikit-physlearn.readthedocs.org) |
 [Base boosting](https://arxiv.org/abs/2005.06194)
@@ -19,16 +20,17 @@ regressors into a flexible framework that:
 * Solves single-target and multi-target regression tasks.
 * Interprets regressors with SHAP.
 
-Additionally, the library contains the official implementation of
-[base boosting](https://arxiv.org/abs/2005.06194). This modification
-of the [gradient boosting machine](https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451>)
-supplants a weak learning algorithm with an explict model of the domain,
-which provides gradient boosting with an inductive bias in scientific applications;
+Additionally, the library contains the official implementation of *base boosting*.
+This modification of the
+[gradient boosting machine](https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451)
+supplants a weak learning algorithm with an explict model of the domain.
+As such, it provides the gradient boosting machine with an inductive bias in
+scientific applications;
 see the [documentation](https://scikit-physlearn.readthedocs.io/en/latest/baseboosting.html)
-and the [paper results](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results).
+as well as the paper results
+[directory](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results).
 
-The [library](https://github.com/a-wozniakowski/scikit-physlearn) was
-started by Alex Wozniakowski during his graduate studies at Nanyang Technological
+The library was started by Alex Wozniakowski during his graduate studies at Nanyang Technological
 University.
 
 ## Installation
