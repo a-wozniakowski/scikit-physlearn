@@ -8,3 +8,4 @@ catboost
 lightgbm
 xgboost
 bayesian-optimization
+shap
