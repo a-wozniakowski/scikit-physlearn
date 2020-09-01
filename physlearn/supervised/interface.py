@@ -10,6 +10,7 @@ object. It includes the :class:`physlearn.RegressorDictionaryInterface` class.
 
 import os
 import joblib
+
 import mlxtend.regressor
 import sklearn.ensemble
 
