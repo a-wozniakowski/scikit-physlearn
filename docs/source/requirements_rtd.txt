@@ -7,3 +7,4 @@ python-levenshtein-wheels
 catboost
 lightgbm
 xgboost
+bayesian-optimization
