@@ -1,12 +1,10 @@
-# Regressors
-# scikit-learn
-# lightgbm
-# xgboost
-# catboost
-# mlxtend
-
-# utilities
-# shap
-# ipython
-# bayesian-optimization
-# python-Levenshtein-wheels
+joblib
+mlxtend
+sklearn
+python-levenshtein-wheels
+catboost
+lightgbm
+xgboost
+bayesian-optimization
+shap
+ipython

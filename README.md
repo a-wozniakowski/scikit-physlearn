@@ -23,10 +23,11 @@ regressors into a flexible framework that:
 Additionally, the library contains the official implementation of *base boosting*.
 This modification of the
 [gradient boosting machine](https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451)
-supplants a weak learning algorithm with an explict model of the domain.
-As such, it provides the gradient boosting machine with an inductive bias in
-scientific applications;
-see the [documentation](https://scikit-physlearn.readthedocs.io/en/latest/baseboosting.html)
+supplants the standard statistical initialization in the gradient boosting machine
+with a first principles approach such that the gradient boosting machine learns
+a general model of the domain by building upon the first principles approach in
+a stagewise fashion; see the
+[documentation](https://scikit-physlearn.readthedocs.io/en/latest/baseboosting.html)
 as well as the paper results
 [directory](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results).
 

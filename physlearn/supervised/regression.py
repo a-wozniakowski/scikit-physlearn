@@ -64,7 +64,6 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
     ``predict``, ``score``, ``dump``, ``load``, ``cross_validate``, and
     ``cross_val_score``.
 
-
     Parameters
     ----------
     regressor_choice : str, optional (default='ridge')
@@ -990,7 +989,6 @@ class Regressor(BaseRegressor):
     which follows the Scikit-learn API. Important methods include ``fit``,
     ``predict``, ``score``, ``baseboostcv``, ``search``, ``dump``, ``load``,
     ``cross_val_score``, and ``nested_cross_validate``.
-
 
     Parameters
     ----------

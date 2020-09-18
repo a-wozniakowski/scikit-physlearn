@@ -5,7 +5,7 @@
 .. |SOTA| image:: https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/boosting-on-the-shoulders-of-giants-in/multi-target-regression-on-google-5-qubit
 .. _SOTA: https://paperswithcode.com/sota/multi-target-regression-on-google-5-qubit?p=boosting-on-the-shoulders-of-giants-in
 
-.. |DOCS|:: https://readthedocs.org/projects/scikit-physlearn/badge/?version=latest
+.. |DOCS| image:: https://readthedocs.org/projects/scikit-physlearn/badge/?version=latest
 .. _DOCS: https://scikit-physlearn.readthedocs.io/en/latest/?badge=latest
 
 .. |PyPI| image:: https://badge.fury.io/py/scikit-physlearn.svg
@@ -31,10 +31,11 @@ regressors into a flexible framework that:
 Additionally, the library contains the official implementation of *base boosting*.
 This modification of the
 `gradient boosting machine <https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451>`_
-supplants a weak learning algorithm with an explict model of the domain.
-As such, it provides the gradient boosting machine with an inductive bias in
-scientific applications;
-see the `documentation <https://scikit-physlearn.readthedocs.io/en/latest/baseboosting.html>`_
+supplants the standard statistical initialization in the gradient boosting machine
+with a first principles approach such that the gradient boosting machine learns
+a general model of the domain by building upon the first principles approach in
+a stagewise fashion; see the
+`documentation <https://scikit-physlearn.readthedocs.io/en/latest/baseboosting.html>`_
 as well as the paper results
 `directory <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results>`_.
 
