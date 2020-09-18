@@ -1,10 +1,10 @@
 """
 Machine learning package for Python.
 ====================================
+"""
 
 # Author: Alex Wozniakowski
 # Licence: MIT
-"""
 
 from __future__ import absolute_import
 
@@ -12,23 +12,20 @@ from __future__ import absolute_import
 __version__ = '0.1.4'
 
 
-try:
-    from .supervised.regression import Regressor
-except ImportError:
-    pass
-
-try:
-    from .pipeline import ModifiedPipeline
-except ImportError:
-    pass
-
-try:
-    from .loss import (LeastSquaresError, LeastAbsoluteError, HuberLossFunction,
-                       QuantileLossFunction)
-except ImportError:
-    pass
+from .supervised.interface import RegressorDictionaryInterface
+from .supervised.regression import BaseRegressor, Regressor
+from .pipeline import ModifiedPipeline, make_pipeline
+from .loss import (LeastSquaresError, LeastAbsoluteError,
+                   HuberLossFunction, QuantileLossFunction)
+from .supervised.interpretation.interpret_regressor import ShapInterpret
+from .supervised.model_selection.learning_curve import (LearningCurve,
+                                                        plot_learning_curve)
 
 
-__all__ = ['Regressor', 'ModifiedPipeline',
-           'LeastSquaresError', 'LeastAbsoluteError', 'HuberLossFunction',
-           'QuantileLossFunction']
+__all__ = ['ModifiedPipeline', 'make_pipeline',
+           'LeastSquaresError', 'LeastAbsoluteError',
+           'HuberLossFunction', 'QuantileLossFunction',
+           'BaseRegressor', 'Regressor',
+           'RegressorDictionaryInterface',
+           'ShapInterpret', 'LearningCurve',
+           'plot_learning_curve']

@@ -2,12 +2,16 @@
 The :mod:`physlearn.loss` module enables computation of the average loss
 or the negative gradient in either the single-target or the multi-target
 regression setting, whereby data can be represented heterogeneously with
-Numpy or Pandas. The choice of loss functions are: squared error,
-absolute error, Huber, or quantile.
+Numpy or Pandas. It includes the :class:`physlearn.LeastSquaresError`,
+:class:`physlearn.LeastAbsoluteError`, :class:`physlearn.HuberLossFunction`,
+:class:`physlearn.QuantileLossFunction` classes, and the helper
+:func:`physlearn.loss._difference` function.
 """
 
 # Author: Alex Wozniakowski
 # License: MIT
+
+import typing
 
 import numpy as np
 import pandas as pd
@@ -15,22 +19,30 @@ import pandas as pd
 import sklearn.ensemble
 import sklearn.metrics
 
+pandas_or_numpy = typing.Union[pd.DataFrame, pd.Series, np.ndarray]
 
-def _difference(y, raw_predictions):
-    """
-    Subtract the raw predictions from the single-target(s)
-    regardless of the Numpy or Pandas data representation(s).
+
+def _difference(y: pandas_or_numpy, raw_predictions: pandas_or_numpy) -> pandas_or_numpy:
+    """Subtract the raw predictions from the single-target(s).
+
+    The function supports heterogeneous usage of Numpy and pandas
+    data representations.
 
     Parameters
     ----------
 
-    y : DataFrame, Series, or ndarray
+    y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
         The target matrix, where each row corresponds to an example and the
         column(s) correspond to the single-target(s).
 
-    raw_predictions : DataFrame, Series, or ndarray
+    raw_predictions : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
         The estimate matrix, where each row corresponds to an example and the
         column(s) correspond to the prediction(s) for the single-target(s).
+
+    Returns
+    -------
+    diff : DataFrame, Series, or ndarray
+        The difference between the single-target(s) and the raw predictions.
     """
 
     if isinstance(y, (pd.DataFrame, pd.Series)):
@@ -44,26 +56,45 @@ def _difference(y, raw_predictions):
 
 
 class LeastSquaresError(sklearn.ensemble._gb_losses.LeastSquaresError):
-    """Least squares loss function, which is used in base boosting."""
+    """Least squares loss function.
 
-    def __call__(self, y, raw_predictions, sample_weight=None):
-        """
-        Compute the average loss.
+    The object modifies the original Scikit-learn LeastSquaresError such that
+    the average loss and pseudo-residual computations support heterogeneous
+    usage of Numpy and pandas data representations. Moreover, the modification
+    supports both single-target and multi-target data.
+
+    References
+    ----------
+    - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+      "Boosting on the shoulders of giants in quantum device calibration",
+      arXiv preprint arXiv:2005.06194 (2020).
+    
+    - Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
+      Annals of Statistics, 29(5):1189–1232 (2001).
+      """
+
+    def __call__(self, y: pandas_or_numpy, raw_predictions: pandas_or_numpy,
+                 sample_weight=None) -> pandas_or_numpy:
+        """Computes the average loss.
 
         Parameters
         ----------
 
-        y : DataFrame, Series, or ndarray
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
-        raw_predictions : DataFrame, Series, or ndarray
+        raw_predictions : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The estimate matrix, where each row corresponds to an example and the
             column(s) correspond to the prediction(s) for the single-target(s).
 
         sample_weight : float, ndarray, or None, optional (default=None)
-            Individual weights for each example. If the weight is a float, then
-            every example will have the same weight.
+            Individual weights for each target. If the weight is a float, then
+            every target will have the same weight.
+
+        Returns
+        -------
+        mse : DataFrame, Series, or ndarray
         """
 
         if sample_weight is None:
@@ -72,46 +103,69 @@ class LeastSquaresError(sklearn.ensemble._gb_losses.LeastSquaresError):
             return sklearn.metrics.mean_squared_error(y_true=y, y_pred=raw_predictions,
                                                       sample_weight=sample_weight)
 
-    def negative_gradient(self, y, raw_predictions):
-        """
-        Compute the pseduoresiduals.
+    def negative_gradient(self, y: pandas_or_numpy,
+                          raw_predictions: pandas_or_numpy) -> pandas_or_numpy:
+        """Computes the pseudo-residuals.
 
         Parameters
         ----------
 
-        y : DataFrame, Series, or ndarray
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
-        raw_predictions : DataFrame, Series, or ndarray
+        raw_predictions : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The estimate matrix, where each row corresponds to an example and the
             column(s) correspond to the prediction(s) for the single-target(s).
+
+        Returns
+        -------
+        residual : DataFrame, Series, or ndarray
         """
 
         return _difference(y=y, raw_predictions=raw_predictions)
 
 
 class LeastAbsoluteError(sklearn.ensemble._gb_losses.LeastAbsoluteError):
-    """Absolute error loss function, which is used in base boosting."""
+    """Absolute error loss function.
 
-    def __call__(self, y, raw_predictions, sample_weight=None):
-        """
-        Compute the average loss.
+    The object modifies the original Scikit-learn LeastAbsoluteError such that
+    the average loss and pseudo-residual computations support heterogeneous
+    usage of Numpy and pandas data representations. Moreover, the modification
+    supports both single-target and multi-target data.
+
+    References
+    ----------
+    - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+      "Boosting on the shoulders of giants in quantum device calibration",
+      arXiv preprint arXiv:2005.06194 (2020).
+    
+    - Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
+      Annals of Statistics, 29(5):1189–1232 (2001).
+      """
+
+    def __call__(self, y: pandas_or_numpy, raw_predictions: pandas_or_numpy,
+                 sample_weight=None) -> pandas_or_numpy:
+        """Computes the average loss.
 
         Parameters
         ----------
 
-        y : DataFrame, Series, or ndarray
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
-        raw_predictions : DataFrame, Series, or ndarray
+        raw_predictions : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The estimate matrix, where each row corresponds to an example and the
             column(s) correspond to the prediction(s) for the single-target(s).
 
         sample_weight : float, ndarray, or None, optional (default=None)
-            Individual weights for each example. If the weight is a float, then
-            every example will have the same weight.
+            Individual weights for each target. If the weight is a float, then
+            every target will have the same weight.
+
+        Returns
+        -------
+        mae : DataFrame, Series, or ndarray
         """
 
         if sample_weight is None:
@@ -120,20 +174,24 @@ class LeastAbsoluteError(sklearn.ensemble._gb_losses.LeastAbsoluteError):
             return sklearn.metrics.mean_absolute_error(y_true=y, y_pred=raw_predictions,
                                                        sample_weight=sample_weight)
 
-    def negative_gradient(self, y, raw_predictions):
-        """
-        Compute the pseduoresiduals.
+    def negative_gradient(self, y: pandas_or_numpy,
+                          raw_predictions: pandas_or_numpy) -> pandas_or_numpy:
+        """Computes the pseudo-residuals.
 
         Parameters
         ----------
 
-        y : DataFrame, Series, or ndarray
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
-        raw_predictions : DataFrame, Series, or ndarray
+        raw_predictions : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The estimate matrix, where each row corresponds to an example and the
             column(s) correspond to the prediction(s) for the single-target(s).
+
+        Returns
+        -------
+        residual : DataFrame, Series, or ndarray
         """
 
         if isinstance(y, (pd.DataFrame, pd.Series)):
@@ -143,20 +201,39 @@ class LeastAbsoluteError(sklearn.ensemble._gb_losses.LeastAbsoluteError):
 
 
 class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
-    """Huber loss function, which is used in base boosting."""
+    """Huber loss function.
 
-    def _delta(self, difference, sample_weight=None):
-        """
-        Compute the delta threshold, which determines whether to
-        use the squared error or the absolute error loss function.
+    The object modifies the original Scikit-learn HuberLossFunction such that
+    the average loss and pseudo-residual computations support heterogeneous
+    usage of Numpy and pandas data representations. Moreover, the modification
+    supports both single-target and multi-target data.
 
-        difference : DataFrame, Series, or ndarray
+    References
+    ----------
+    - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+      "Boosting on the shoulders of giants in quantum device calibration",
+      arXiv preprint arXiv:2005.06194 (2020).
+    
+    - Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
+      Annals of Statistics, 29(5):1189–1232 (2001).
+      """
+
+    def _delta(self, difference: pandas_or_numpy, sample_weight=None) -> np.float64:
+        """Computes the delta threshold.
+
+        This threshold determines whether to use the squared error or
+        the absolute error loss function.
+
+        difference : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The difference between the single-target(s) and the raw prediction(s).
 
         sample_weight : float, ndarray, or None, optional (default=None)
-            Individual weights for each example. If the weight is a float, then
-            every example will have the same weight.
+            Individual weights for each target. If the weight is a float, then
+            every target will have the same weight.
 
+        Returns
+        -------
+        delta : np.float64
         """
 
         if hasattr(difference, 'abs'):
@@ -171,24 +248,28 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
         return delta
 
 
-    def __call__(self, y, raw_predictions, sample_weight=None):
-        """
-        Compute the average loss.
+    def __call__(self, y: pandas_or_numpy, raw_predictions: pandas_or_numpy,
+                 sample_weight=None) -> pandas_or_numpy: 
+        """Computes the average loss.
 
         Parameters
         ----------
 
-        y : DataFrame, Series, or ndarray
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
-        raw_predictions : DataFrame, Series, or ndarray
+        raw_predictions : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The estimate matrix, where each row corresponds to an example and the
             column(s) correspond to the prediction(s) for the single-target(s).
 
         sample_weight : float, ndarray, or None, optional (default=None)
-            Individual weights for each example. If the weight is a float, then
-            every example will have the same weight.
+            Individual weights for each target. If the weight is a float, then
+            every target will have the same weight.
+
+        Returns
+        -------
+        huber : DataFrame, Series, or ndarray
         """
 
         diff = _difference(y=y, raw_predictions=raw_predictions)
@@ -215,20 +296,24 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
         
         return diff.sum() / sample_weight.sum()
 
-    def negative_gradient(self, y, raw_predictions, sample_weight=None):
-        """
-        Compute the pseduoresiduals.
+    def negative_gradient(self, y: pandas_or_numpy, raw_predictions: pandas_or_numpy,
+                          sample_weight=None) -> pandas_or_numpy:
+        """Computes the pseudo-residuals.
 
         Parameters
         ----------
 
-        y : DataFrame, Series, or ndarray
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
-        raw_predictions : DataFrame, Series, or ndarray
+        raw_predictions : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The estimate matrix, where each row corresponds to an example and the
             column(s) correspond to the prediction(s) for the single-target(s).
+
+        Returns
+        -------
+        residual : DataFrame, Series, or ndarray
         """
 
         diff = _difference(y=y, raw_predictions=raw_predictions)
@@ -245,26 +330,45 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
 
 
 class QuantileLossFunction(sklearn.ensemble._gb_losses.QuantileLossFunction):
-    """Quantile loss function, which is used in base boosting"""
+    """Quantile loss function.
 
-    def __call__(self, y, raw_predictions, sample_weight=None):
-        """
-        Compute the average loss.
+    The object modifies the original Scikit-learn QuantileLossFunction such that
+    the average loss and pseudo-residual computations support heterogeneous
+    usage of Numpy and pandas data representations. Moreover, the modification
+    supports both single-target and multi-target data.
+
+    References
+    ----------
+    - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+      "Boosting on the shoulders of giants in quantum device calibration",
+      arXiv preprint arXiv:2005.06194 (2020).
+    
+    - Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
+      Annals of Statistics, 29(5):1189–1232 (2001).
+      """
+
+    def __call__(self, y: pandas_or_numpy, raw_predictions: pandas_or_numpy,
+                 sample_weight=None) -> pandas_or_numpy:
+        """Computes the average loss.
 
         Parameters
         ----------
 
-        y : DataFrame, Series, or ndarray
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
-        raw_predictions : DataFrame, Series, or ndarray
+        raw_predictions : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The estimate matrix, where each row corresponds to an example and the
             column(s) correspond to the prediction(s) for the single-target(s).
 
         sample_weight : float, ndarray, or None, optional (default=None)
-            Individual weights for each example. If the weight is a float, then
-            every example will have the same weight.
+            Individual weights for each target. If the weight is a float, then
+            every target will have the same weight.
+
+        Returns
+        -------
+        quantile : DataFrame, Series, or ndarray
         """
 
         diff = _difference(y=y, raw_predictions=raw_predictions)
@@ -281,20 +385,24 @@ class QuantileLossFunction(sklearn.ensemble._gb_losses.QuantileLossFunction):
             return (self.alpha*with_mask - (1-self.alpha)*without_mask) / sample_weight.sum()
 
 
-    def negative_gradient(self, y, raw_predictions):
-        """
-        Compute the pseduoresiduals.
+    def negative_gradient(self, y: pandas_or_numpy,
+                          raw_predictions: pandas_or_numpy) -> pandas_or_numpy:
+        """Computes the pseudo-residuals.
 
         Parameters
         ----------
 
-        y : DataFrame, Series, or ndarray
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
-        raw_predictions : DataFrame, Series, or ndarray
+        raw_predictions : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The estimate matrix, where each row corresponds to an example and the
             column(s) correspond to the prediction(s) for the single-target(s).
+
+        Returns
+        -------
+        residual : DataFrame, Series, or ndarray
         """
 
         mask = y.gt(raw_predictions.values)

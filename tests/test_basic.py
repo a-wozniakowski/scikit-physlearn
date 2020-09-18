@@ -21,6 +21,8 @@ from sklearn.pipeline import FeatureUnion
 from physlearn import Regressor
 from physlearn.datasets import load_benchmark
 from physlearn.supervised import ShapInterpret
+from physlearn.supervised.utils._estimator_checks import (_check_estimator_choice,
+                                                          _check_stacking_layer)
 
 
 class TestBasic(unittest.TestCase):
@@ -51,8 +53,8 @@ class TestBasic(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='stackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
+        reg = Regressor(regressor_choice='stackingregressor', pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack))
         search_params = dict(reg__0__n_neighbors=[2, 4, 5],
                              reg__1__alpha_1=[1e-7, 1e-6],
                              reg__final_estimator__alpha=[1.0],
@@ -127,15 +129,15 @@ class TestBasic(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='stackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', randomizedcv_n_iter=6)
+        reg = Regressor(regressor_choice='stackingregressor', pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack), randomizedcv_n_iter=6)
         search_params = dict(reg__0__n_neighbors=randint(low=2, high=5),
                              reg__1__alpha_1=[1e-7, 1e-6],
                              reg__final_estimator__alpha=[1.0],
                              tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 2.8)
+        self.assertLess(reg.best_score_.values, 3.5)
         self.assertLessEqual(reg.best_params_['reg__0__n_neighbors'], 5)
         self.assertGreaterEqual(reg.best_params_['reg__0__n_neighbors'], 2)
         self.assertIn(reg.best_params_['reg__1__alpha_1'], [1e-7, 1e-6])
@@ -299,8 +301,8 @@ class TestBasic(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='stackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
+        reg = Regressor(regressor_choice='stackingregressor', pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack))
         reg.fit(X_train, y_train)
         y_pred = reg.fit(X_train, y_train).predict(X_test)
         score = reg.score(y_test, y_pred)
@@ -340,6 +342,29 @@ class TestBasic(unittest.TestCase):
         interpret.fit(X=X_train, y=y_train, index=index)
         explainer, shap_values = interpret.explainer(X=X_train)
         self.assertEqual(X_train.shape, shap_values.shape)
+
+    def test_estimator_choice(self):
+        choices = ['ridge', 'Ridge', 'RIDGE', 'rIdGe']
+        estimator_choices = [_check_estimator_choice(estimator_choice=choice,
+                                                     estimator_type='regression')
+                            for choice in choices]
+        self.assertListEqual(estimator_choices, ['ridge'] * 4)
+
+    def test_stacking_choice(self):
+        reg_test = dict(regressors=['kneighborsregressor', 'bayesianridge'],
+                        final_regressor='lasso')
+        est_test = dict(estimators=['kneighborsregressor', 'bayesianridge'],
+                        final_estimator='lasso')
+        reg = dict(regressors=['KnEiGhBoRsReGrEsSoR', 'BAYESIANRIDGE'],
+                   final_regressor='Lasso')
+        est = dict(estimators=['KnEiGhBoRsReGrEsSoR', 'BAYESIANRIDGE'],
+                   final_estimator='Lasso')
+        check_reg_stack = _check_stacking_layer(stacking_layer=reg,
+                                                estimator_type='regression')
+        check_est_stack = _check_stacking_layer(stacking_layer=est,
+                                                estimator_type='regression')
+        self.assertDictEqual(reg_test, check_reg_stack)
+        self.assertDictEqual(est_test, check_est_stack)
 
 
 if __name__ == '__main__':

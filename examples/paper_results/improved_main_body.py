@@ -60,12 +60,12 @@ ls_loss = 'ls'
 # Huber loss function in the single-target regression subtasks:
 # 1, 2, 3, and 5.
 line_search_options_with_lad = dict(init_guess=1, opt_method='minimize',
-                                    alg='Nelder-Mead', tol=1e-7,
+                                    method='Nelder-Mead', tol=1e-7,
                                     options={"maxiter": 10000},
                                     niter=None, T=None, loss='lad',
                                     regularization=0.1)
 line_search_options_with_huber = dict(init_guess=1, opt_method='minimize',
-                                      alg='Nelder-Mead', tol=1e-7,
+                                      method='Nelder-Mead', tol=1e-7,
                                       options={"maxiter": 10000},
                                       niter=None, T=None, loss='huber',
                                       regularization=0.1)
@@ -85,13 +85,13 @@ for index in range(5):
         # We make an instance of Regressor with our choice of stacking
         # for the single-target regression subtasks: 1, 2, and 5.
         reg = Regressor(regressor_choice=stacking_basis_fn, params=paper_params(index),
-                        stacking_layer=stack, target_index=index,
+                        target_index=index, stacking_options=dict(layers=stack),
                         base_boosting_options=options_with_huber)
     elif index == 3:
         # We make an instance of Regressor with our choice of stacking
         # for the single-target regression subtask: 4.
         reg = Regressor(regressor_choice=stacking_basis_fn, params=paper_params(index),
-                        stacking_layer=stack, target_index=index,
+                        target_index=index, stacking_options=dict(layers=stack),
                         base_boosting_options=options_with_lad)
     else:
         # We make an instance of Regressor with our choice of ridge

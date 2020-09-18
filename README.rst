@@ -1,254 +1,63 @@
 .. -*- mode: rst -*-
 
-|SOTA|_
+|SOTA|_ |DOCS|_ |PyPI|_
 
 .. |SOTA| image:: https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/boosting-on-the-shoulders-of-giants-in/multi-target-regression-on-google-5-qubit
 .. _SOTA: https://paperswithcode.com/sota/multi-target-regression-on-google-5-qubit?p=boosting-on-the-shoulders-of-giants-in
 
-**Scikit-physlearn** is a Python package for single-target and multi-target regression.
-It is designed to amalgamate
-`Scikit-learn <https://scikit-learn.org/>`__,
-`LightGBM <https://lightgbm.readthedocs.io/en/latest/index.html>`__,
-`XGBoost <https://xgboost.readthedocs.io/en/latest/>`__,
-`CatBoost <https://catboost.ai/>`__,
-and `Mlxtend <http://rasbt.github.io/mlxtend/>`__ 
-regressors into a unified ``Regressor``, which:
+.. |DOCS| image:: https://readthedocs.org/projects/scikit-physlearn/badge/?version=latest
+.. _DOCS: https://scikit-physlearn.readthedocs.io/en/latest/?badge=latest
+
+.. |PyPI| image:: https://badge.fury.io/py/scikit-physlearn.svg
+.. _PyPI: https://badge.fury.io/py/scikit-physlearn
+
+################
+Scikit-physlearn
+################
+
+**Scikit-physlearn** is a machine learning library designed to amalgamate 
+`Scikit-learn <https://scikit-learn.org/>`_,
+`LightGBM <https://lightgbm.readthedocs.io/en/latest/index.html>`_,
+`XGBoost <https://xgboost.readthedocs.io/en/latest/>`_,
+`CatBoost <https://catboost.ai/>`_,
+and `Mlxtend <http://rasbt.github.io/mlxtend/>`_ 
+regressors into a flexible framework that:
 
 - Follows the Scikit-learn API.
-- Represents data in pandas.
-- Supports `base boosting <https://arxiv.org/abs/2005.06194>`__.
+- Represents data with pandas.
+- Solves single-target and multi-target regression tasks.
+- Interprets regressors with SHAP.
 
-The repository was started by Alex Wozniakowski during his graduate studies at Nanyang Technological University.
+Additionally, the library contains the official implementation of *base boosting*.
+This modification of the
+`gradient boosting machine <https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451>`_
+supplants the standard statistical initialization in the gradient boosting machine
+with a first principles approach such that the gradient boosting machine learns
+a general model of the domain by building upon the first principles approach in
+a stagewise fashion; see the
+`documentation <https://scikit-physlearn.readthedocs.io/en/latest/baseboosting.html>`_
+as well as the paper results
+`directory <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results>`_.
 
+The `library <https://github.com/a-wozniakowski/scikit-physlearn>`_ was
+started by Alex Wozniakowski during his graduate studies at Nanyang Technological
+University.
+
+************
 Installation
-------------
+************
 
 Scikit-physlearn can be installed from `PyPI <https://pypi.org/project/scikit-physlearn/>`__::
 
     pip install scikit-physlearn
 
+To build from source, see the `installation guide <https://scikit-physlearn.readthedocs.io/en/latest/install.html>`_.
 
-Quick Start
------------
-
-A multi-target regression example:
-
-.. code-block:: python
-
-    from sklearn.datasets import load_linnerud
-    from sklearn.decomposition import PCA, TruncatedSVD
-    from sklearn.model_selection import train_test_split
-    from sklearn.pipeline import FeatureUnion
-    from physlearn import Regressor
-
-    bunch = load_linnerud(as_frame=True)  # returns a Bunch instance
-    X, y = bunch['data'], bunch['target']
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        random_state=42)
-
-    transformer_list = [('pca', PCA(n_components=1)),
-                                ('svd', TruncatedSVD(n_components=2))]
-    union = FeatureUnion(transformer_list=transformer_list, n_jobs=-1)
-
-    # Select a regressor, e.g., LGBMRegressor from LightGBM, with a case-insensitive string.
-    reg = Regressor(regressor_choice='lgbmregressor', pipeline_transform=('tr', union),
-                    scoring='neg_mean_absolute_error')
-
-    # Automatically build the pipeline with final estimator MultiOutputRegressor
-    # from Sklearn, then exhaustively search over the (hyper)parameters.
-    search_params = dict(reg__boosting_type=['gbdt', 'goss'],
-                         reg__n_estimators=[6, 8, 10, 20])
-    reg.search(X_train, y_train, search_params=search_params,
-               search_method='gridsearchcv')
-
-    # Generate predictions with the refit regressors, then
-    # compute the average mean absolute error.
-    y_pred = reg.fit(X_train, y_train).predict(X_test)
-    score = reg.score(y_test, y_pred)
-    print(score['mae'].mean().round(decimals=2))
-
-Example output:
-
-.. code-block:: bash
-
-    8.04
-
-
-A `SHAP <https://shap.readthedocs.io/en/latest/>`__ visualization example of a single-target regression subtask:
-
-.. code-block:: python
-
-    from physlearn.datasets import load_benchmark
-    from physlearn.supervised import ShapInterpret
-
-    # Load the training data from a quantum device calibration application.
-    X_train, _, y_train, _ = load_benchmark(return_split=True)
-
-    # Select a regressor, e.g., RidgeCV from Sklearn, and pick the single-target
-    # regression subtask: 2, using Python indexing.
-    interpret = ShapInterpret(regressor_choice='ridgecv', target_index=1)
-
-    # Generate a SHAP force plot, and visualize the subtask predictions.
-    interpret.force_plot(X_train, y_train)
-
-Example output (this plot is interactive in a `notebook <https://jupyter.org/>`_):
-
-.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/force_plot.png
-  :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 500px
-  :height: 250px
-
-
-For additional examples, check out the `basics <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/basics>`__ directory.
-
-Base boosting
--------------
-
-Inspired by the process of human research, wherein scientific progress derives from prior scientific knowledge, `base boosting <https://arxiv.org/abs/2005.06194>`_ is a modification of the standard version of `gradient boosting <https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451>`_, which is designed to emulate the paradigm of "standing on the shoulders of giants". 
-
-.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/framework.png
-  :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 500px
-  :height: 250px
-
-In a multi-target regression task, a base regressor, e.g., an explict model of the domain, generates the initial multi-target predictions. Subsequently, the multi-target boosting algorithm reduces the task to independent single-target regression subtasks. For the jth single-target regression subtask, base boosting greedily fits the following additive expansion in a stagewise fashion:
-
-.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/expansion.PNG
-  :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 225px
-  :height: 100px
-  :align: center
-
-where the parameter alpha collects the expansion coefficients and the parameter theta collects the parameter sets, which characterize the basis function b. In contrast, the standard additive expansion:
-
-.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/standard_expansion.PNG
-  :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 225px
-  :height: 100px
-  :align: center
-
-uses a constant offset value (usually determined by maximum likelihood estimation) in place of the base regressor's jth single-target prediction. In essence, this changes the initialization step in gradient boosting, and it enables base boosting to sequentially refine its predecessor's prior scientific knowledge in analogy with human scientific research.
-
-To get started with base boosting, consider the following example, which compares `non-nested versus nested cross-validation <https://arxiv.org/abs/1809.09446>`_ scores in a multi-target quantum device calibration application with a limited supply of `experimental data <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/physlearn/datasets/google/google_json/_5q.json>`_:
-
-.. code-block:: python
-
-    import numpy as np
-    from sklearn.model_selection import KFold
-
-    from physlearn import Regressor
-    from physlearn.datasets import load_benchmark, paper_params
-    from physlearn.supervised import plot_cv_comparison
-
-
-    # Number of random trials
-    n_trials = 30
-
-    # Load the training data from a quantum device calibration application, wherein
-    # X_train denotes the base regressor's initial predictions and y_train denotes
-    # the multi-target experimental observations, i.e., the extracted eigenenergies.
-    X_train, _, y_train, _ = load_benchmark(return_split=True)
-
-    # Select a basis function, e.g., StackingRegressor from Sklearn with first
-    # layer regressors: Ridge and RandomForestRegressor from Sklearn and final
-    # layer regressor: KNeighborsRegressor from Sklearn.
-    basis_fn = 'stackingregressor'
-    stack = dict(regressors=['ridge', 'randomforestregressor'],
-                 final_regressor='kneighborsregressor')
-
-    # Number of basis functions in the noise term of the additive expansion.
-    n_regressors = 1
-
-    # Choice of squared error loss function for the pseduo-residual computation.
-    boosting_loss = 'ls'
-
-    # Choice of absolute error loss function and (hyper)parameters for the line search computation.
-    line_search_options = dict(init_guess=1, opt_method='minimize',
-                               alg='Nelder-Mead', tol=1e-7,
-                               options={"maxiter": 10000},
-                               niter=None, T=None, loss='lad',
-                               regularization=0.1)
-
-    base_boosting_options = dict(n_regressors=n_regressors,
-                                 boosting_loss=boosting_loss,
-                                 line_search_options=line_search_options)
-
-    # (Hyper)parameters to to exhaustively search over in the non-nested cross-valdation procedure and in
-    # the inner loop of the nested cross-validation procedure. Namely, the regularization strength in ridge
-    # regression, number of decision trees in random forest, and number of neighbors in k-nearest neighbors.
-    search_params = {'reg__0__alpha': [0.5, 1.0, 1.5],
-                     'reg__1__n_estimators': [30, 50, 100],
-                     'reg__final_estimator__n_neighbors': [2, 5, 10]}
-
-    # Choose the single-target regression subtask: 5, using Python indexing.
-    index = 4
-
-    # Make an instance of Regressor with the aforespecified choices.
-    reg = Regressor(regressor_choice=basis_fn, stacking_layer=stack,
-                    target_index=index, scoring='neg_mean_absolute_error',
-                    base_boosting_options=base_boosting_options)
-
-    # Make arrays to store the scores.
-    non_nested_scores = np.zeros(n_trials)
-    nested_scores = np.zeros(n_trials)
-
-    # Loop through the number of random trials.
-    for i in range(n_trials):
-
-        # Make two instances of k-fold cross-validation, whereby we generate the same indices
-        # for non-nested cross-validation and the outer loop of nested cross-validation.
-        outer_cv = KFold(n_splits=5, shuffle=True, random_state=i)
-        inner_cv = KFold(n_splits=5, shuffle=True, random_state=i)
-
-        
-        # Perform a non-nested cross-validation procedure with GridSearchCV from Sklearn.
-        reg.search(X=X_train, y=y_train, search_params=search_params,
-                   search_method='gridsearchcv', cv=outer_cv)
-        non_nested_scores[i] = reg.best_score_
-
-        # Perform a 5*5-fold nested cross-validation procedure.
-        outer_loop_scores = reg.nested_cross_validate(X=X_train, y=y_train,
-                                                      search_params=search_params,
-                                                      search_method='gridsearchcv',
-                                                      outer_cv=outer_cv,
-                                                      inner_cv=inner_cv,
-                                                      return_inner_loop_score=False)
-        nested_scores[i] = outer_loop_scores.mean()
-
-    # Illustrate the non-nested and nested mean absolute error, as well as the score difference,
-    # for each of the 30 random trials. Note that mean absolute error is a nonnegative score.
-    plot_cv_comparison(non_nested_scores=non_nested_scores, nested_scores=nested_scores,
-                       n_trials=n_trials)
-
-Example output:
-
-.. code-block:: bash
-
-  Average difference of -0.038677 with standard deviation of 0.027483.
-
-.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/cv_comparison.png
-  :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 500px
-  :height: 250px
-
-
-For additional examples, check out the `paper results <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results>`_ directory:
-
-- Generate an `augmented learning curve <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/learning_curve.py>`_.
-
-.. image:: https://raw.githubusercontent.com/a-wozniakowski/scikit-physlearn/master/images/aug_learning_curve.png
-  :target: https://github.com/a-wozniakowski/scikit-physlearn/
-  :width: 500px
-  :height: 250px
-
-- Establish a proxy of expert human-level performance on the calibration benchmark task with the `base regressor <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/benchmark.py>`_.
-- Boost the initial predictions, generated by the base regressor, and evaulate the test error of the returned `regressor <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/main_body.py>`_.
-- Examine the utility of the base regressor, as a data preprocessor, with a SHAP `summary plot <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results/summary_plot.py>`_.
-
+********
 Citation
---------
+********
 
-If you use this package, please consider adding the corresponding citation:
+If you use this library, please consider adding the corresponding citation:
 
 .. code-block:: latex
 

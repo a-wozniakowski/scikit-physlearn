@@ -34,8 +34,9 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
+        reg = Regressor(regressor_choice='mlxtendstackingregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack))
         search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
                              reg__meta_regressor__alpha=[1.0],
@@ -55,8 +56,9 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
+        reg = Regressor(regressor_choice='mlxtendstackingcvregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack))
         search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
                              reg__meta_regressor__alpha=[1.0],
@@ -78,8 +80,9 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
+        reg = Regressor(regressor_choice='mlxtendstackingregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack))
         search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
                              reg__meta_regressor__alpha=[1.0],
@@ -102,8 +105,9 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
+        reg = Regressor(regressor_choice='mlxtendstackingcvregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack))
         search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
                              reg__meta_regressor__alpha=[1.0],
@@ -126,8 +130,10 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', chain_order=[2, 0, 1])
+        reg = Regressor(regressor_choice='mlxtendstackingregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack),
+                        chain_order=[2, 0, 1])
         search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
                              reg__meta_regressor__alpha=[1.0],
@@ -152,8 +158,10 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', chain_order=[2, 0, 1])
+        reg = Regressor(regressor_choice='mlxtendstackingcvregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack),
+                        chain_order=[2, 0, 1])
         search_params = dict(reg__kneighborsregressor__n_neighbors=[2, 4, 5],
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
                              reg__meta_regressor__alpha=[1.0],
@@ -176,8 +184,10 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', randomizedcv_n_iter=6)
+        reg = Regressor(regressor_choice='mlxtendstackingregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack),
+                        randomizedcv_n_iter=6)
         search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
                              reg__meta_regressor__alpha=[1.0],
@@ -199,8 +209,10 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', randomizedcv_n_iter=6)
+        reg = Regressor(regressor_choice='mlxtendstackingcvregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack),
+                        randomizedcv_n_iter=6)
         search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
                              reg__meta_regressor__alpha=[1.0],
@@ -224,15 +236,17 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', randomizedcv_n_iter=6)
+        reg = Regressor(regressor_choice='mlxtendstackingregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack),
+                        randomizedcv_n_iter=6)
         search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
                              reg__meta_regressor__alpha=[1.0],
                              tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 12.0)
+        self.assertLess(reg.best_score_.values, 12.8)
         self.assertLessEqual(reg.best_params_['reg__estimator__kneighborsregressor__n_neighbors'],
                              5)
         self.assertGreaterEqual(reg.best_params_['reg__estimator__kneighborsregressor__n_neighbors'],
@@ -251,15 +265,17 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', randomizedcv_n_iter=6)
+        reg = Regressor(regressor_choice='mlxtendstackingcvregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack),
+                        randomizedcv_n_iter=6)
         search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
                              reg__meta_regressor__alpha=[1.0],
                              tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 12.0)
+        self.assertLess(reg.best_score_.values, 12.8)
         self.assertLessEqual(reg.best_params_['reg__estimator__kneighborsregressor__n_neighbors'],
                              5)
         self.assertGreaterEqual(reg.best_params_['reg__estimator__kneighborsregressor__n_neighbors'],
@@ -278,8 +294,10 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', randomizedcv_n_iter=6,
+        reg = Regressor(regressor_choice='mlxtendstackingregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack),
+                        randomizedcv_n_iter=6,
                         chain_order=[2, 0, 1])
         search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
@@ -287,7 +305,7 @@ class TestMlxtend(unittest.TestCase):
                              tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 12.0)
+        self.assertLess(reg.best_score_.values, 12.8)
         self.assertLessEqual(reg.best_params_['reg__base_estimator__kneighborsregressor__n_neighbors'],
                              5)
         self.assertGreaterEqual(reg.best_params_['reg__base_estimator__kneighborsregressor__n_neighbors'],
@@ -308,8 +326,10 @@ class TestMlxtend(unittest.TestCase):
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
 
-        reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', randomizedcv_n_iter=6,
+        reg = Regressor(regressor_choice='mlxtendstackingcvregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack),
+                        randomizedcv_n_iter=6,
                         chain_order=[2, 0, 1])
         search_params = dict(reg__kneighborsregressor__n_neighbors=randint(low=2, high=5),
                              reg__bayesianridge__alpha_1=[1e-7, 1e-6],
@@ -317,7 +337,7 @@ class TestMlxtend(unittest.TestCase):
                              tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 12.0)
+        self.assertLess(reg.best_score_.values, 12.8)
         self.assertLessEqual(reg.best_params_['reg__base_estimator__kneighborsregressor__n_neighbors'],
                              5)
         self.assertGreaterEqual(reg.best_params_['reg__base_estimator__kneighborsregressor__n_neighbors'],
@@ -335,8 +355,9 @@ class TestMlxtend(unittest.TestCase):
 
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
-        reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
+        reg = Regressor(regressor_choice='mlxtendstackingregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack))
         reg.fit(X_train, y_train)
         y_pred = reg.fit(X_train, y_train).predict(X_test)
         score = reg.score(y_test, y_pred)
@@ -354,8 +375,9 @@ class TestMlxtend(unittest.TestCase):
 
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
-        reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
+        reg = Regressor(regressor_choice='mlxtendstackingcvregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack))
         reg.fit(X_train, y_train)
         y_pred = reg.fit(X_train, y_train).predict(X_test)
         score = reg.score(y_test, y_pred)
@@ -375,8 +397,9 @@ class TestMlxtend(unittest.TestCase):
 
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
-        reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
+        reg = Regressor(regressor_choice='mlxtendstackingregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack))
         y_pred = reg.fit(X_train, y_train).predict(X_test)
         score = reg.score(y_test, y_pred).mean()
         self.assertCountEqual(y_pred.index, y_test.index)
@@ -395,8 +418,9 @@ class TestMlxtend(unittest.TestCase):
 
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
-        reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler')
+        reg = Regressor(regressor_choice='mlxtendstackingcvregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack))
         y_pred = reg.fit(X_train, y_train).predict(X_test)
         score = reg.score(y_test, y_pred).mean()
         self.assertCountEqual(y_pred.index, y_test.index)
@@ -415,8 +439,10 @@ class TestMlxtend(unittest.TestCase):
 
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
-        reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', chain_order=[2, 0, 1])
+        reg = Regressor(regressor_choice='mlxtendstackingregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack),
+                        chain_order=[2, 0, 1])
         y_pred = reg.fit(X_train, y_train).predict(X_test)
         score = reg.score(y_test, y_pred).mean()
         self.assertCountEqual(y_pred.index, y_test.index)
@@ -435,8 +461,10 @@ class TestMlxtend(unittest.TestCase):
 
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
-        reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform='standardscaler', chain_order=[2, 0, 1])
+        reg = Regressor(regressor_choice='mlxtendstackingcvregressor',
+                        pipeline_transform='standardscaler',
+                        stacking_options=dict(layers=stack),
+                        chain_order=[2, 0, 1])
         y_pred = reg.fit(X_train, y_train).predict(X_test)
         score = reg.score(y_test, y_pred).mean()
         self.assertCountEqual(y_pred.index, y_test.index)
@@ -455,8 +483,9 @@ class TestMlxtend(unittest.TestCase):
         union = FeatureUnion(transformer_list=transformer_list, n_jobs=-1)
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
-        reg = Regressor(regressor_choice='mlxtendstackingregressor', stacking_layer=stack,
-                        pipeline_transform=('tr', union))
+        reg = Regressor(regressor_choice='mlxtendstackingregressor',
+                        pipeline_transform=('tr', union),
+                        stacking_options=dict(layers=stack))
         reg.get_pipeline(y=y_train)
         _class_before_clone = reg.pipe.__class__
         reg.pipe = clone(reg.pipe)
@@ -479,8 +508,9 @@ class TestMlxtend(unittest.TestCase):
         union = FeatureUnion(transformer_list=transformer_list, n_jobs=-1)
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
-        reg = Regressor(regressor_choice='mlxtendstackingcvregressor', stacking_layer=stack,
-                        pipeline_transform=('tr', union))
+        reg = Regressor(regressor_choice='mlxtendstackingcvregressor',
+                        pipeline_transform=('tr', union),
+                        stacking_options=dict(layers=stack))
         reg.get_pipeline(y=y_train)
         _class_before_clone = reg.pipe.__class__
         reg.pipe = clone(reg.pipe)
@@ -498,8 +528,9 @@ class TestMlxtend(unittest.TestCase):
         index = 3
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
-        interpret = ShapInterpret(regressor_choice='mlxtendstackingregressor', target_index=index,
-                                  stacking_layer=stack)
+        interpret = ShapInterpret(regressor_choice='mlxtendstackingregressor',
+                                  target_index=index,
+                                  stacking_options=dict(layers=stack))
         interpret.fit(X=X_train, y=y_train, index=index)
         explainer, shap_values = interpret.explainer(X=X_train)
         self.assertEqual(X_train.shape, shap_values.shape)
@@ -509,8 +540,9 @@ class TestMlxtend(unittest.TestCase):
         index = 3
         stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
                      final_regressor='lasso')
-        interpret = ShapInterpret(regressor_choice='mlxtendstackingcvregressor', target_index=index,
-                                  stacking_layer=stack)
+        interpret = ShapInterpret(regressor_choice='mlxtendstackingcvregressor',
+                                  target_index=index,
+                                  stacking_options=dict(layers=stack))
         interpret.fit(X=X_train, y=y_train, index=index)
         explainer, shap_values = interpret.explainer(X=X_train)
         self.assertEqual(X_train.shape, shap_values.shape)

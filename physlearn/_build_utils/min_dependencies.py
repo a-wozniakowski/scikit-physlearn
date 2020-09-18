@@ -1,4 +1,10 @@
-"""All minimum dependencies for scikit-physlearn."""
+"""
+The :mod:`physlearn._build_utils.min_dependencies` module contains all of the
+minimum dependencies for scikit-physlearn.
+"""
+
+# Author: Alex Wozniakowski
+# License: MIT
 
 import platform
 
@@ -11,8 +17,6 @@ else:
     NUMPY_MIN_VERSION = '1.13.3'
 
 JOBLIB_MIN_VERSION = '0.11'
-THREADPOOLCTL_MIN_VERSION = '2.0.0'
-CYTHON_MIN_VERSION = '0.28.5'
 SCIKIT_LEARN_MIN_VERSION = '0.23.0'
 PANDAS_MIN_VERSION = '1.0.0'
 SHAP_MIN_VERSION = '0.35.0'
@@ -36,21 +40,16 @@ dependent_packages = {
     'xgboost': (XGBOOST_MIN_VERSION, 'build, install'),
     'lightgbm': (LIGHTGBM_MIN_VERSION, 'build, install'),
     'mlxtend': (MLXTEND_MIN_VERSION, 'build, install'),
-    'joblib': (JOBLIB_MIN_VERSION, 'install'),
-    'threadpoolctl': (THREADPOOLCTL_MIN_VERSION, 'install'),
-    'cython': (CYTHON_MIN_VERSION, 'install'),
-    'python-levenshtein-wheels': (PYTHON_LEVENSHTEIN_WHEELS_MIN_VERSION, 'install'),
+    'joblib': (JOBLIB_MIN_VERSION, 'build, install'),
+    'python-levenshtein-wheels': (PYTHON_LEVENSHTEIN_WHEELS_MIN_VERSION, 'build, install'),
     'sphinx': ('3.0.3', 'docs'),
-    'sphinx-gallery': ('0.7.0', 'docs'),
-    'numpydoc': ('1.0.0', 'docs'),
-    'Pillow': ('7.1.2', 'docs'),
+    'sphinx-gallery': ('0.7.0', 'docs')
 }
 
 
 tag_to_packages: dict = {
-    extra: [] for extra in ['build', 'install', 'docs', 'examples',
-                            'tests']
+    extra: [] for extra in ['build', 'install', 'docs', 'tests']
 }
 for package, (min_version, extras) in dependent_packages.items():
     for extra in extras.split(', '):
-        tag_to_packages[extra].append("{}>={}".format(package, min_version))
+        tag_to_packages[extra].append('{}>={}'.format(package, min_version))

@@ -1,5 +1,7 @@
 """
-Regressor interpretability with SHAP utilities.
+The :mod:`physlearn.supervised.interpretation.interpret_regressor` module provides
+SHAP utilities for regressor interpretability. It includes the 
+:class:`physlearn.ShapInterpret` class.
 """
 
 # Author: Alex Wozniakowski
@@ -23,12 +25,11 @@ from physlearn.supervised.utils._definition import (_MULTI_TARGET, _SHAP_TAXONOM
 class ShapInterpret(BaseRegressor):
     """Interpret a regressor's output with SHAP plots."""
 
-    def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
-                 verbose=0, n_jobs=-1, show=True, pipeline_transform='quantile_normal',
-                 pipeline_memory=None, params=None, chain_order=None,
-                 stacking_layer=None, stacking_cv_shuffle=True,
-                 stacking_cv_refit=True, stacking_passthrough=True,
-                 stacking_meta_features=True, target_index=None):
+    def __init__(self, regressor_choice='ridge', cv=5,
+                 random_state=0, verbose=0, n_jobs=-1,
+                 show=True, pipeline_transform='quantilenormal',
+                 pipeline_memory=None, params=None, target_index=None,
+                 chain_order=None, stacking_options=None):
 
         super().__init__(regressor_choice=regressor_choice,
                          cv=cv,
@@ -38,14 +39,16 @@ class ShapInterpret(BaseRegressor):
                          pipeline_transform=pipeline_transform,
                          pipeline_memory=pipeline_memory,
                          params=params,
+                         target_index=target_index,
                          chain_order=chain_order,
-                         stacking_layer=stacking_layer,
-                         target_index=target_index)
-
-        assert isinstance(show, bool)
+                         stacking_options=stacking_options)
 
         self.show = show
         self.explainer_type = _SHAP_TAXONOMY[self.regressor_choice]
+        self._validate_display_options()
+
+    def _validate_display_options(self):
+        assert isinstance(self.show, bool)
 
     def fit(self, X, y, index=None, sample_weight=None):
         """Fit regressor."""
