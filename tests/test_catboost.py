@@ -125,7 +125,7 @@ class TestCatBoost(unittest.TestCase):
                              tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 10.0)
+        self.assertLess(reg.best_score_.values, 10.4)
         self.assertLessEqual(reg.best_params_['reg__base_estimator__iterations'], 10)
         self.assertGreaterEqual(reg.best_params_['reg__base_estimator__iterations'], 3)
 

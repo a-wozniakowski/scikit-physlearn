@@ -76,48 +76,48 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         A dictionary of base boosting options, wherein the following options
         must be specified:
 
-            n_estimators :obj:`int`
-                The number of basis functions in the noise term of the additive expansion.
+        n_estimators :obj:`int`
+            The number of basis functions in the noise term of the additive expansion.
 
-            boosting_loss :obj:`str` 
-                The loss function utilized in the pseudo-residual computation, where 'ls'
+        boosting_loss :obj:`str` 
+            The loss function utilized in the pseudo-residual computation, where 'ls'
+            denotes the squared error loss function, 'lad' denotes the absolute error
+            loss function, 'huber' denotes the Huber loss function, and 'quantile'
+            denotes the quantile loss function.
+
+        line_search_options :obj:`dict` 
+            init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
+                The initial guess for the expansion coefficient.
+
+            opt_method :obj:`str`
+                Choice of optimization method. If ``'minimize'``, then
+                :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
+                then :class:`scipy.optimize.basinhopping`.
+
+            method :obj:`str` or None
+                The type of solver utilized in the optimization method.
+
+            tol :obj:`float` or None
+                The epsilon tolerance for terminating the optimization method.
+
+            options :obj:`dict` or None
+                A dictionary of solver options.
+
+            niter :obj:`int` or None
+                The number of iterations in basin-hopping.
+
+            T :obj:`float` or None
+                The temperature paramter utilized in basin-hopping,
+                which determines the accept or reject criterion.
+
+            loss :obj:`str`
+                The loss function utilized in the line search computation, where 'ls'
                 denotes the squared error loss function, 'lad' denotes the absolute error
                 loss function, 'huber' denotes the Huber loss function, and 'quantile'
                 denotes the quantile loss function.
 
-            line_search_options :obj:`dict` 
-                init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
-                    The initial guess for the expansion coefficient.
-
-                opt_method :obj:`str`
-                    Choice of optimization method. If ``'minimize'``, then
-                    :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
-                    then :class:`scipy.optimize.basinhopping`.
-
-                method :obj:`str` or None
-                    The type of solver utilized in the optimization method.
-
-                tol :obj:`float` or None
-                    The epsilon tolerance for terminating the optimization method.
-
-                options :obj:`dict` or None
-                    A dictionary of solver options.
-
-                niter :obj:`int` or None
-                    The number of iterations in basin-hopping.
-
-                T :obj:`float` or None
-                    The temperature paramter utilized in basin-hopping,
-                    which determines the accept or reject criterion.
-
-                loss :obj:`str`
-                    The loss function utilized in the line search computation, where 'ls'
-                    denotes the squared error loss function, 'lad' denotes the absolute error
-                    loss function, 'huber' denotes the Huber loss function, and 'quantile'
-                    denotes the quantile loss function.
-
-                regularization :obj:`int` or :obj:`float`
-                    The regularization strength in the line search computation.
+            regularization :obj:`int` or :obj:`float`
+                The regularization strength in the line search computation.
 
     Attributes
     ----------
@@ -595,48 +595,48 @@ def make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
         A dictionary of base boosting options, wherein the following options
         must be specified:
 
-            n_estimators :obj:`int`
-                The number of basis functions in the noise term of the additive expansion.
+        n_estimators :obj:`int`
+            The number of basis functions in the noise term of the additive expansion.
 
-            boosting_loss :obj:`str` 
-                The loss function utilized in the pseudo-residual computation, where 'ls'
+        boosting_loss :obj:`str` 
+            The loss function utilized in the pseudo-residual computation, where 'ls'
+            denotes the squared error loss function, 'lad' denotes the absolute error
+            loss function, 'huber' denotes the Huber loss function, and 'quantile'
+            denotes the quantile loss function.
+
+        line_search_options :obj:`dict` 
+            init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
+                The initial guess for the expansion coefficient.
+
+            opt_method :obj:`str`
+                Choice of optimization method. If ``'minimize'``, then
+                :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
+                then :class:`scipy.optimize.basinhopping`.
+
+            method :obj:`str` or None
+                The type of solver utilized in the optimization method.
+
+            tol :obj:`float` or None
+                The epsilon tolerance for terminating the optimization method.
+
+            options :obj:`dict` or None
+                A dictionary of solver options.
+
+            niter :obj:`int` or None
+                The number of iterations in basin-hopping.
+
+            T :obj:`float` or None
+                The temperature paramter utilized in basin-hopping,
+                which determines the accept or reject criterion.
+
+            loss :obj:`str`
+                The loss function utilized in the line search computation, where 'ls'
                 denotes the squared error loss function, 'lad' denotes the absolute error
                 loss function, 'huber' denotes the Huber loss function, and 'quantile'
                 denotes the quantile loss function.
 
-            line_search_options :obj:`dict` 
-                init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
-                    The initial guess for the expansion coefficient.
-
-                opt_method :obj:`str`
-                    Choice of optimization method. If ``'minimize'``, then
-                    :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
-                    then :class:`scipy.optimize.basinhopping`.
-
-                method :obj:`str` or None
-                    The type of solver utilized in the optimization method.
-
-                tol :obj:`float` or None
-                    The epsilon tolerance for terminating the optimization method.
-
-                options :obj:`dict` or None
-                    A dictionary of solver options.
-
-                niter :obj:`int` or None
-                    The number of iterations in basin-hopping.
-
-                T :obj:`float` or None
-                    The temperature paramter utilized in basin-hopping,
-                    which determines the accept or reject criterion.
-
-                loss :obj:`str`
-                    The loss function utilized in the line search computation, where 'ls'
-                    denotes the squared error loss function, 'lad' denotes the absolute error
-                    loss function, 'huber' denotes the Huber loss function, and 'quantile'
-                    denotes the quantile loss function.
-
-                regularization :obj:`int` or :obj:`float`
-                    The regularization strength in the line search computation.
+            regularization :obj:`int` or :obj:`float`
+                The regularization strength in the line search computation.
 
     random_state : int, RandomState instance, or None
         Determines the random number generation in

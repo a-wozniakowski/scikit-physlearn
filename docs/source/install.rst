@@ -51,11 +51,11 @@ Moreover, all of the dependencies are automatically managed by the build:
     scipy>=0.19.1
     scikit-learn>=0.23.0
     pandas>=1.0.0
-    shap>=0.35.0
+    shap>=0.36.0
     ipython>=7.11.0
     bayesian-optimization>=1.2.0
     catboost>=0.23.2
-    xgboost>=1.1.0
+    xgboost>=1.2.0
     lightgbm>=2.3.0
     mlxtend>=0.17.0
     joblib>=0.11

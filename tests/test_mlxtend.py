@@ -219,7 +219,7 @@ class TestMlxtend(unittest.TestCase):
                              tr__with_std=[True, False])
         reg.search(X_train, y_train, search_params=search_params,
                    search_method='randomizedsearchcv')
-        self.assertLess(reg.best_score_.values, 2.8)
+        self.assertLess(reg.best_score_.values, 3.0)
         self.assertLessEqual(reg.best_params_['reg__kneighborsregressor__n_neighbors'], 5)
         self.assertGreaterEqual(reg.best_params_['reg__kneighborsregressor__n_neighbors'], 2)
         self.assertIn(reg.best_params_['reg__bayesianridge__alpha_1'], [1e-7, 1e-6])
