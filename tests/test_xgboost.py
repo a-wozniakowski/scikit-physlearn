@@ -210,8 +210,6 @@ class TestXGBoost(unittest.TestCase):
         self.assertLess(score['mae'].values, 11.0)
         self.assertLess(score['mse'].values, 232.0)
 
-    # xgboost > 1.1.0 causes an issue with TreeExplainer; see issue #1215 in SHAP
-    @unittest.skipIf(xgb_version > '1.1.0', 'xgboost version is greater than 1.1.0')
     def test_shap_explainer(self):
         X_train, _, y_train, _ = load_benchmark(return_split=True)
         index = 3

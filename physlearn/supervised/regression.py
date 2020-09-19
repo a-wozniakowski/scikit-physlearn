@@ -131,74 +131,79 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
         A dictionary of stacking options, whereby ``layers``
         must be specified:
 
-            layers :obj:`dict`
-                A dictionary of stacking layer(s).
-            shuffle :obj:`bool` or None, (default=True)
-                Determines whether to shuffle the training data in
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            refit :obj:`bool` or None, (default=True)
-                Determines whether to clone and refit the regressors in
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            passthrough :obj:`bool` or None, (default=True)
-                Determines whether to concatenate the original features with
-                the first stacking layer predictions in
-                :class:`sklearn.ensemble.StackingRegressor`,
-                :class:`mlxtend.regressor.StackingRegressor`, or
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            meta_features : :obj:`bool` or None, (default=True)
-                Determines whether to make the concatenated features
-                accessible through the attribute ``train_meta_features_``
-                in :class:`mlxtend.regressor.StackingRegressor` and
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            voting_weights : :obj:`ndarray` of shape (n_regressors,) or None, (default=None)
-                Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
+        layers :obj:`dict`
+            A dictionary of stacking layer(s).
+
+        shuffle :obj:`bool` or None, (default=True)
+            Determines whether to shuffle the training data in
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        refit :obj:`bool` or None, (default=True)
+            Determines whether to clone and refit the regressors in
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        passthrough :obj:`bool` or None, (default=True)
+            Determines whether to concatenate the original features with
+            the first stacking layer predictions in
+            :class:`sklearn.ensemble.StackingRegressor`,
+            :class:`mlxtend.regressor.StackingRegressor`, or
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        meta_features : :obj:`bool` or None, (default=True)
+            Determines whether to make the concatenated features
+            accessible through the attribute ``train_meta_features_``
+            in :class:`mlxtend.regressor.StackingRegressor` and
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        voting_weights : :obj:`ndarray` of shape (n_regressors,) or None, (default=None)
+            Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
 
     base_boosting_options : dict or None, optional (default=None)
         A dictionary of base boosting options used in the modified pipeline construction,
         wherein the following options must be specified:
 
-            n_estimators :obj:`int`
-                The number of basis functions in the noise term of the additive expansion.
+        n_estimators :obj:`int`
+            The number of basis functions in the noise term of the additive expansion.
 
-            boosting_loss :obj:`str` 
-                The loss function utilized in the pseudo-residual computation, where 'ls'
+        boosting_loss :obj:`str` 
+            The loss function utilized in the pseudo-residual computation, where 'ls'
+            denotes the squared error loss function, 'lad' denotes the absolute error
+            loss function, 'huber' denotes the Huber loss function, and 'quantile'
+            denotes the quantile loss function.
+
+        line_search_options :obj:`dict` 
+            init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
+                The initial guess for the expansion coefficient.
+
+            opt_method :obj:`str`
+                Choice of optimization method. If ``'minimize'``, then
+                :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
+                then :class:`scipy.optimize.basinhopping`.
+
+            method :obj:`str` or None
+                The type of solver utilized in the optimization method.
+
+            tol :obj:`float` or None
+                The epsilon tolerance for terminating the optimization method.
+
+            options :obj:`dict` or None
+                A dictionary of solver options.
+
+            niter :obj:`int` or None
+                The number of iterations in basin-hopping.
+
+            T :obj:`float` or None
+                The temperature paramter utilized in basin-hopping,
+                which determines the accept or reject criterion.
+
+            loss :obj:`str`
+                The loss function utilized in the line search computation, where 'ls'
                 denotes the squared error loss function, 'lad' denotes the absolute error
                 loss function, 'huber' denotes the Huber loss function, and 'quantile'
                 denotes the quantile loss function.
 
-            line_search_options :obj:`dict` 
-                init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
-                    The initial guess for the expansion coefficient.
-
-                opt_method :obj:`str`
-                    Choice of optimization method. If ``'minimize'``, then
-                    :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
-                    then :class:`scipy.optimize.basinhopping`.
-
-                method :obj:`str` or None
-                    The type of solver utilized in the optimization method.
-
-                tol :obj:`float` or None
-                    The epsilon tolerance for terminating the optimization method.
-
-                options :obj:`dict` or None
-                    A dictionary of solver options.
-
-                niter :obj:`int` or None
-                    The number of iterations in basin-hopping.
-
-                T :obj:`float` or None
-                    The temperature paramter utilized in basin-hopping,
-                    which determines the accept or reject criterion.
-
-                loss :obj:`str`
-                    The loss function utilized in the line search computation, where 'ls'
-                    denotes the squared error loss function, 'lad' denotes the absolute error
-                    loss function, 'huber' denotes the Huber loss function, and 'quantile'
-                    denotes the quantile loss function.
-
-                regularization :obj:`int` or :obj:`float`
-                    The regularization strength in the line search computation.
+            regularization :obj:`int` or :obj:`float`
+                The regularization strength in the line search computation.
 
     Notes
     -----
@@ -510,7 +515,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
                                  % (self.pipe.named_steps['reg'], attr))
 
     def _check_target_index(self, y: DataFrame_or_Series) -> DataFrame_or_Series:
-        """Automates single-target regression subtask slicing.
+        """Automates subtask slicing in multi-target regression.
 
         Parameters
         ----------
@@ -906,9 +911,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
                                                return_incumbent_score=return_incumbent_score,
                                                cv=cv, fit_params=fit_params)
 
-        if self.scoring in ['neg_mean_absolute_error', 'neg_mean_squared_error']:
-            scores['train_score'] = np.array([np.abs(score) for score in scores['train_score']])
-            scores['test_score'] = np.array([np.abs(score) for score in scores['test_score']])
+        if re.match('neg', self.scoring):
+            scores['train_score'] = np.abs(scores['train_score'])
+            scores['test_score'] = np.abs(scores['test_score'])
 
         return pd.DataFrame(scores)
 
@@ -1078,74 +1083,79 @@ class Regressor(BaseRegressor):
         A dictionary of stacking options, whereby ``layers``
         must be specified:
 
-            layers :obj:`dict`
-                A dictionary of stacking layer(s).
-            shuffle :obj:`bool` or None, (default=True)
-                Determines whether to shuffle the training data in
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            refit :obj:`bool` or None, (default=True)
-                Determines whether to clone and refit the regressors in
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            passthrough :obj:`bool` or None, (default=True)
-                Determines whether to concatenate the original features with
-                the first stacking layer predictions in
-                :class:`sklearn.ensemble.StackingRegressor`,
-                :class:`mlxtend.regressor.StackingRegressor`, or
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            meta_features : :obj:`bool` or None, (default=True)
-                Determines whether to make the concatenated features
-                accessible through the attribute ``train_meta_features_``
-                in :class:`mlxtend.regressor.StackingRegressor` and
-                :class:`mlxtend.regressor.StackingCVRegressor`.
-            voting_weights : :obj:`ndarray` of shape (n_regressors,) or None, (default=None)
-                Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
+        layers :obj:`dict`
+            A dictionary of stacking layer(s).
+
+        shuffle :obj:`bool` or None, (default=True)
+            Determines whether to shuffle the training data in
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        refit :obj:`bool` or None, (default=True)
+            Determines whether to clone and refit the regressors in
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        passthrough :obj:`bool` or None, (default=True)
+            Determines whether to concatenate the original features with
+            the first stacking layer predictions in
+            :class:`sklearn.ensemble.StackingRegressor`,
+            :class:`mlxtend.regressor.StackingRegressor`, or
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        meta_features : :obj:`bool` or None, (default=True)
+            Determines whether to make the concatenated features
+            accessible through the attribute ``train_meta_features_``
+            in :class:`mlxtend.regressor.StackingRegressor` and
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        voting_weights : :obj:`ndarray` of shape (n_regressors,) or None, (default=None)
+            Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
 
     base_boosting_options : dict or None, optional (default=None)
         A dictionary of base boosting options used in the modified pipeline construction,
         wherein the following options must be specified:
 
-            n_estimators :obj:`int`
-                The number of basis functions in the noise term of the additive expansion.
+        n_estimators :obj:`int`
+            The number of basis functions in the noise term of the additive expansion.
 
-            boosting_loss :obj:`str` 
-                The loss function utilized in the pseudo-residual computation, where 'ls'
+        boosting_loss :obj:`str` 
+            The loss function utilized in the pseudo-residual computation, where 'ls'
+            denotes the squared error loss function, 'lad' denotes the absolute error
+            loss function, 'huber' denotes the Huber loss function, and 'quantile'
+            denotes the quantile loss function.
+
+        line_search_options :obj:`dict` 
+            init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
+                The initial guess for the expansion coefficient.
+
+            opt_method :obj:`str`
+                Choice of optimization method. If ``'minimize'``, then
+                :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
+                then :class:`scipy.optimize.basinhopping`.
+
+            method :obj:`str` or None
+                The type of solver utilized in the optimization method.
+
+            tol :obj:`float` or None
+                The epsilon tolerance for terminating the optimization method.
+
+            options :obj:`dict` or None
+                A dictionary of solver options.
+
+            niter :obj:`int` or None
+                The number of iterations in basin-hopping.
+
+            T :obj:`float` or None
+                The temperature paramter utilized in basin-hopping,
+                which determines the accept or reject criterion.
+
+            loss :obj:`str`
+                The loss function utilized in the line search computation, where 'ls'
                 denotes the squared error loss function, 'lad' denotes the absolute error
                 loss function, 'huber' denotes the Huber loss function, and 'quantile'
                 denotes the quantile loss function.
 
-            line_search_options :obj:`dict` 
-                init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
-                    The initial guess for the expansion coefficient.
-
-                opt_method :obj:`str`
-                    Choice of optimization method. If ``'minimize'``, then
-                    :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
-                    then :class:`scipy.optimize.basinhopping`.
-
-                method :obj:`str` or None
-                    The type of solver utilized in the optimization method.
-
-                tol :obj:`float` or None
-                    The epsilon tolerance for terminating the optimization method.
-
-                options :obj:`dict` or None
-                    A dictionary of solver options.
-
-                niter :obj:`int` or None
-                    The number of iterations in basin-hopping.
-
-                T :obj:`float` or None
-                    The temperature paramter utilized in basin-hopping,
-                    which determines the accept or reject criterion.
-
-                loss :obj:`str`
-                    The loss function utilized in the line search computation, where 'ls'
-                    denotes the squared error loss function, 'lad' denotes the absolute error
-                    loss function, 'huber' denotes the Huber loss function, and 'quantile'
-                    denotes the quantile loss function.
-
-                regularization :obj:`int` or :obj:`float`
-                    The regularization strength in the line search computation.
+            regularization :obj:`int` or :obj:`float`
+                The regularization strength in the line search computation.
 
     Notes
     -----

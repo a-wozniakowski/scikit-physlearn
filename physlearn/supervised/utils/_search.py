@@ -28,18 +28,18 @@ def _bayesoptcv(X, y, estimator, search_params, cv,
                 init_points, n_iter):
 
     def regressor_cross_val_mean(**pbounds):
-        pbounds = _check_bayesoptcv_parameter_type(pbounds=pbounds)
-        cross_val = sklearn.model_selection.cross_val_score(estimator=estimator.set_params(**pbounds),
+        estimator.set_params(**_check_bayesoptcv_parameter_type(pbounds=pbounds))
+        cross_val = sklearn.model_selection.cross_val_score(estimator=estimator,
                                                             X=X, y=y,
                                                             scoring=scoring,
                                                             cv=cv,
                                                             n_jobs=n_jobs)
         return cross_val.mean()
 
-    search = BayesianOptimization(f=regressor_cross_val_mean,
-                                  pbounds=search_params,
-                                  verbose=verbose,
-                                  random_state=random_state)
+    search = bayes_opt.BayesianOptimization(f=regressor_cross_val_mean,
+                                            pbounds=search_params,
+                                            verbose=verbose,
+                                            random_state=random_state)
 
     search.maximize(init_points=init_points, n_iter=n_iter)
 
