@@ -641,7 +641,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
             column(s) correspond to the predicted single-target(s).
 
         scoring : str
-            The scoring name, which may be `mae`, `mse`, `rmse`, `r2`, `ev`, or `msle`.
+            The scoring name, which may be `mae`, `mse`, `rmse`, `r2`, `ev`, or
+            `msle`.
 
         multioutput : str
             Defines aggregating of multiple output values, wherein the string
@@ -1478,7 +1479,7 @@ class Regressor(BaseRegressor):
         return y_pred
 
     def score(self, y_true: DataFrame_or_Series, y_pred: DataFrame_or_Series,
-              path=None) -> DataFrame_or_Series:
+              path=None) -> pd.DataFrame:
         """Computes the DataFrame of supervised scores.
 
         The scoring metrics include mean squared error, mean absolute error,
@@ -1503,9 +1504,11 @@ class Regressor(BaseRegressor):
 
         Returns
         -------
-        scores : pd.DataFrame
-            The DataFrame of computed scores.
+        scores : pd.DataFrame or pd.Series
+            The pandas object of computed scores.
         """
+
+        assert any(self.score_multioutput for output in ['raw_values', 'uniform_average'])
 
         scores = {}
         for scoring in _SCORE_CHOICE:
@@ -1514,14 +1517,17 @@ class Regressor(BaseRegressor):
                                             scoring=scoring,
                                             multioutput=self.score_multioutput)
 
-        scores = pd.DataFrame(scores).dropna(how='any', axis=1)
-        scores.index.name = 'target'
-        
-        # Shifts the index origin by one.
-        if self.target_index is not None:
-            scores.index = pd.RangeIndex(start=self.target_index + 1,
-                                         stop=self.target_index + 2,
-                                         step=1)
+        if self.score_multioutput == 'raw_values':
+            scores = pd.DataFrame(scores).dropna(how='any', axis=1)
+            scores.index.name = 'target'
+            
+            # Shifts the index origin by one.
+            if self.target_index is not None:
+                scores.index = pd.RangeIndex(start=self.target_index + 1,
+                                             stop=self.target_index + 2,
+                                             step=1)
+        else:
+            scores = pd.Series(scores).dropna(how='any', axis=0)
 
         if path is not None:
             assert isinstance(path, str)
