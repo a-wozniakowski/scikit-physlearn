@@ -164,6 +164,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
 
         n_estimators :obj:`int`
             The number of basis functions in the noise term of the additive expansion.
+            Note that this option may also be specified as ``n_regressors``.
 
         boosting_loss :obj:`str` 
             The loss function utilized in the pseudo-residual computation, where 'ls'
@@ -216,6 +217,22 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
     pipeline of transforms with a final estimator, which supports base boosting.
     :class:`physlearn.supervised.regression.Regressor` : The main class for
     regressor amalgamation.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.model_selection import train_test_split
+    >>> from physlearn import BaseRegressor
+    >>> X, y = load_boston(return_X_y=True)
+    >>> X, y = pd.DataFrame(X), pd.Series(y)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            random_state=42)
+    >>> reg = BaseRegressor(regressor_choice='lgbmregressor',
+                            pipeline_transform='standardscaler')
+    >>> y_pred = reg.fit(X_train, y_train).predict(X_test)
+    >>> reg.score(y_test, y_pred)
+    array([11.63706835])
     """
 
     def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
@@ -626,8 +643,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
 
         return self.pipe.predict(X=X)
 
-    def score(self, y_true: pandas_or_numpy, y_pred: pandas_or_numpy, scoring: str,
-              multioutput: str) -> pandas_or_numpy:
+    def score(self, y_true: pandas_or_numpy, y_pred: pandas_or_numpy, scoring='mse',
+              multioutput='raw_values') -> pandas_or_numpy:
         """Computes the supervised score.
 
         Parameters
@@ -640,11 +657,11 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
             The predicted target matrix, where each row corresponds to an example and the
             column(s) correspond to the predicted single-target(s).
 
-        scoring : str
+        scoring : str, optional (default='mse')
             The scoring name, which may be `mae`, `mse`, `rmse`, `r2`, `ev`, or
             `msle`.
 
-        multioutput : str
+        multioutput : str, optional (default='raw_values')
             Defines aggregating of multiple output values, wherein the string
             must be either ``'raw_values'``, ``'uniform_average'``, or
             ``'variance_weighted'``.
@@ -895,9 +912,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
 
         Notes
         -----
-        Scikit-learn returns negative scores for mean absolute error (MAE),
-        and mean squared error (MSE). However, we prefer to restore nonnegativity,
-        so we take the absolute value for these scoring methods.
+        Scikit-learn returns negative scores for some metrics, such as
+        mean absolute error (MAE) or mean squared error (MSE). However,
+        we only return nonnegativie scores.
 
         References
         ----------
@@ -961,9 +978,9 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
 
         Notes
         -----
-        Scikit-learn returns negative scores for mean absolute error (MAE),
-        and mean squared error (MSE). However, we prefer to restore nonnegativity,
-        so we take the absolute value for these scoring methods.
+        Scikit-learn returns negative scores for some metrics, such as
+        mean absolute error (MAE) or mean squared error (MSE). However,
+        we only return nonnegativie scores.
 
         References
         ----------
@@ -1117,6 +1134,7 @@ class Regressor(BaseRegressor):
 
         n_estimators :obj:`int`
             The number of basis functions in the noise term of the additive expansion.
+            Note that this option may also be specified as ``n_regressors``.
 
         boosting_loss :obj:`str` 
             The loss function utilized in the pseudo-residual computation, where 'ls'
@@ -1162,7 +1180,7 @@ class Regressor(BaseRegressor):
     -----
     The ``score`` method differs from the Scikit-learn usage, as the method is designed
     to abstract the regressor metrics, e.g., :class:`sklearn.metrics.mean_absolute_error`.
-    Moreover, it computes multiple metrics, and returns the scores in a DataFrame.
+    Moreover, it computes multiple metrics, and returns the scores in a pandas object.
 
     See Also
     --------
@@ -1170,6 +1188,32 @@ class Regressor(BaseRegressor):
     pipeline of transforms with a final estimator, which supports base boosting.
     :class:`physlearn.supervised.regression.BaseRegressor` : The base class for
     regressor amalgamation.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.pipeline import FeatureUnion
+    >>> from physlearn import Regressor
+    >>> X, y = load_boston(return_X_y=True)
+    >>> X, y = pd.DataFrame(X), pd.Series(y)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            random_state=42)
+    >>> transformer_list = [('pca', PCA(n_components=1)),
+                            ('svd', TruncatedSVD(n_components=2))]
+    >>> union = FeatureUnion(transformer_list=transformer_list, n_jobs=-1)
+    >>> stack = dict(regressors=['kneighborsregressor', 'bayesianridge'],
+                     final_regressor='lasso')
+    >>> reg = Regressor(regressor_choice='stackingregressor',
+                        pipeline_transform=('tr', union),
+                        stacking_options=dict(layers=stack))
+    >>> y_pred = reg.fit(X_train, y_train).predict(X_test)
+    >>> reg.score(y_test, y_pred)
+                 mae        mse      rmse        r2       ev      msle
+    target
+    0       4.775145  42.874253  6.547843  0.387748  0.40836  0.079818
     """
 
     def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
@@ -1582,9 +1626,9 @@ class Regressor(BaseRegressor):
 
         Notes
         -----
-        Scikit-learn returns negative scores for mean absolute error (MAE),
-        and mean squared error (MSE). However, we prefer to restore nonnegativity,
-        so we take the absolute value for these scoring methods.
+        Scikit-learn returns negative scores for some metrics, such as
+        mean absolute error (MAE) or mean squared error (MSE). However,
+        we only return nonnegativie scores.
 
         References
         ----------
@@ -1643,9 +1687,9 @@ class Regressor(BaseRegressor):
 
         Notes
         -----
-        Scikit-learn returns negative scores for mean absolute error (MAE),
-        and mean squared error (MSE). However, we prefer to restore nonnegativity,
-        so we take the absolute value for these scoring methods.
+        Scikit-learn returns negative scores for some metrics, such as
+        mean absolute error (MAE) or mean squared error (MSE). However,
+        we only return nonnegativie scores.
 
         References
         ----------
@@ -1809,9 +1853,9 @@ class Regressor(BaseRegressor):
 
         Notes
         -----
-        Scikit-learn returns negative scores for mean absolute error (MAE),
-        and mean squared error (MSE). However, we prefer to restore nonnegativity,
-        so we take the absolute value for these scoring methods.
+        Scikit-learn returns negative scores for some metrics, such as
+        mean absolute error (MAE) or mean squared error (MSE). However,
+        we only return nonnegativie scores.
         """
 
         X, y = super()._validate_data(X=X, y=y)
@@ -1920,9 +1964,9 @@ class Regressor(BaseRegressor):
 
         Notes
         -----
-        Scikit-learn returns negative scores for mean absolute error (MAE),
-        and mean squared error (MSE). However, we prefer to restore nonnegativity,
-        so we take the absolute value for these scoring methods.
+        Scikit-learn returns negative scores for some metrics, such as
+        mean absolute error (MAE) or mean squared error (MSE). However,
+        we only return nonnegativie scores.
         """
 
         X_train, y_train = sklearn.utils.metaestimators._safe_split(estimator=pipeline,
@@ -1995,9 +2039,9 @@ class Regressor(BaseRegressor):
         The procedure does not compute the single best set of (hyper)parameters,
         as each inner loop may return a different set of optimal (hyper)parameters.
 
-        Scikit-learn returns negative scores for mean absolute error (MAE),
-        and mean squared error (MSE). However, we prefer to restore nonnegativity,
-        so we take the absolute value for these scoring methods.
+        Scikit-learn returns negative scores for some metrics, such as
+        mean absolute error (MAE) or mean squared error (MSE). However,
+        we only return nonnegativie scores.
 
         References
         ----------
