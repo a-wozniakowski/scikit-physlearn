@@ -149,7 +149,12 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                                 base_boosting_options=base_boosting_options)
     >>> pipe.fit(X_train, y_train)
     >>> pipe.score(X_test, y_test).round(decimals=2)
-    3.49
+        mae    mse  rmse    r2    ev
+    0  2.17  10.01  3.16  0.97  0.98
+    1  1.17   3.09  1.76  0.99  0.99
+    2  0.78   1.20  1.09  1.00  1.00
+    3  0.83   1.12  1.06  1.00  1.00
+    4  0.99   2.00  1.42  1.00  1.00
 
     References
     ----------
@@ -579,8 +584,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         return y_pred
 
     @sklearn.utils.metaestimators.if_delegate_has_method(delegate='_final_estimator')
-    def score(self, X: DataFrame_or_Series, y: DataFrame_or_Series, scoring='mse',
-              multioutput='uniform_average', **predict_params) -> pandas_or_numpy:
+    def score(self, X: DataFrame_or_Series, y: DataFrame_or_Series, multioutput='raw_values',
+              **predict_params) -> pd.DataFrame:
         """Computes the supervised score.
 
         Parameters
@@ -593,14 +598,9 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
-        scoring : str, optional (default='mse')
-            The scoring name, which may be `mae`, `mse`, `rmse`, `r2`, `ev`, or
-            `msle`.
-
-        multioutput : str, optional (default='uniform_average')
+        multioutput : str, optional (default='raw_values')
             Defines aggregating of multiple output values, wherein the string
-            must be either ``'raw_values'``, ``'uniform_average'``, or
-            ``'variance_weighted'``.
+            must be either ``'raw_values'`` or ``'uniform_average'``.
 
         **predict_params : dict of string -> object
             Parameters to the ``predict`` method, which are called after completing
@@ -608,49 +608,52 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         Returns
         -------
-        score : float or ndarray of floats
-            The computed score.
+        scores : pd.DataFrame or pd.Series
+            The pandas object of computed scores.
         """
 
-        assert any(scoring for method in _SCORE_CHOICE) and isinstance(scoring, str)
-
-        if scoring in ['r2', 'ev']:
-            possible_multioutputs = ['raw_values', 'uniform_average',
-                                     'variance_weighted']
-            assert any(multioutput for output in possible_multioutputs)
-        else:
-            possible_multioutputs = ['raw_values', 'uniform_average']
-            assert any(multioutput for output in possible_multioutputs)
+        assert any(multioutput for output in ['raw_values', 'uniform_average'])
 
         y_pred = self.predict(X=X, **predict_params)
         y_true = y
 
-        if scoring == 'mae':
-            score = sklearn.metrics.mean_absolute_error(y_true=y_true, y_pred=y_pred,
-                                                        multioutput=multioutput)
-        elif scoring == 'mse':
-            score = sklearn.metrics.mean_squared_error(y_true=y_true, y_pred=y_pred,
-                                                       multioutput=multioutput)
-        elif scoring == 'rmse':
-            score = np.sqrt(sklearn.metrics.mean_squared_error(y_true=y_true, y_pred=y_pred,
-                                                               multioutput=multioutput))
-        elif scoring == 'r2':
-            score = sklearn.metrics.r2_score(y_true=y_true, y_pred=y_pred,
-                                             multioutput=multioutput)
-        elif scoring == 'ev':
-            score = sklearn.metrics.explained_variance_score(y_true=y_true, y_pred=y_pred,
-                                                             multioutput=multioutput)
-        elif scoring == 'msle':
-            try:
-                score = sklearn.metrics.mean_squared_log_error(y_true=y_true, y_pred=y_pred,
-                                                               multioutput=multioutput)
-            except:
-                # Sklearn will raise a ValueError if either
-                # statement is true, so we circumvent
-                # this error and score with a NaN.
-                score = np.nan
+        scores = {}
+        for scoring in _SCORE_CHOICE:
+            if scoring == 'mae':
+                scores[scoring] = sklearn.metrics.mean_absolute_error(y_true=y_true,
+                                                                      y_pred=y_pred,
+                                                                      multioutput=multioutput)
+            elif scoring == 'mse':
+                scores[scoring] = sklearn.metrics.mean_squared_error(y_true=y_true,
+                                                                     y_pred=y_pred,
+                                                                     multioutput=multioutput)
+            elif scoring == 'rmse':
+                scores[scoring] = np.sqrt(sklearn.metrics.mean_squared_error(y_true=y_true,
+                                                                             y_pred=y_pred,
+                                                                             multioutput=multioutput))
+            elif scoring == 'r2':
+                scores[scoring] = sklearn.metrics.r2_score(y_true=y_true,
+                                                           y_pred=y_pred,
+                                                           multioutput=multioutput)
+            elif scoring == 'ev':
+                scores[scoring] = sklearn.metrics.explained_variance_score(y_true=y_true,
+                                                                           y_pred=y_pred,
+                                                                           multioutput=multioutput)
+            elif scoring == 'msle':
+                try:
+                    scores[scoring] = sklearn.metrics.mean_squared_log_error(y_true=y_true,
+                                                                             y_pred=y_pred,
+                                                                             multioutput=multioutput)
+                except:
+                    # Sklearn will raise a ValueError if either
+                    # statement is true, so we circumvent
+                    # this error and score with a NaN.
+                    scores[scoring] = np.nan
 
-        return score
+        if multioutput == 'raw_values':
+            return pd.DataFrame(scores).dropna(how='any', axis=1)
+        else:
+            return pd.Series(scores).dropna(how='any', axis=0)
 
 
 def make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
