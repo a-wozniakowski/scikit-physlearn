@@ -11,8 +11,10 @@ import sklearn.ensemble
 import pandas as pd
 
 from sklearn.datasets import load_boston, load_linnerud
+from sklearn.linear_model import Ridge
+from sklearn.preprocessing import StandardScaler
 
-from physlearn import Regressor
+from physlearn import ModifiedPipeline, Regressor
 from physlearn.datasets import load_benchmark
 from physlearn.loss import LOSS_FUNCTIONS
 from physlearn.supervised import ShapInterpret
@@ -27,6 +29,25 @@ class TestBaseBoost(unittest.TestCase):
         self.assertEqual(score['mae'].mean().round(decimals=2), 1.34)
         self.assertEqual(score['mse'].mean().round(decimals=2), 4.19)
         self.assertEqual(score['rmse'].mean().round(decimals=2), 1.88)
+        self.assertEqual(score['r2'].mean().round(decimals=2), 0.99)
+        self.assertEqual(score['ev'].mean().round(decimals=2), 0.99)
+
+    def test_pipeline_score_uniform_average(self):
+        X_train, X_test, y_train, y_test = load_benchmark(return_split=True)
+        line_search_options = dict(init_guess=1, opt_method='minimize',
+                                   method='Nelder-Mead', tol=1e-7,
+                                   options={"maxiter": 10000},
+                                   niter=None, T=None, loss='lad',
+                                   regularization=0.1)
+        base_boosting_options = dict(n_regressors=3, boosting_loss='lad',
+                                     line_search_options=line_search_options)
+        pipe = ModifiedPipeline(steps=[('scaler', StandardScaler()), ('reg', Ridge())],
+                                base_boosting_options=base_boosting_options)
+        pipe.fit(X_train, y_train)
+        score = pipe.score(X_test, y_test, multioutput='uniform_average')
+        self.assertEqual(score['mae'].mean().round(decimals=2), 1.19)
+        self.assertEqual(score['mse'].mean().round(decimals=2), 3.49)
+        self.assertEqual(score['rmse'].mean().round(decimals=2), 1.87)
         self.assertEqual(score['r2'].mean().round(decimals=2), 0.99)
         self.assertEqual(score['ev'].mean().round(decimals=2), 0.99)
 

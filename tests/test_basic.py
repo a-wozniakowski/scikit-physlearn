@@ -366,6 +366,24 @@ class TestBasic(unittest.TestCase):
         self.assertDictEqual(reg_test, check_reg_stack)
         self.assertDictEqual(est_test, check_est_stack)
 
+    # sklearn < 0.23 does not have as_frame parameter
+    @unittest.skipIf(sk_version < '0.23.0', 'scikit-learn version is less than 0.23')
+    def test_score_uniform_average(self):
+        bunch = load_linnerud(as_frame=True)  # returns a Bunch instance
+        X, y = bunch['data'], bunch['target']
+        X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            random_state=42)
+
+        reg = Regressor(regressor_choice='ridge', pipeline_transform='standardscaler',
+                        score_multioutput='uniform_average')
+        y_pred = reg.fit(X_train, y_train).predict(X_test)
+        score = reg.score(y_test, y_pred)
+        self.assertCountEqual(y_pred.index, y_test.index)
+        self.assertGreaterEqual(score['mae'], 0.0)
+        self.assertGreaterEqual(score['mse'], 0.0)
+        self.assertLess(score['mae'], 11.0)
+        self.assertLess(score['mse'], 237.0)
+
 
 if __name__ == '__main__':
     unittest.main()
