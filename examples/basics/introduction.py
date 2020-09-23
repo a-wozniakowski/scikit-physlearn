@@ -38,10 +38,6 @@ pipeline_transform = 'standardscaler'
 # Make an instance of the Regressor object.
 reg = Regressor(regressor_choice=regressor_choice, pipeline_transform=pipeline_transform)
 
-
-# Greedily fit the additive model
-reg.fit(X_train, y_train)
-
 # Generate test data predictions
 y_pred = reg.fit(X_train, y_train).predict(X_test)
 
