@@ -33,7 +33,8 @@ from physlearn.supervised.utils._data_checks import _n_targets
 from physlearn.supervised.utils._definition import (_CATBOOST_FLAG, _CHAIN_FLAG,
                                                     _MULTI_TARGET,
                                                     _PIPELINE_TRANSFORM_CHOICE,
-                                                    _XGBOOST_FLAG)
+                                                    _XGBOOST_FLAG,
+                                                    _SCORE_CHOICE)
 from physlearn.supervised.utils._estimator_checks import _check_line_search_options
 
 DataFrame_or_Series = typing.Union[pd.DataFrame, pd.Series]
@@ -129,6 +130,26 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
     --------
     :func:`physlearn.pipeline.make_pipeline` : Convenience function for constructing a modified pipeline.
     :mod:`physlearn.supervised.utils._definition` : Dictionary of final estimator options.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import Ridge
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from physlearn import ModifiedPipeline
+    >>> from physlearn.datasets import load_benchmark
+    >>> X_train, X_test, y_train, y_test = load_benchmark(return_split=True)
+    >>> line_search_options = dict(init_guess=1, opt_method='minimize',
+                                   method='Nelder-Mead', tol=1e-7,
+                                   options={"maxiter": 10000},
+                                   niter=None, T=None, loss='lad',
+                                   regularization=0.1)
+    >>> base_boosting_options = dict(n_regressors=3, boosting_loss='lad',
+                                     line_search_options=line_search_options)
+    >>> pipe = ModifiedPipeline(steps=[('scaler', StandardScaler()), ('reg', Ridge())],
+                                base_boosting_options=base_boosting_options)
+    >>> pipe.fit(X_train, y_train)
+    >>> pipe.score(X_test, y_test).round(decimals=2)
+    3.49
 
     References
     ----------
@@ -502,8 +523,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             column(s) correspond to the feature(s).
 
         **predict_params : dict of string -> object
-            Parameters to the ``predict`` called at the end of all
-            transformations in the pipeline.
+            Parameters to the ``predict`` method, which are called after completing
+            all of the pipeline transformations.
 
         Returns
         -------
@@ -556,6 +577,80 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                                           index=X.index)
 
         return y_pred
+
+    @sklearn.utils.metaestimators.if_delegate_has_method(delegate='_final_estimator')
+    def score(self, X: DataFrame_or_Series, y: DataFrame_or_Series, scoring='mse',
+              multioutput='uniform_average', **predict_params) -> pandas_or_numpy:
+        """Computes the supervised score.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The design matrix, where each row corresponds to an example and the
+            column(s) correspond to the feature(s).
+
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
+            The target matrix, where each row corresponds to an example and the
+            column(s) correspond to the single-target(s).
+
+        scoring : str, optional (default='mse')
+            The scoring name, which may be `mae`, `mse`, `rmse`, `r2`, `ev`, or
+            `msle`.
+
+        multioutput : str, optional (default='uniform_average')
+            Defines aggregating of multiple output values, wherein the string
+            must be either ``'raw_values'``, ``'uniform_average'``, or
+            ``'variance_weighted'``.
+
+        **predict_params : dict of string -> object
+            Parameters to the ``predict`` method, which are called after completing
+            all of the pipeline transformations.
+
+        Returns
+        -------
+        score : float or ndarray of floats
+            The computed score.
+        """
+
+        assert any(scoring for method in _SCORE_CHOICE) and isinstance(scoring, str)
+
+        if scoring in ['r2', 'ev']:
+            possible_multioutputs = ['raw_values', 'uniform_average',
+                                     'variance_weighted']
+            assert any(multioutput for output in possible_multioutputs)
+        else:
+            possible_multioutputs = ['raw_values', 'uniform_average']
+            assert any(multioutput for output in possible_multioutputs)
+
+        y_pred = self.predict(X=X, **predict_params)
+        y_true = y
+
+        if scoring == 'mae':
+            score = sklearn.metrics.mean_absolute_error(y_true=y_true, y_pred=y_pred,
+                                                        multioutput=multioutput)
+        elif scoring == 'mse':
+            score = sklearn.metrics.mean_squared_error(y_true=y_true, y_pred=y_pred,
+                                                       multioutput=multioutput)
+        elif scoring == 'rmse':
+            score = np.sqrt(sklearn.metrics.mean_squared_error(y_true=y_true, y_pred=y_pred,
+                                                               multioutput=multioutput))
+        elif scoring == 'r2':
+            score = sklearn.metrics.r2_score(y_true=y_true, y_pred=y_pred,
+                                             multioutput=multioutput)
+        elif scoring == 'ev':
+            score = sklearn.metrics.explained_variance_score(y_true=y_true, y_pred=y_pred,
+                                                             multioutput=multioutput)
+        elif scoring == 'msle':
+            try:
+                score = sklearn.metrics.mean_squared_log_error(y_true=y_true, y_pred=y_pred,
+                                                               multioutput=multioutput)
+            except:
+                # Sklearn will raise a ValueError if either
+                # statement is true, so we circumvent
+                # this error and score with a NaN.
+                score = np.nan
+
+        return score
 
 
 def make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
