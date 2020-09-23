@@ -79,6 +79,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         n_estimators :obj:`int`
             The number of basis functions in the noise term of the additive expansion.
+            Note that this option may also be specified as ``n_regressors``; see the
+            example below.
 
         boosting_loss :obj:`str` 
             The loss function utilized in the pseudo-residual computation, where 'ls'
@@ -584,8 +586,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         return y_pred
 
     @sklearn.utils.metaestimators.if_delegate_has_method(delegate='_final_estimator')
-    def score(self, X: DataFrame_or_Series, y: DataFrame_or_Series, multioutput='raw_values',
-              **predict_params) -> pd.DataFrame:
+    def score(self, X: DataFrame_or_Series, y: DataFrame_or_Series,
+              multioutput='raw_values', **predict_params) -> pd.DataFrame:
         """Computes the supervised score.
 
         Parameters
@@ -760,6 +762,27 @@ def make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
     --------
     :class:`physlearn.pipeline.ModifiedPipeline` : Class for creating a modified pipeline of
         transforms with a final estimator, which supports base boosting.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.linear_model import Ridge
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.utils.multiclass import type_of_target
+    >>> from physlearn import make_pipeline, Regressor
+    >>> X, y = make_regression(n_targets=3, random_state=42)
+    >>> X, y = pd.DataFrame(X), pd.DataFrame(y)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            random_state=42)
+    >>> pipe = make_pipeline(Ridge(), 'yeojohnson',
+                             target_type=type_of_target(y))
+    >>> pipe.fit(X_train, y_train)
+    >>> pipe.score(X_test, y_test).round(decimals=2)
+          mae       mse    rmse    r2    ev
+    0   58.68   5884.12   76.71  0.67  0.67
+    1  101.19  14627.70  120.95  0.36  0.36
+    2   96.31  14450.54  120.21  0.40  0.40
 
     References
     ----------
