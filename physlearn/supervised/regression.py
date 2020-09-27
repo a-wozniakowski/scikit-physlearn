@@ -213,10 +213,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
 
     See Also
     --------
-    :class:`physlearn.pipeline.ModifiedPipeline` : Class for creating a modified
-    pipeline of transforms with a final estimator, which supports base boosting.
-    :class:`physlearn.supervised.regression.Regressor` : The main class for
-    regressor amalgamation.
+    :class:`physlearn.pipeline.ModifiedPipeline` : Class for creating a pipeline.
+    :class:`physlearn.supervised.regression.Regressor` : Main class for regressor amalgamation.
 
     Examples
     --------
@@ -1184,10 +1182,8 @@ class Regressor(BaseRegressor):
 
     See Also
     --------
-    :class:`physlearn.pipeline.ModifiedPipeline` : Class for creating a modified
-    pipeline of transforms with a final estimator, which supports base boosting.
-    :class:`physlearn.supervised.regression.BaseRegressor` : The base class for
-    regressor amalgamation.
+    :class:`physlearn.pipeline.ModifiedPipeline` : Class for creating a pipeline.
+    :class:`physlearn.supervised.regression.BaseRegressor` : Base class for regressor amalgamation.
 
     Examples
     --------

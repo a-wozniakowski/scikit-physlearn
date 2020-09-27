@@ -1,5 +1,6 @@
 """
-Abstract base class for the estimator dictionary and a mixin class for regression.
+The :mod:`physlearn.base` module provides a base class and mixin class
+for the estimator dictionary and regressor amalgamation, respectively.
 """
 
 # Author: Alex Wozniakowski
@@ -10,8 +11,7 @@ from abc import ABC, abstractmethod
 
 
 class AbstractEstimatorDictionaryInterface(ABC):
-    """
-    Abstract base class for the estimator dictionary interface.
+    """Abstract base class for the estimator dictionary interface.
 
     Notes
     -----
@@ -21,13 +21,11 @@ class AbstractEstimatorDictionaryInterface(ABC):
 
     @abstractmethod
     def set_params(self):
-        """Set the parameters."""
+        """Set the (hyper)parameters."""
 
 
 class AdditionalRegressorMixin(ABC):
-    """
-    An additional mixin to include with the :class:`sklearn.base.RegressorMixin 
-    <https://scikit-learn.org/stable/modules/generated/sklearn.base.RegressorMixin.html>`_.
+    """Mixin class to include with :class:`sklearn.base.RegressorMixin`.
 
     Notes
     -----
@@ -36,16 +34,16 @@ class AdditionalRegressorMixin(ABC):
 
     @abstractmethod
     def dump(self, value, filename):
-        """Save a file."""
+        """Serializes the value."""
 
     @abstractmethod
     def load(self, filename):
-        """Load a file."""
+        """Deserializes the file object."""
 
     @abstractmethod
     def fit(self, X, y, sample_weight=None):
-        """Fit model in supervised fashion."""
+        """Fit a model in supervised fashion."""
     
     @abstractmethod
     def predict(self, X):
-        """Generate predictions."""
+        """Generate predictions with a model."""

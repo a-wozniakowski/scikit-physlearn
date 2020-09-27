@@ -6,104 +6,137 @@ Introduction
 ============
 
 Gradient boosting is a general and effective algorithmic paradigm that
-improves the prediction accuracy of any given learning algorithm in a
-stagewise fashion. The first stage generates residuals with a statistical
-approach, usually based upon maximum likelihood estimation. Next, it invokes
-a learning algorithm to discover regularities in the residuals. Then, it
-finishes by appending the learned function to the statistical initialization
-in an additive fashion. Subsequent stages follow suit, wherein each stage
-generates residuals with the model from the previous stage and it finishes
-by appending the learned function to the model from the previous stage in
-an additive fashion. As such, the gradient boosting machine derives a model
-of the domain exclusively from the statistical evidence present in the training
-examples.
+builds an additive expansion in a greedy stagewise fashion. Prior to the
+first stage, gradient boosting initializes the additive expansion with
+the optimal constant model, usually determined by maximum likelihood
+estimation. The first stage generates residuals with the statistical
+initialization, then it uses a given learning algorithm to discover
+regularities in the residuals. The stage finishes by appending the learned
+basis function to the statistical initialization in an additive fashion.
+Subsequent stages follow suit, wherein each stage generates residuals with
+the additive expansion built in the previous stage and it finishes by
+appending the learned basis function to the additive expansion. As such,
+gradient boosting is an entirely data-driven method that derives a model
+of the domain exclusively from the statistical evidence present in the
+training examples itself.
 
-Base boosting is a hyrbidization of first principle approaches with the
-gradient boosting machine. Namely, it supplants the standard statistical
-initialization in the first stage with a first principles approach. In other
-words, base boosting learns a model of the domain by building upon the 
-first princples approach in a greedy stagewise fashion.
+Base boosting is a modification of the algorithmic paradigm of gradient
+boosting, which supplants the standard statistical initialization with
+the output of any base-level regressor. As such, the output of a base-level
+regressir acts as an inductive transfer mechanism in base boosting. Its role
+is to incorporate prior domain knowledge into gradient boosting, as a means
+of compensates for a lack of training examples.
 
 Example
 -------
 
-To get started with base boosting, consider the following example. Namely, compare
-the scores between
-`non-nested and nested cross-validation <https://arxiv.org/abs/1809.09446>`_ in
-a multi-target quantum device calibration
-`application <https://github.com/a-wozniakowski/scikit-physlearn/blob/master/physlearn/datasets/google/google_json/_5q.json>`_:
+Here, we consider an example that compares nested and non-nested cross-validation
+procedures in a quantum computing regression task. We plan to perform thirty random
+trials: 
 
 .. code-block:: python
 
-    import numpy as np
-    from sklearn.model_selection import KFold
+  n_trials = 30
 
-    from physlearn import Regressor
-    from physlearn.datasets import load_benchmark, paper_params
-    from physlearn.supervised import plot_cv_comparison
+wherein each random trial uses base boosting. We begin by loading the training
+examples:
 
+.. code-block:: python
 
-    # Number of random trials
-    n_trials = 30
-
-    # Load the training data from a quantum device calibration application, wherein
-    # X_train denotes the base regressor's initial predictions and y_train denotes
-    # the multi-target experimental observations, i.e., the extracted eigenenergies.
+    from physlearn.datasets import load_benchmark
+    # Shapes of (95, 5) and (41, 5), respectively.
     X_train, _, y_train, _ = load_benchmark(return_split=True)
 
-    # Select a basis function, e.g., StackingRegressor from Sklearn with first
-    # layer regressors: Ridge and RandomForestRegressor from Sklearn and final
-    # layer regressor: KNeighborsRegressor from Sklearn.
+Next, we select a single basis function:
+
+.. code-block:: python
+
+    n_regressors = 1
     basis_fn = 'stackingregressor'
     stack = dict(regressors=['ridge', 'randomforestregressor'],
                  final_regressor='kneighborsregressor')
 
-    # Number of basis functions in the noise term of the additive expansion.
-    n_regressors = 1
+which is ``StackingRegressor`` with first layer regressors
+``Ridge`` and ``RandomForestRegressor`` and final layer regressor
+``KNeighborsRegressor`` from scikit-learn. 
 
-    # Choice of squared error loss function for the pseduo-residual computation.
+We select the squared error loss function for the pseduo-residual computation:
+
+.. code-block:: python
+
     boosting_loss = 'ls'
 
-    # Choice of absolute error loss function and (hyper)parameters for the line search computation.
+and we select the line search options:
+
+.. code-block:: python
+
     line_search_options = dict(init_guess=1, opt_method='minimize',
                                method='Nelder-Mead', tol=1e-7,
                                options={"maxiter": 10000},
                                niter=None, T=None, loss='lad',
                                regularization=0.1)
 
+We bundle the options into a dict:
+
+.. code-block:: python
+
     base_boosting_options = dict(n_regressors=n_regressors,
                                  boosting_loss=boosting_loss,
                                  line_search_options=line_search_options)
 
-    # (Hyper)parameters to to exhaustively search over in the non-nested cross-valdation procedure and in
-    # the inner loop of the nested cross-validation procedure. Namely, the regularization strength in ridge
-    # regression, number of decision trees in random forest, and number of neighbors in k-nearest neighbors.
+We choose the (hyper)parameters to exhaustively search over in the
+non-nested cross-valdation procedure and in the inner loop of the
+nested cross-validation procedure. Namely, the regularization strength
+in ridge regression, the number of decision trees in random forest, and
+the number of neighbors in k-nearest neighbors:
+
+.. code-block:: python
+
     search_params = {'reg__0__alpha': [0.5, 1.0, 1.5],
                      'reg__1__n_estimators': [30, 50, 100],
                      'reg__final_estimator__n_neighbors': [2, 5, 10]}
 
-    # Choose the single-target regression subtask: 5, using Python indexing.
-    index = 4
+Then, we make an instance of the regressor object using the aforespecified
+choices:
 
-    # Make an instance of Regressor with the aforespecified choices.
+.. code-block:: python
+
+    from physlearn import Regressor
     reg = Regressor(regressor_choice=basis_fn, stacking_layer=stack,
-                    target_index=index, scoring='neg_mean_absolute_error',
+                    target_index=4, scoring='neg_mean_absolute_error',
                     base_boosting_options=base_boosting_options)
 
-    # Make arrays to store the scores.
+where the target index corresponds to the fifth single-target regression
+subtask.
+
+We make arrays to store the nested and non-nested cross-validation scores:
+
+.. code-block:: python
+
+    import numpy as np
     non_nested_scores = np.zeros(n_trials)
     nested_scores = np.zeros(n_trials)
 
-    # Loop through the number of random trials.
+and we also import ``KFold`` from scikit-learn:
+
+.. code-block:: python
+
+    from sklearn.model_selection import KFold
+
+We start the random trials and collect the scores:
+
+.. code-block:: python
+
     for i in range(n_trials):
 
-        # Make two instances of k-fold cross-validation, whereby we generate the same indices
-        # for non-nested cross-validation and the outer loop of nested cross-validation.
+        # Make two instances of k-fold cross-validation, whereby
+        # we generate the same indices for non-nested cross-validation
+        # and the outer loop of nested cross-validation.
         outer_cv = KFold(n_splits=5, shuffle=True, random_state=i)
         inner_cv = KFold(n_splits=5, shuffle=True, random_state=i)
 
         
-        # Perform a non-nested cross-validation procedure with GridSearchCV from Sklearn.
+        # Perform a non-nested cross-validation procedure.
         reg.search(X=X_train, y=y_train, search_params=search_params,
                    search_method='gridsearchcv', cv=outer_cv)
         non_nested_scores[i] = reg.best_score_
@@ -117,12 +150,16 @@ a multi-target quantum device calibration
                                                       return_inner_loop_score=False)
         nested_scores[i] = outer_loop_scores.mean()
 
-    # Illustrate the non-nested and nested mean absolute error, as well as the score difference,
-    # for each of the 30 random trials. Note that mean absolute error is a nonnegative score.
+Lastly, we plot the nested and non-nested cross-validation scores,
+as well as the score difference, for each of the 30 random trials:
+
+.. code-block:: python
+
+    from physlearn.supervised import plot_cv_comparison
     plot_cv_comparison(non_nested_scores=non_nested_scores, nested_scores=nested_scores,
                        n_trials=n_trials)
 
-Example output:
+which outputs:
 
 .. code-block:: bash
 
