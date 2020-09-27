@@ -11,16 +11,20 @@ and `Mlxtend <http://rasbt.github.io/mlxtend/>`_
 regressors into a flexible framework that:
 
 - Follows the Scikit-learn API.
-- Represents data with pandas.
+- Processes pandas data representations.
 - Solves single-target and multi-target regression tasks.
-- Interprets regressors with SHAP.
+- Interprets regressors with `SHAP <https://shap.readthedocs.io/en/latest/>`_.
 
 Additionally, the library contains the official implementation of
-`base boosting <https://arxiv.org/abs/2005.06194>`_. This modification
-of the `gradient boosting machine <https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451>`_
-supplants a weak learning algorithm with an explict model of the domain,
-which provides gradient boosting with an inductive bias in scientific applications;
-see the :doc:`base boosting <baseboosting>` page. 
+`base boosting <https://arxiv.org/abs/2005.06194>`_, which is an algorithmic
+paradigm for building additive expansions based upon the output of any
+base-level regressor. The implementation:
+
+- Supplants the statistical initialization in gradient boosting
+  with the output of any base-level regressor.
+- Boosts arbitrary basis functions, i.e., it is not limited to boosting
+  decision trees.
+- Efficiently learns in the low data regime.
 
 The `library <https://github.com/a-wozniakowski/scikit-physlearn>`_ was
 started by Alex Wozniakowski during his graduate studies at Nanyang Technological

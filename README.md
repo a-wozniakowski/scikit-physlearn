@@ -16,20 +16,20 @@ and [Mlxtend](http://rasbt.github.io/mlxtend/)
 regressors into a flexible framework that:
 
 * Follows the Scikit-learn API.
-* Represents data with pandas.
+* Processes pandas data representations.
 * Solves single-target and multi-target regression tasks.
 * Interprets regressors with SHAP.
 
-Additionally, the library contains the official implementation of *base boosting*.
-This modification of the
-[gradient boosting machine](https://projecteuclid.org/download/pdf_1/euclid.aos/1013203451)
-supplants the standard statistical initialization in the gradient boosting machine
-with a first principles approach such that the gradient boosting machine learns
-a general model of the domain by building upon the first principles approach in
-a stagewise fashion; see the
-[documentation](https://scikit-physlearn.readthedocs.io/en/latest/baseboosting.html)
-as well as the paper results
-[directory](https://github.com/a-wozniakowski/scikit-physlearn/blob/master/examples/paper_results).
+Additionally, the library contains the official implementation of
+[base boosting](https://arxiv.org/abs/2005.06194>), which is an algorithmic
+paradigm for building additive expansions based upon the output of any
+base-level regressor. The implementation:
+
+* Supplants the statistical initialization in gradient boosting
+  with the output of any base-level regressor.
+* Boosts arbitrary basis functions, i.e., it is not limited to boosting
+  decision trees.
+* Efficiently learns in the low data regime.
 
 The library was started by Alex Wozniakowski during his graduate studies at Nanyang Technological
 University.
@@ -40,7 +40,7 @@ Scikit-physlearn can be installed from [PyPI](https://pypi.org/project/scikit-ph
 pip install scikit-physlearn
 ```
 
-To build from source, see the [installation guide](https://scikit-physlearn.readthedocs.io/en/latest/install.html).
+To build from source, follow the [installation guide](https://scikit-physlearn.readthedocs.io/en/latest/install.html).
 
 ## Citation
 
