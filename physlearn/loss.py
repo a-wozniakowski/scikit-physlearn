@@ -43,6 +43,17 @@ def _difference(y: pandas_or_numpy, raw_predictions: pandas_or_numpy) -> pandas_
     -------
     diff : DataFrame, Series, or ndarray
         The difference between the single-target(s) and the raw predictions.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.datasets import load_linnerud
+    >>> from physlearn.loss import _difference
+    >>> X, y = load_linnerud(return_X_y=True)
+    >>> _difference(y=pd.DataFrame(y), raw_predictions=X).iloc[:2]
+           0      1     2
+    0  186.0 -126.0 -10.0
+    1  187.0  -73.0  -8.0
     """
 
     if isinstance(y, (pd.DataFrame, pd.Series)):
@@ -79,7 +90,6 @@ class LeastSquaresError(sklearn.ensemble._gb_losses.LeastSquaresError):
 
         Parameters
         ----------
-
         y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
@@ -95,6 +105,15 @@ class LeastSquaresError(sklearn.ensemble._gb_losses.LeastSquaresError):
         Returns
         -------
         mse : DataFrame, Series, or ndarray
+
+        Examples
+        --------
+        >>> from sklearn.datasets import load_linnerud
+        >>> from physlearn import LeastSquaresError
+        >>> X, y = load_linnerud(return_X_y=True)
+        >>> ls = LeastSquaresError(n_classes=1)
+        >>> ls(y=y, raw_predictions=X)
+        16048.6
         """
 
         if sample_weight is None:
@@ -109,7 +128,6 @@ class LeastSquaresError(sklearn.ensemble._gb_losses.LeastSquaresError):
 
         Parameters
         ----------
-
         y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
@@ -121,6 +139,18 @@ class LeastSquaresError(sklearn.ensemble._gb_losses.LeastSquaresError):
         Returns
         -------
         residual : DataFrame, Series, or ndarray
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from sklearn.datasets import load_linnerud
+        >>> from physlearn import LeastSquaresError
+        >>> X, y = load_linnerud(return_X_y=True)
+        >>> ls = LeastSquaresError(n_classes=1)
+        >>> ls.negative_gradient(y=pd.DataFrame(y), raw_predictions=X).iloc[:2]
+               0      1     2
+        0  186.0 -126.0 -10.0
+        1  187.0  -73.0  -8.0
         """
 
         return _difference(y=y, raw_predictions=raw_predictions)
@@ -150,7 +180,6 @@ class LeastAbsoluteError(sklearn.ensemble._gb_losses.LeastAbsoluteError):
 
         Parameters
         ----------
-
         y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
@@ -166,6 +195,15 @@ class LeastAbsoluteError(sklearn.ensemble._gb_losses.LeastAbsoluteError):
         Returns
         -------
         mae : DataFrame, Series, or ndarray
+
+        Examples
+        --------
+        >>> from sklearn.datasets import load_linnerud
+        >>> from physlearn import LeastAbsoluteError
+        >>> X, y = load_linnerud(return_X_y=True)
+        >>> lad = LeastAbsoluteError(n_classes=1)
+        >>> lad(y=y, raw_predictions=X)
+        104.23333333333333
         """
 
         if sample_weight is None:
@@ -180,7 +218,6 @@ class LeastAbsoluteError(sklearn.ensemble._gb_losses.LeastAbsoluteError):
 
         Parameters
         ----------
-
         y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
@@ -192,6 +229,18 @@ class LeastAbsoluteError(sklearn.ensemble._gb_losses.LeastAbsoluteError):
         Returns
         -------
         residual : DataFrame, Series, or ndarray
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from sklearn.datasets import load_linnerud
+        >>> from physlearn import LeastAbsoluteError
+        >>> X, y = load_linnerud(return_X_y=True)
+        >>> lad = LeastAbsoluteError(n_classes=1)
+        >>> lad.negative_gradient(y=pd.DataFrame(y), raw_predictions=X).iloc[:2]
+             0    1    2
+        0  1.0 -1.0 -1.0
+        1  1.0 -1.0 -1.0
         """
 
         if isinstance(y, (pd.DataFrame, pd.Series)):
@@ -224,6 +273,8 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
         This threshold determines whether to use the squared error or
         the absolute error loss function.
 
+        Parameters
+        ----------
         difference : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The difference between the single-target(s) and the raw prediction(s).
 
@@ -254,7 +305,6 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
 
         Parameters
         ----------
-
         y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
@@ -270,6 +320,15 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
         Returns
         -------
         huber : DataFrame, Series, or ndarray
+
+        Examples
+        --------
+        >>> from sklearn.datasets import load_linnerud
+        >>> from physlearn import HuberLossFunction
+        >>> X, y = load_linnerud(return_X_y=True)
+        >>> huber = HuberLossFunction(n_classes=1)
+        >>> huber(y=y, raw_predictions=X)
+        7989.893
         """
 
         diff = _difference(y=y, raw_predictions=raw_predictions)
@@ -302,7 +361,6 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
 
         Parameters
         ----------
-
         y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
@@ -314,6 +372,18 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
         Returns
         -------
         residual : DataFrame, Series, or ndarray
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from sklearn.datasets import load_linnerud
+        >>> from physlearn import HuberLossFunction
+        >>> X, y = load_linnerud(return_X_y=True)
+        >>> huber = HuberLossFunction(n_classes=1)
+        >>> huber.negative_gradient(y=pd.DataFrame(y), raw_prediction=X).iloc[:2]
+               0      1     2
+        0  186.0 -126.0 -10.0
+        1  187.0  -73.0  -8.0
         """
 
         diff = _difference(y=y, raw_predictions=raw_predictions)
@@ -353,7 +423,6 @@ class QuantileLossFunction(sklearn.ensemble._gb_losses.QuantileLossFunction):
 
         Parameters
         ----------
-
         y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
@@ -369,6 +438,15 @@ class QuantileLossFunction(sklearn.ensemble._gb_losses.QuantileLossFunction):
         Returns
         -------
         quantile : DataFrame, Series, or ndarray
+
+        Examples
+        --------
+        >>> from sklearn.datasets import load_linnerud
+        >>> from physlearn import QuantileLossFunction
+        >>> X, y = load_linnerud(return_X_y=True)
+        >>> quantile = QuantileLossFunction(n_classes=1)
+        >>> quantile(y=y, raw_predictions=X)
+        174.27
         """
 
         diff = _difference(y=y, raw_predictions=raw_predictions)
@@ -391,7 +469,6 @@ class QuantileLossFunction(sklearn.ensemble._gb_losses.QuantileLossFunction):
 
         Parameters
         ----------
-
         y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
@@ -403,9 +480,24 @@ class QuantileLossFunction(sklearn.ensemble._gb_losses.QuantileLossFunction):
         Returns
         -------
         residual : DataFrame, Series, or ndarray
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from sklearn.datasets import load_linnerud
+        >>> from physlearn import QuantileLossFunction
+        >>> X, y = load_linnerud(return_X_y=True)
+        >>> quantile = QuantileLossFunction(n_classes=1)
+        >>> quantile.negative_gradient(y=pd.DataFrame(y), raw_predictions=X).iloc[:2]
+             0    1    2
+        0  0.9 -0.1 -0.1
+        1  0.9 -0.1 -0.1
         """
 
-        mask = y.gt(raw_predictions.values)
+        if hasattr(raw_predictions, 'values'):
+            mask = y.gt(raw_predictions.values)
+        else:
+            mask = y.gt(raw_predictions)
         return self.alpha*mask - (1-self.alpha)*~mask
 
 
