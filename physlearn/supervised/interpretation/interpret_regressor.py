@@ -14,6 +14,7 @@ import sklearn.utils.validation
 
 import matplotlib.pyplot as plt
 
+from dataclasses import dataclass, field
 from IPython.display import display
 
 from physlearn.supervised.regression import BaseRegressor
@@ -22,30 +23,17 @@ from physlearn.supervised.utils._definition import (_MULTI_TARGET, _SHAP_TAXONOM
                                                     _SHAP_SUMMARY_PLOT_CHOICE)
 
 
+@dataclass
 class ShapInterpret(BaseRegressor):
     """Interpret a regressor's output with SHAP plots."""
 
-    def __init__(self, regressor_choice='ridge', cv=5,
-                 random_state=0, verbose=0, n_jobs=-1,
-                 show=True, pipeline_transform='quantilenormal',
-                 pipeline_memory=None, params=None, target_index=None,
-                 chain_order=None, stacking_options=None):
+    show: bool = field(default=True)
 
-        super().__init__(regressor_choice=regressor_choice,
-                         cv=cv,
-                         random_state=random_state,
-                         verbose=verbose,
-                         n_jobs=n_jobs,
-                         pipeline_transform=pipeline_transform,
-                         pipeline_memory=pipeline_memory,
-                         params=params,
-                         target_index=target_index,
-                         chain_order=chain_order,
-                         stacking_options=stacking_options)
-
-        self.show = show
+    def __post_init__(self):
         self.explainer_type = _SHAP_TAXONOMY[self.regressor_choice]
         self._validate_display_options()
+        self._validate_regressor_options()
+        self._get_regressor()
 
     def _validate_display_options(self):
         assert isinstance(self.show, bool)

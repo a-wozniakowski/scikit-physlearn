@@ -28,6 +28,8 @@ import sklearn.utils
 import sklearn.utils.metaestimators
 import sklearn.utils.multiclass
 
+from dataclasses import dataclass, field
+
 from physlearn.loss import LOSS_FUNCTIONS
 from physlearn.supervised.utils._data_checks import _n_targets
 from physlearn.supervised.utils._definition import (_CATBOOST_FLAG, _CHAIN_FLAG,
@@ -41,6 +43,7 @@ DataFrame_or_Series = typing.Union[pd.DataFrame, pd.Series]
 pandas_or_numpy = typing.Union[pd.DataFrame, pd.Series, np.ndarray]
 
 
+@dataclass
 class ModifiedPipeline(sklearn.pipeline.Pipeline):
     """Custom pipeline object that supports base boosting.
 
@@ -58,13 +61,14 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
     Parameters
     ----------
     steps : list
-        List of tuples, wherein the preceding tuple(s) (name, transform) are transform(s)
-        and the last tuple (name, estimator) is an estimator
+        List of tuples, wherein the preceding tuple(s) (name, transform)
+        are transform(s) and the last tuple (name, estimator) is an
+        estimator.
 
-    memory : str or object with the joblib.Memory interface, default=None
+    memory : str or object with the joblib.Memory interface, optional (default=None)
         Enables fitted transform caching.
 
-    verbose : int
+    verbose : int, optional (default=0)
         Determines verbosity.
 
     n_jobs : int or None, optional (default=-1)
@@ -179,17 +183,14 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
     _required_parameters = ['steps']
 
-    def __init__(self, steps: list, memory=None,
-                 verbose=False, n_jobs=None,
-                 target_index=None,
-                 base_boosting_options=None):
+    steps: list
+    memory: str = field(default=None)
+    verbose: int = field(default=0)
+    n_jobs: str = field(default=None)
+    target_index: int = field(default=None)
+    base_boosting_options: dict = field(default=None)
 
-        self.steps = steps
-        self.memory = memory
-        self.verbose = verbose
-        self.n_jobs = n_jobs
-        self.target_index = target_index
-        self.base_boosting_options = base_boosting_options
+    def __post_init__(self):
         self._validate_steps()
 
     def _validate_base_boosting_options(self):
@@ -842,7 +843,7 @@ def make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
         steps = []
 
     # Distinguishes between single-target and multi-target regression.
-    if target_type in _MULTI_TARGET:
+    if target_type in _MULTI_TARGET and target_index is None:
         if chain_order is not None:
             estimator = sklearn.multioutput.RegressorChain(base_estimator=estimator,
                                                            order=chain_order,

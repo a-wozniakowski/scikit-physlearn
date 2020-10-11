@@ -94,14 +94,42 @@ paper_params_dict = dict(target_1=[[mlp_params_1, gbm_params_1], meta_params_1],
                          target_5=[[mlp_params_5, gbm_params_5], meta_params_5])
 
 def paper_params(index=0) -> list:
-    """
-    Retrieves a list for StackingRegressor.
+    """Retrieves a list for StackingRegressor.
 
     Parameters
     ----------
     index : int
         Specifies the single-target regression subtask,
         using the Python indexing convention.
+
+    Returns
+    -------
+    params : list
+
+    Examples
+    --------
+    >>> from physlearn.datasets import paper_params
+    >>> paper_params(index=0)
+    [[{'activation': 'tanh',
+       'solver': 'lbfgs',
+       'hidden_layer_sizes': (3,),
+       'alpha': 17.0,
+       'max_iter': 4390},
+      {'objective': 'mean_absolute_error',
+       'boosting_type': 'goss',
+       'num_leaves': 32,
+       'max_depth': 20,
+       'learning_rate': 0.2,
+       'reg_alpha': 0.3,
+       'reg_lambda': 0.3,
+       'max_bin': 512,
+       'subsample_for_bin': 200,
+       'n_estimators': 1060}],
+     {'activation': 'tanh',
+      'solver': 'lbfgs',
+      'hidden_layer_sizes': (10,),
+      'alpha': 15.0,
+      'max_iter': 4070}]
     """
 
     # Changes to the paper's index convention.
@@ -152,14 +180,27 @@ supplementary_dict = dict(target_1=mlp_params_1,
                           target_5=mlp_params_5)
 
 def supplementary_params(index=0) -> dict:
-    """
-    Retrieves a dict for MLPRegressor.
+    """Retrieves a dict for MLPRegressor.
 
     Parameters
     ----------
     index : int
         Specifies the single-target regression subtask,
         using the Python indexing convention.
+
+    Returns
+    -------
+    params : dict
+
+    Examples
+    --------
+    >>> from physlearn.datasets import supplementary_params
+    >>> supplementary_params(index=0)
+    {'activation': 'relu',
+     'solver': 'lbfgs',
+     'hidden_layer_sizes': (10,),
+     'alpha': 15.0,
+     'max_iter': 4600}
     """
     
     # Changes to the paper's index convention.

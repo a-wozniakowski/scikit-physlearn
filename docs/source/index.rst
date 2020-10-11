@@ -42,6 +42,7 @@ Contents
    Quick Start <quick_start>
    Base Boosting <baseboosting>
    Python API <python_api>
+   Datasets API <datasets_api>
    Developer Tools <developer_tools>
    License <license>
 
