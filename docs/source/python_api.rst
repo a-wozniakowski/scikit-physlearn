@@ -2,7 +2,7 @@
 Python API
 ==========
 
-This page contains the links for each aspect of the scikit-physlearn Python API.
+This page contains links for each aspect of the scikit-physlearn Python API.
 
 .. toctree::
    :maxdepth: 1

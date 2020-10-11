@@ -1,12 +1,12 @@
 """
 The :mod:`physlearn.datasets.google._google` module provides utilities
-for wrangling, loading, and saving the Google quantum computer
-calibration data.
+for wrangling, serializing, and deserializing superconducting quantum
+computing calibration data.
 
 Notes
 -----
 The calibration data was collected by Benjamin Chiaro during his
-time as a graduate student at UC Santa Barbara. The quantum device
+time as a graduate student at UC Santa Barbara. The Google quantum computer
 contains 9 qubits, wherein the 5 rightmost qubits and 4 interleaving
 couplers were utilized during experimentation. The 4 leftmost qubits
 and couplers were left idle during experimentation.
@@ -22,23 +22,51 @@ import pandas as pd
 
 import sklearn.model_selection
 
+from dataclasses import dataclass, field
+
 from physlearn.datasets.google.base import BaseDataFrame
-from physlearn.datasets.google.utils._dataset_helper_functions import (_shuffle,
-                                                                       _iqr_outlier_mask,
-                                                                       _train_test_split,
-                                                                       _json_dump,
-                                                                       _json_load,
-                                                                       _path_to_google_data,
-                                                                       _path_to_google_json_folder)
+from physlearn.datasets.google.utils._helper_functions import (_shuffle,
+                                                               _iqr_outlier_mask,
+                                                               _train_test_split,
+                                                               _json_dump,
+                                                               _json_load,
+                                                               _path_to_google_data,
+                                                               _path_to_google_json_folder)
+
+sklearn_train_test_split_or_dict = typing.Union[sklearn.model_selection.train_test_split, dict]
 
 
+@dataclass
 class GoogleDataFrame(BaseDataFrame):
-    """Represents the Google quantum computer calibration data with a DataFrame."""
+    """Represents the Google quantum computer calibration data with a DataFrame.
 
-    def __init__(self, n_qubits, path):
-        super().__init__(path=path)
+    Parameters
+    ----------
+    path : str
+        Path to the csv file with calibration data.
 
-        self.n_qubits = n_qubits
+    n_qubits : int
+        Number of qubits in the experiment.
+
+    See Also
+    --------
+    :class:`physlearn.datasets.GoogleData` : Class for wrangling the calibration data.
+
+    Examples
+    --------
+    >>> from physlearn.datasets import GoogleDataFrame
+    >>> from physlearn.datasets.google.utils._helper_functions import _path_to_google_data
+    >>> df = GoogleDataFrame(path=_path_to_google_data(), n_qubits=5)
+    >>> df.get_df_with_correct_columns.head().iloc[0, :3]
+    qvolt5   -0.008238
+    qvolt6   -0.006896
+    qvolt7   -0.026120
+    Name: 1, dtype: float64
+    """
+
+    n_qubits: int
+
+    def __post_init__(self):
         self._validate_dataframe_options()
 
     def _validate_dataframe_options(self):
@@ -47,7 +75,12 @@ class GoogleDataFrame(BaseDataFrame):
         
     @property    
     def get_df_with_correct_columns(self) -> pd.DataFrame:
-        """Split DataFrame into train and test split."""
+        """Drops the undesired columns from the raw calibration data.
+
+        Returns
+        -------
+        df : DataFrame
+        """
 
         df = self.get_df
 
@@ -71,19 +104,65 @@ class GoogleDataFrame(BaseDataFrame):
         return df
 
 
+@dataclass
 class GoogleData(GoogleDataFrame):
-    """Wrangles the Google quantum computer calibration data for multi-target regression."""
+    """Wrangles the calibration data for multi-target regression.
 
-    def __init__(self, n_qubits=5, test_split=0.3, random_state=0,
-                 remove_outliers=False, shuffle=True):
+    Parameters
+    ----------
+    path : str, optional (default=None)
+        Path to the csv file with calibration data.
 
-        super().__init__(n_qubits=n_qubits,
-                         path=_path_to_google_data())
+    n_qubits : int, optional (default=5)
+        Number of qubits in the experiment. Currently, supports 5 qubits.
 
-        self.test_split = test_split        
-        self.random_state = random_state
-        self.remove_outliers = remove_outliers
-        self.shuffle = shuffle
+    test_split : float, optional (default=0.3)
+        The proportion of labeled examples withheld from training.
+
+    random_state : int, RandomState instance, or None, optional (default=0)
+        Determines the random number generation in the training and test
+        examples split.
+
+    remove_outliers : bool, optional (default=False)
+        If True, then it removes labeled examples that are not
+        within the interquartile range of the DataFrame.
+
+    shuffle : bool, optional (default=True)
+        If True, then it shuffles the DataFrame rows prior
+        to splitting the DataFrame into training and test
+        examples.
+
+    See Also
+    --------
+    :class:`physlearn.datasets.GoogleDataFrame` : Class for representing the calibration data.
+
+    Examples
+    --------
+    >>> from physlearn.datasets import GoogleData
+    >>> data = GoogleData()
+    >>> data.load_benchmark['X_train'].iloc[0, :3]
+    qvolt5    0.003398
+    qvolt6   -0.018080
+    qvolt7   -0.009895
+    Name: 0, dtype: float64
+
+    References
+    ----------
+    - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+      "Boosting on the shoulders of giants in quantum device calibration",
+      arXiv preprint arXiv:2005.06194 (2020).
+    """
+
+    path : str = field(default=None)
+    n_qubits: int = field(default=5)
+    test_split: float = field(default=0.3)
+    random_state: int = field(default=0)
+    remove_outliers: bool = field(default=False)
+    shuffle: bool = field(default=True)
+
+    def __post_init__(self):
+        if self.path is None:
+            self.path = _path_to_google_data()
         self._validate_data_options()
 
     def _validate_data_options(self):
@@ -97,7 +176,12 @@ class GoogleData(GoogleDataFrame):
         assert isinstance(self.shuffle, bool)
 
     def _train_test_split(self) -> dict:
-        """Get the DataFrame, then split it into training and test data."""
+        """Get the DataFrame, then split it into training and test data.
+
+        Returns
+        -------
+        X_train, X_test, y_train, and y_test : DataFrame(s)
+        """
 
         if self.shuffle:
             df = _shuffle(data=self.get_df_with_correct_columns)
@@ -132,13 +216,18 @@ class GoogleData(GoogleDataFrame):
 
     @property    
     def load_benchmark(self) -> dict:
-        """Deserializes the benchmark dataset."""
+        """Deserializes the benchmark dataset.
+
+        Returns
+        -------
+        data : dict
+        """
 
         folder = _path_to_google_json_folder()
         return _json_load(filename=os.path.join(folder, '_{}'.format(self.n_qubits) + 'q.json'))
 
 
-def load_benchmark(return_split=False) -> typing.Union[sklearn.model_selection.train_test_split, dict]:
+def load_benchmark(return_split=False) -> sklearn_train_test_split_or_dict:
     """Deserializes the benchmark dataset for the multi-target regression task.
     
     If the return split parameter is true, then the benchmark dataset is
@@ -149,6 +238,16 @@ def load_benchmark(return_split=False) -> typing.Union[sklearn.model_selection.t
     return_split : bool
         If True, then the benchmark dataset is returned in the form of
         X_train, X_test, y_train, and y_test.
+
+    Returns
+    -------
+    X_train, X_test, y_train, and y_test or data : DataFrame(s) or dict
+
+    References
+    ----------
+    - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+      "Boosting on the shoulders of giants in quantum device calibration",
+      arXiv preprint arXiv:2005.06194 (2020).
     """
 
     data = GoogleData(n_qubits=5).load_benchmark

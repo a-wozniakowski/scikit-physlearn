@@ -1,7 +1,7 @@
 """
 The :mod:`physlearn.datasets.google.utils._dataset_helper_functions` module
-provides basic utilities for wrangling, loading, and dumping supervised
-learning data. 
+provides basic utilities for wrangling, serializing, and deserializing
+superconducting quantum computing calibration data.
 """
 
 # Author: Alex Wozniakowski
@@ -68,6 +68,10 @@ def _json_load(filename: str) -> dict:
     ----------
     filename : str
         Name of the file in which the training and test data dictionary has been dumped.
+
+    Returns
+    -------
+    train_test_data : dict
     """
 
     with open(filename, 'r') as json_file:
@@ -104,18 +108,22 @@ def _train_test_split(X: DataFrame_or_Series, y: DataFrame_or_Series, test_size:
     random_state : int, RandomState instance or None.
         Determines random number generation in sklearn.model_selection.train_test_split.
 
+    Returns
+    -------
+    train_test_data : dict
+
     Notes
     -----
     As shuffling is handled by sklearn.utils.shuffle, there is no shuffling parameter.
     """
 
-    X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y,
-                                                                                test_size=test_size,
-                                                                                random_state=random_state,
-                                                                                shuffle=False)
+    data = sklearn.model_selection.train_test_split(X, y,
+                                                    test_size=test_size,
+                                                    random_state=random_state,
+                                                    shuffle=False)
 
-    return dict(X_train=X_train, X_test=X_test,
-                y_train=y_train, y_test=y_test)
+    return dict(X_train=data[0], X_test=data[1], 
+                y_train=data[-2], y_test=data[-1])
 
 
 def _shuffle(data: DataFrame_or_Series, drop=True) -> DataFrame_or_Series:
@@ -129,6 +137,9 @@ def _shuffle(data: DataFrame_or_Series, drop=True) -> DataFrame_or_Series:
     drop : bool
         Resets the index of the pandas data object.
 
+    Returns
+    -------
+    pandas : DataFrame or Series
     """
 
     return sklearn.utils.shuffle(data).reset_index(drop=drop)
@@ -142,6 +153,9 @@ def _iqr_outlier_mask(data: DataFrame_or_Series) -> DataFrame_or_Series:
     data : DataFrame or Series
         The pandas data that is to be masked.
 
+    Returns
+    -------
+    pandas : DataFrame or Series
     """
 
     first = data.quantile(0.25)
@@ -151,14 +165,24 @@ def _iqr_outlier_mask(data: DataFrame_or_Series) -> DataFrame_or_Series:
 
 
 def _path_to_google_data() -> str:
-    """Finds the path to the Google quantum computer calibration data."""
+    """Finds the path to the Google quantum computer calibration data.
+
+    Returns
+    -------
+    path : str
+    """
 
     root = os.path.dirname(__file__).replace('utils', '')
     return os.path.join(root, 'data', 'google_5q_random.csv')
 
 
 def _path_to_google_json_folder() -> str:
-    """Finds the path to the folder with the serialized Google data."""
+    """Finds the path to the folder with the serialized Google data.
+
+    Returns
+    -------
+    path : str
+    """
 
     root = os.path.dirname(__file__).replace('utils', '')
     return os.path.join(root, 'google_json')
