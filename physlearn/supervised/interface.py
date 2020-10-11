@@ -1,12 +1,13 @@
 """
-The :mod:`physlearn.supervised.interface` provides an interface object, which
-abstracts regressors and enables their amalgamation into a unified regressor
-object. It includes the :class:`physlearn.RegressorDictionaryInterface` class.
+The :mod:`physlearn.supervised.interface` provides an interface between
+:class:`physlearn.BaseRegressor` and the regressor dictionary. It includes
+the :class:`physlearn.RegressorDictionaryInterface` class.
 """
 
 # Author: Alex Wozniakowski
 # License: MIT
 
+from __future__ import annotations
 
 import os
 import joblib
@@ -14,28 +15,27 @@ import joblib
 import mlxtend.regressor
 import sklearn.ensemble
 
+from dataclasses import dataclass, field
+
 from physlearn.base import AbstractEstimatorDictionaryInterface
 from physlearn.supervised.utils._definition import _REGRESSOR_DICT
 
         
+@dataclass
 class RegressorDictionaryInterface(AbstractEstimatorDictionaryInterface):
     """BaseRegressor and regressor dictionary interface.
 
-    This interface enables the regressor abstraction, which amalgamates
-    regressors from 
-    `Scikit-learn <https://scikit-learn.org/>`_,
-    `LightGBM <https://lightgbm.readthedocs.io/en/latest/index.html>`_,
-    `XGBoost <https://xgboost.readthedocs.io/en/latest/>`_,
-    `CatBoost <https://catboost.ai/>`_,
-    and `Mlxtend <http://rasbt.github.io/mlxtend/>`_ into a unified framework.
-    It links the :class:`physlearn.supervised.regression.BaseRegressor` and
-    the regressor dictionary, which contains the regressor classes. 
+    The regressor dictionary collects key-value pairs, whereby each key
+    is a lower case regressor class name that uniquely identifies the
+    regressor class, e.g., ``dict('ridge': Ridge)``. As such, the interface
+    manages regressor class retrieval for :class:`physlearn.BaseRegressor`
+    as part of the constructor method. 
 
     Parameters
     ----------
     regressor_choice : str
         The dictionary key for lookup in the dictionary of regressors.
-        The key must be in lower case letter, e.g., the Scikit-learn
+        The key must be in lower cases, e.g., the Scikit-learn
         regressor Ridge has key ``'ridge'``.
 
     params : dict, list, or None, optional (default=None)
@@ -71,14 +71,19 @@ class RegressorDictionaryInterface(AbstractEstimatorDictionaryInterface):
 
         voting_weights : :obj:`ndarray` of shape (n_regressors,) or None, (default=None)
             Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
+
+    Examples
+    --------
+    >>> from physlearn import RegressorDictionaryInterface
+    >>> interface = RegressorDictionaryInterface(regressor_choice='mlpregressor',
+                                                 params=dict(alpha=1))
+    >>> interface.set_params()
+    MLPRegressor(alpha=1)
     """
 
-    def __init__(self, regressor_choice: str, params=None,
-                 stacking_options=None):
-
-        self.regressor_choice = regressor_choice
-        self.params = params
-        self.stacking_options = stacking_options
+    regressor_choice: str
+    params: typing.Union[dict, list] = field(default=None)
+    stacking_options: dict = field(default=None)
 
     def get_params(self, regressor):
         """
@@ -105,7 +110,7 @@ class RegressorDictionaryInterface(AbstractEstimatorDictionaryInterface):
         """Sets the (hyper)parameters.
 
         If ``params`` is ``None``, then the default (hyper)parameters
-        are utilized.
+        are set.
 
         Parameters
         ----------

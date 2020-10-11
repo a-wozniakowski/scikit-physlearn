@@ -30,6 +30,7 @@ import sklearn.utils.multiclass
 import sklearn.utils.validation
 
 from collections import defaultdict
+from dataclasses import dataclass, field
 
 from physlearn.base import AdditionalRegressorMixin
 from physlearn.loss import LOSS_FUNCTIONS
@@ -50,6 +51,7 @@ DataFrame_or_Series = typing.Union[pd.DataFrame, pd.Series]
 pandas_or_numpy = typing.Union[pd.DataFrame, pd.Series, np.ndarray]
 
 
+@dataclass
 class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
                     AdditionalRegressorMixin):
     """Base class for regressor amalgamation.
@@ -233,28 +235,23 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
     array([11.63706835])
     """
 
-    def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
-                 verbose=0, n_jobs=-1, score_multioutput='raw_values',
-                 scoring='neg_mean_absolute_error', return_train_score=True,
-                 pipeline_transform=None, pipeline_memory=None,
-                 params=None, target_index=None, chain_order=None,
-                 stacking_options=None, base_boosting_options=None):
+    regressor_choice: str = field(default='ridge')
+    cv: int = field(default=5)
+    random_state: int = field(default=0)
+    verbose: int = field(default=0)
+    n_jobs: int = field(default=-1)
+    score_multioutput: str = field(default='raw_values')
+    scoring: str = field(default='neg_mean_absolute_error')
+    return_train_score: bool = field(default=True)
+    pipeline_transform: typing.Union[str, list, tuple] = field(default=None)
+    pipeline_memory: str = field(default=None)
+    params: typing.Union[dict, list] = field(default=None)
+    target_index: int = field(default=None)
+    chain_order: list = field(default=None)
+    stacking_options: dict = field(default=None)
+    base_boosting_options: dict = field(default=None)
 
-        self.regressor_choice = regressor_choice
-        self.cv = cv
-        self.random_state = random_state
-        self.verbose = verbose
-        self.n_jobs = n_jobs
-        self.score_multioutput = score_multioutput
-        self.scoring = scoring
-        self.return_train_score = return_train_score
-        self.pipeline_transform = pipeline_transform
-        self.pipeline_memory = pipeline_memory
-        self.params = params
-        self.target_index = target_index
-        self.chain_order = chain_order
-        self.stacking_options = stacking_options
-        self.base_boosting_options = base_boosting_options
+    def __post_init__(self):
         self._validate_regressor_options()
         self._get_regressor()
 
@@ -269,7 +266,10 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
         assert isinstance(self.score_multioutput, str)
         assert isinstance(self.scoring, str)
         assert isinstance(self.return_train_score, bool)
-        assert any(isinstance(self.pipeline_transform, built_in) for built_in in (str, list, tuple))
+
+        if self.pipeline_transform is not None:
+            assert any(isinstance(self.pipeline_transform, built_in)
+                   for built_in in (str, list, tuple))
 
         if self.pipeline_memory is not None:
             assert isinstance(self.pipeline_memory, bool)
@@ -998,6 +998,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
             return scores['test_score']
 
 
+@dataclass
 class Regressor(BaseRegressor):
     """Main class for regressor amalgamation.
 
@@ -1212,36 +1213,17 @@ class Regressor(BaseRegressor):
     0       4.775145  42.874253  6.547843  0.387748  0.40836  0.079818
     """
 
-    def __init__(self, regressor_choice='ridge', cv=5, random_state=0,
-                 verbose=1, n_jobs=-1, score_multioutput='raw_values',
-                 scoring='neg_mean_absolute_error', refit=True,
-                 randomizedcv_n_iter=20, bayesoptcv_init_points=2,
-                 bayesoptcv_n_iter=20, return_train_score=True,
-                 pipeline_transform='quantilenormal', pipeline_memory=None,
-                 params=None, target_index=None, chain_order=None,
-                 stacking_options=None, base_boosting_options=None):
+    verbose: int = field(default=1)
+    pipeline_transform: typing.Union[str, list, tuple] = field(default='quantilenormal')
+    refit: bool = field(default=True)
+    randomizedcv_n_iter: int = field(default=20)
+    bayesoptcv_init_points: int = field(default=2)
+    bayesoptcv_n_iter: int = field(default=20)
 
-        super().__init__(regressor_choice=regressor_choice,
-                         cv=cv,
-                         random_state=random_state,
-                         verbose=verbose,
-                         n_jobs=n_jobs,
-                         score_multioutput=score_multioutput,
-                         scoring=scoring,
-                         return_train_score=return_train_score,
-                         pipeline_transform=pipeline_transform,
-                         pipeline_memory=pipeline_memory,
-                         params=params,
-                         target_index=target_index,
-                         chain_order=chain_order,
-                         stacking_options=stacking_options,
-                         base_boosting_options=base_boosting_options)
-
-        self.refit = refit
-        self.randomizedcv_n_iter = randomizedcv_n_iter
-        self.bayesoptcv_init_points = bayesoptcv_init_points
-        self.bayesoptcv_n_iter = bayesoptcv_n_iter
+    def __post_init__(self):
+        self._validate_regressor_options()
         self._validate_search_options()
+        self._get_regressor()
 
     def _validate_search_options(self):
         assert isinstance(self.refit, bool)
@@ -1475,7 +1457,8 @@ class Regressor(BaseRegressor):
         if not hasattr(self, '_return_incumbent'):
             # This checks if the candidate was chosen
             # in model selection.
-            super().fit(X=X, y=y, sample_weight=sample_weight)
+            super()._fit(regressor=self.pipe, X=X, y=y,
+                         sample_weight=sample_weight)
             return self.pipe
         else:
             setattr(self, 'return_incumbent_', True) 

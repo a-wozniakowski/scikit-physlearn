@@ -1,8 +1,8 @@
 """
 The :mod:`physlearn.supervised.model_selection.learning_curve` module provides
-utilities for plotting augmented learning curves. It includes the 
-:class:`physlearn.LearningCurve` class and the :func:`physlearn.plot_learning_curve`
-function.
+utilities for plotting learning curves. It includes the
+:class:`physlearn.LearningCurve` class and the
+:func:`physlearn.plot_learning_curve` function.
 """
 
 # Author: Alex Wozniakowski
@@ -22,33 +22,28 @@ import sklearn.model_selection._validation
 import sklearn.utils.multiclass
 import sklearn.utils.validation
 
+from dataclasses import dataclass, field
+
 from physlearn.supervised.regression import BaseRegressor
 from physlearn.supervised.utils._data_checks import _n_samples, _validate_data
 
 
+@dataclass
 class LearningCurve(BaseRegressor):
-    """(Augmented) learning curve for base boosting."""
+    """Learning curve object that supports base boosting.
 
-    def __init__(self, regressor_choice='ridge', cv=5, verbose=1,
-                 n_jobs=-1, scoring='neg_mean_absolute_error',
-                 return_train_score=True, pipeline_transform='quantilenormal',
-                 pipeline_memory=None, params=None, target_index=None,
-                 chain_order=None, stacking_options=None,
-                 base_boosting_options=None):
+    The object retains the original functionality provided by the
+    Scikit-learn learning curve utility, which performs a
+    cross-validation procedure with varying training sizes. It extends
+    the utility to support augmented cross-validation procedures, which
+    score an incumbent model and a candidate model on the same withheld
+    folds."""
 
-        super().__init__(regressor_choice=regressor_choice,
-                         cv=cv,
-                         verbose=verbose,
-                         n_jobs=n_jobs,
-                         scoring=scoring,
-                         return_train_score=return_train_score,
-                         pipeline_transform=pipeline_transform,
-                         pipeline_memory=pipeline_memory,
-                         params=params,
-                         target_index=target_index,
-                         chain_order=chain_order,
-                         stacking_options=stacking_options,
-                         base_boosting_options=base_boosting_options)
+    pipeline_transform: str = field(default='quantilenormal')
+
+    def __post_init__(self):
+        self._validate_regressor_options()
+        self._get_regressor()
 
     def _modified_learning_curve(self, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
                                  return_train_score=True, return_times=False,
