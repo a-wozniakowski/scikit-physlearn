@@ -68,7 +68,7 @@ class TestBaseBoost(unittest.TestCase):
         index = 3
         reg = Regressor(regressor_choice=linear_basis_fn, params=dict(alpha=0.1),
                         target_index=index, base_boosting_options=base_boosting_options)
-        y_pred = reg.baseboostcv(X_train.iloc[:10, :], y_train.iloc[:10, :]).predict(X_test)
+        reg.baseboostcv(X_train.iloc[:10, :], y_train.iloc[:10, :])
         self.assertHasAttr(reg, 'return_incumbent_')
 
     def test_baseboostcv_score(self):
