@@ -8,9 +8,11 @@ This is a quick start guide for scikit-physlearn.
 
 - :doc:`Installation guide </install>`
 
+- :doc:`Python API </python_api>`
+
 - :doc:`Base boosting </baseboosting>`
 
-- :doc:`Python API </python_api>`
+- :doc:`Regressor definitions <definition>`
 
 Python
 ------

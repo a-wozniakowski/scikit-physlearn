@@ -26,7 +26,7 @@ it includes ``fit``, ``predict``, and ``score`` methods, as well as:
   Bayesian optimization.
 - Cross-validation methods such as ``cross_validate``, ``cross_val_score``,
   and ``nested_cross_validate``.
-- A base boosting method with inbuilt k-fold cross-validation.
+- A base boosting method with built-in model selection.
 
 ********
 Citation
