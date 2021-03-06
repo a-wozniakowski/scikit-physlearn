@@ -3,6 +3,7 @@
 # Author: Alex Wozniakowski
 # Licence: MIT
 
+import os
 import sys
 
 from setuptools import setup, find_packages
@@ -10,8 +11,11 @@ from setuptools import setup, find_packages
 
 DISTNAME = 'scikit-physlearn'
 DESCRIPTION = 'A machine learning library for solving regression tasks.'
-with open('README.md', encoding='utf-8') as f:
+
+get_directory = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(get_directory, 'README.md'), encoding='utf-8') as f:
     LONG_DESCRIPTION = f.read()
+
 MAINTAINER = 'Alex Wozniakowski'
 MAINTAINER_EMAIL = 'wozn0001@e.ntu.edu.sg'
 URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
