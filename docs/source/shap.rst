@@ -3,4 +3,4 @@ SHAP API
 ========
 
 .. automodule:: physlearn.supervised.interpretation.interpret_regressor
-   :members:
+   :exclude-members: _check_n_features

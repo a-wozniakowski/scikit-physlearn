@@ -43,6 +43,7 @@ Contents
    Base Boosting <baseboosting>
    Python API <python_api>
    Datasets API <datasets_api>
+   Definitions <definition>
    Developer Tools <developer_tools>
    License <license>
 
