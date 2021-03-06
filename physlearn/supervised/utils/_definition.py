@@ -18,28 +18,46 @@ from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.multioutput import ClassifierChain, RegressorChain
 
 from sklearn.experimental import enable_hist_gradient_boosting
-from sklearn.ensemble import (AdaBoostRegressor, BaggingRegressor, ExtraTreesRegressor,
-                              GradientBoostingRegressor, RandomForestRegressor,
-                              HistGradientBoostingRegressor, StackingRegressor,
+from sklearn.ensemble import (AdaBoostRegressor,
+                              BaggingRegressor,
+                              ExtraTreesRegressor,
+                              GradientBoostingRegressor,
+                              RandomForestRegressor,
+                              HistGradientBoostingRegressor,
+                              StackingRegressor,
                               VotingRegressor)
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel, RBF
+from sklearn.gaussian_process.kernels import (DotProduct, WhiteKernel,
+                                              RBF)
 from sklearn.kernel_ridge import KernelRidge
-from sklearn.linear_model import (LinearRegression, Ridge, RidgeCV, SGDRegressor,
-                                  ElasticNet, ElasticNetCV, Lars, LarsCV, Lasso,
-                                  LassoCV, LassoLars, LassoLarsCV, LassoLarsIC,
-                                  OrthogonalMatchingPursuit, OrthogonalMatchingPursuitCV,
-                                  ARDRegression, BayesianRidge, MultiTaskElasticNet,
-                                  MultiTaskElasticNetCV, MultiTaskLasso, MultiTaskLassoCV,
-                                  HuberRegressor, RANSACRegressor, TheilSenRegressor)
+from sklearn.linear_model import (LinearRegression,
+                                  Ridge, RidgeCV,
+                                  SGDRegressor,
+                                  ElasticNet, ElasticNetCV,
+                                  Lars, LarsCV,
+                                  Lasso, LassoCV,
+                                  LassoLars, LassoLarsCV, LassoLarsIC,
+                                  OrthogonalMatchingPursuit,
+                                  OrthogonalMatchingPursuitCV,
+                                  ARDRegression,
+                                  BayesianRidge,
+                                  MultiTaskElasticNet,
+                                  MultiTaskElasticNetCV,
+                                  MultiTaskLasso,
+                                  MultiTaskLassoCV,
+                                  HuberRegressor,
+                                  RANSACRegressor,
+                                  TheilSenRegressor)
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 
-from sklearn.preprocessing import PowerTransformer, QuantileTransformer, StandardScaler
+from sklearn.preprocessing import (PowerTransformer, QuantileTransformer,
+                                   StandardScaler)
 
 
+#: Collection of regressor options.
 _REGRESSOR_DICT = dict(linearregression=LinearRegression,
                        ridge=Ridge,
                        ridgecv=RidgeCV,
@@ -122,7 +140,11 @@ _OPTIMIZE_METHOD = ['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'Newton-CG',
 _SCORE_CHOICE = ['mae', 'mse', 'rmse', 'r2', 'ev', 'msle']
 
 
-_PIPELINE_PARAMS = ['steps', 'memory', 'verbose', 'n_jobs', 'base_boosting_options']
+_SCORE_MULTIOUTPUT = ['raw_values', 'uniform_average']
+
+
+_PIPELINE_PARAMS = ['steps', 'memory', 'verbose', 'n_jobs',
+                    'base_boosting_options']
 
 
 _PIPELINE_TRANSFORM_CHOICE = ['standardscaler', 'boxcox', 'yeojohnson',
@@ -164,7 +186,7 @@ _SHAP_TAXONOMY = dict(linearregression='linear',
                       histgradientboostingregressor='tree',
                       lgbmregressor='tree',
                       xgbregressor='tree',
-                      catboostregressor='kernel',  # Changed to kernel per issue #480 in SHAP
+                      catboostregressor='kernel',  # See SHAP issue #480
                       baggingregressor='kernel',
                       kernelridge='kernel',
                       svr='kernel',

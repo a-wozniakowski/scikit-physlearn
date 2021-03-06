@@ -14,8 +14,10 @@ import warnings
 import numpy as np
 
 from physlearn.loss import LOSS_FUNCTIONS
-from physlearn.supervised.utils._definition import (_BAYESOPTCV_INIT_PARAMS, _ESTIMATOR_DICT,
-                                                    _OPTIMIZE_METHOD, _PIPELINE_PARAMS,
+from physlearn.supervised.utils._definition import (_BAYESOPTCV_INIT_PARAMS,
+                                                    _ESTIMATOR_DICT,
+                                                    _OPTIMIZE_METHOD,
+                                                    _PIPELINE_PARAMS,
                                                     _SEARCH_METHOD)
 
 
@@ -127,8 +129,8 @@ def _check_stacking_layer(stacking_layer: dict, estimator_type: str) -> dict:
                                   for est in layer]
         elif key in ['final_estimator', 'final_regressor']:
             stacking_layer[key] = _check_estimator_choice(estimator_choice=layer.strip().lower(),
-                                                           estimator_type=estimator_type, 
-                                                           estimator_choices=estimator_choices)
+                                                          estimator_type=estimator_type, 
+                                                          estimator_choices=estimator_choices)
         else:
             raise KeyError('The key: %s is not a valid choice for stacking_layer.'
                            % (key))
@@ -200,7 +202,7 @@ def _check_line_search_options(line_search_options: dict) -> None:
                            % (search_key))
 
 
-def _check_bayesoptcv_parameter_type(pbounds: dict) -> dict:
+def _check_bayesoptcv_param_type(pbounds: dict) -> dict:
     """Checks if the Bayesian optimization utility changed the (hyper)parameter type.
 
     Parameters
@@ -227,7 +229,8 @@ def _check_bayesoptcv_parameter_type(pbounds: dict) -> dict:
     return pbounds
 
 
-def _preprocess_hyperparams(raw_params: dict, multi_target: bool, chain: bool) -> dict:
+def _preprocess_hyperparams(raw_params: dict, multi_target: bool,
+                            chain: bool) -> dict:
     """Preprocesses the (hyper)parameters.
 
     The preprocessing is determined by the regression task, and the assumption

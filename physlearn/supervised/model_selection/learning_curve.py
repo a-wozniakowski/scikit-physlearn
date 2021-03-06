@@ -8,8 +8,12 @@ utilities for plotting learning curves. It includes the
 # Author: Alex Wozniakowski
 # License: MIT
 
+from __future__ import annotations
+
 import joblib
 import matplotlib
+import re
+import typing
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,6 +31,8 @@ from dataclasses import dataclass, field
 from physlearn.supervised.regression import BaseRegressor
 from physlearn.supervised.utils._data_checks import _n_samples, _validate_data
 
+DataFrame_or_Series = typing.Union[pd.DataFrame, pd.Series]
+
 
 @dataclass
 class LearningCurve(BaseRegressor):
@@ -37,7 +43,153 @@ class LearningCurve(BaseRegressor):
     cross-validation procedure with varying training sizes. It extends
     the utility to support augmented cross-validation procedures, which
     score an incumbent model and a candidate model on the same withheld
-    folds."""
+    folds.
+
+    Parameters
+    ----------
+    regressor_choice : str, optional (default='ridge')
+        Specifies the case-insensitive regressor choice.
+
+    cv : int, cross-validation generator, an iterable, or None, optional (default=5)
+        Determines the cross-validation strategy if the regressor choice is stacking,
+        if the task is multi-target regression and the single-targets are chained,
+        and as the default in the k-fold cross-validation methods.
+
+    random_state : int, RandomState instance, or None, optional (default=0)
+        Determines the random number generation in the regressor choice
+        :class:`mlxtend.regressor.StackingCVRegressor` and in the modified
+        pipeline construction.
+
+    verbose : int, optional (default=0)
+        Determines verbosity in either regressor choice:
+        :class:`mlxtend.regressor.StackingRegressor` and
+        :class:`mlxtend.regressor.StackingCVRegressor`, in the modified
+        pipeline construction, and in the k-fold cross-validation methods.
+
+    n_jobs : int or None, optional (default=-1)
+        The number of jobs to run in parallel if the regressor choice is stacking
+        or voting, in the modified pipeline construction, and in the k-fold
+        cross-validation methods.
+
+    score_multioutput : str, optional (default='raw_values')
+        Defines aggregating of multiple output values in the score method,
+        wherein the string must be either ``'raw_values'``, ``'uniform_average'``, or
+        ``'variance_weighted'``.
+
+    scoring : str, callable, list/tuple, or dict, optional (default='neg_mean_absolute_error')
+        Determines scoring in the k-fold cross-validation methods.
+
+    return_train_score : bool, optional (default=True)
+        Determines whether to return the training scores from the k-fold
+        cross-validation methods.
+
+    pipeline_transform : str, list, tuple, or None, optional (default='quantilenormal')
+        Choice of transform(s) used in the modified pipeline construction.
+        If the specified choice is a string, then it must be a default option,
+        where ``'standardscaler'``, ``'boxcox'``, ``'yeojohnson'``, ``'quantileuniform'``,
+        and ``'quantilenormal'`` denote :class:`sklearn.preprocessing.StandardScaler`,
+        :class:`sklearn.preprocessing.PowerTransformer` with ``method='box-cox'``
+        or ``method='yeo-johnson'``, and :class:`sklearn.preprocessing.QuantileTransformer`
+        with ``output_distribution='uniform'`` or ``output_distribution='normal'``,
+        respectively.
+
+    pipeline_memory : str or object with the joblib.Memory interface, optional (default=None)
+        Enables fitted transform caching in the modified pipeline construction.
+
+    params : dict, list, or None, optional (default=None)
+        The choice of (hyper)parameters for the regressor choice.
+        If None, then the default (hyper)parameters are utilized.
+
+    target_index : int, or None, optional (default=None)
+        Specifies the single-target regression subtask in the multi-target
+        regression task.
+
+    chain_order : list or None
+        Determines the target order in :class:`sklearn.multioutput.RegressorChain`
+        during the modified pipeline construction.
+
+    stacking_options : dict or None, optional (default=None)
+        A dictionary of stacking options, whereby ``layers``
+        must be specified:
+
+        layers :obj:`dict`
+            A dictionary of stacking layer(s).
+
+        shuffle :obj:`bool` or None, (default=True)
+            Determines whether to shuffle the training data in
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        refit :obj:`bool` or None, (default=True)
+            Determines whether to clone and refit the regressors in
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        passthrough :obj:`bool` or None, (default=True)
+            Determines whether to concatenate the original features with
+            the first stacking layer predictions in
+            :class:`sklearn.ensemble.StackingRegressor`,
+            :class:`mlxtend.regressor.StackingRegressor`, or
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        meta_features : :obj:`bool` or None, (default=True)
+            Determines whether to make the concatenated features
+            accessible through the attribute ``train_meta_features_``
+            in :class:`mlxtend.regressor.StackingRegressor` and
+            :class:`mlxtend.regressor.StackingCVRegressor`.
+
+        voting_weights : :obj:`ndarray` of shape (n_regressors,) or None, (default=None)
+            Sequence of weights for :class:`sklearn.ensemble.VotingRegressor`.
+
+    base_boosting_options : dict or None, optional (default=None)
+        A dictionary of base boosting options used in the modified pipeline construction,
+        wherein the following options must be specified:
+
+        n_estimators :obj:`int`
+            The number of basis functions in the noise term of the additive expansion.
+            Note that this option may also be specified as ``n_regressors``.
+
+        boosting_loss :obj:`str` 
+            The loss function utilized in the pseudo-residual computation, where 'ls'
+            denotes the squared error loss function, 'lad' denotes the absolute error
+            loss function, 'huber' denotes the Huber loss function, and 'quantile'
+            denotes the quantile loss function.
+
+        line_search_options :obj:`dict` 
+            init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
+                The initial guess for the expansion coefficient.
+
+            opt_method :obj:`str`
+                Choice of optimization method. If ``'minimize'``, then
+                :class:`scipy.optimize.minimize`, else if ``'basinhopping'``,
+                then :class:`scipy.optimize.basinhopping`.
+
+            method :obj:`str` or None
+                The type of solver utilized in the optimization method.
+
+            tol :obj:`float` or None
+                The epsilon tolerance for terminating the optimization method.
+
+            options :obj:`dict` or None
+                A dictionary of solver options.
+
+            niter :obj:`int` or None
+                The number of iterations in basin-hopping.
+
+            T :obj:`float` or None
+                The temperature paramter utilized in basin-hopping,
+                which determines the accept or reject criterion.
+
+            loss :obj:`str`
+                The loss function utilized in the line search computation, where 'ls'
+                denotes the squared error loss function, 'lad' denotes the absolute error
+                loss function, 'huber' denotes the Huber loss function, and 'quantile'
+                denotes the quantile loss function.
+
+            regularization :obj:`int` or :obj:`float`
+                The regularization strength in the line search computation.
+
+    See Also
+    --------
+    :class:`physlearn.supervised.regression.BaseRegressor` : Base class for regressor amalgamation."""
 
     pipeline_transform: str = field(default='quantilenormal')
 
@@ -45,29 +197,77 @@ class LearningCurve(BaseRegressor):
         self._validate_regressor_options()
         self._get_regressor()
 
-    def _modified_learning_curve(self, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
+    def _modified_learning_curve(self, X: DataFrame_or_Series, y: DataFrame_or_Series,
+                                 train_sizes=np.linspace(0.1, 1.0, 5),
                                  return_train_score=True, return_times=False,
                                  return_estimator=False, error_score=np.nan,
-                                 return_incumbent_score=False):
+                                 return_incumbent_score=False, cv=None,
+                                 fit_params=None):
+        """Performs an (augmented) cross-validation procedure with varying training sizes.
 
-        # Automates single-target slicing
-        y = super()._check_target_index(y=y)
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The design matrix, where each row corresponds to an example and the
+            column(s) correspond to the feature(s).
 
-        X, y = _validate_data(X=X, y=y)
+        y : array-like of shape = [n_samples] or shape = [n_samples, n_targets]
+            The target matrix, where each row corresponds to an example and the
+            column(s) correspond to the single-target(s).
+
+        train_sizes : array-like of shape (n_ticks,), optional (default=np.linspace(0.1, 1.0, 5))
+            The array elements determine the amount of traning examples used in each
+            cross-validation procedure.
+
+        return_train_score : bool, optional (default=True)
+            Determines whether to return the candidate's training fold scores.
+
+        return_times : bool, optional (default=False)
+            Determines whether to return the candidate's fit and score times.
+
+        return_estimator : bool, optional (default=False)
+            Determines whether to return the induced estimator.
+
+        error_score : 'raise' or numeric, optional (default=np.nan)
+            The assigned value if an error occurs while inducing an estimator.
+            If set to 'raise', then the specific error is raised. Else if set
+            to a numeric value, then FitFailedWarning is raised.
+
+        return_incumbent_score : bool, optional (default=False)
+            Determines whether to score the incumbent on the withheld folds,
+            whereby the incumbent is assumed to be an example in the design
+            matrix.
+
+        cv : int, cross-validation generator, an iterable, or None, optional (default=None)
+            Determines the cross-validation strategy. If None, then the default
+            is 5-fold cross-validation.
+
+        fit_params : dict, optional (default=None)
+            (Hyper)parameters to pass to the regressor's fit method.
+        """
+
+        X, y = self._validate_data(X=X, y=y)
+
+        # Automates single-target slicing.
+        y = self._check_target_index(y=y)
+
         X, y, groups = sklearn.utils.validation.indexable(X, y, None)
 
-        if not hasattr(self, 'pipe'):
-            n_samples = _n_samples(y)
-            fold_size =  np.full(shape=n_samples, fill_value=n_samples // self.cv,
-                                 dtype=np.int)
-            estimate_fold_size = n_samples - (np.max(fold_size) + 1)
-            self.get_pipeline(y=y, n_quantiles=estimate_fold_size)
+        if cv is None:
+            cv = self.cv
 
+        if not hasattr(self, 'pipe'):
+            self.get_pipeline(y=y,
+                              n_quantiles=self._estimate_fold_size(y=y,
+                                                                   cv=cv))
+
+        check_classifier = sklearn.base.is_classifier(self.pipe)
         cv = sklearn.model_selection._split.check_cv(cv=self.cv, y=y,
-                                                     classifier=sklearn.base.is_classifier(self.pipe))
+                                                     classifier=check_classifier)
         cv_iter = list(cv.split(X, y, groups))
 
-        scorer = sklearn.metrics.check_scoring(estimator=self.pipe, scoring=self.scoring)
+        scorer = sklearn.metrics.check_scoring(estimator=self.pipe,
+                                               scoring=self.scoring)
 
         # Modify n_max_training_samples
         n_max_training_samples = X.shape[0]
@@ -85,26 +285,25 @@ class LearningCurve(BaseRegressor):
             for n_train_samples in train_sizes_abs:
                 train_test_proportions.append((train[:n_train_samples], test))
 
-        out = parallel(
+        results = parallel(
             joblib.delayed(sklearn.model_selection._validation._fit_and_score)(
                 estimator=sklearn.base.clone(self.pipe), X=X, y=y, scorer=scorer,
                 train=train, test=test, verbose=self.verbose, parameters=None,
-                fit_params=None, return_train_score=return_train_score,
+                fit_params=fit_params, return_train_score=return_train_score,
                 return_parameters=False, return_n_test_samples=False,
                 return_times=return_times, return_estimator=return_estimator,
                 error_score=error_score)
             for train, test in train_test_proportions)
-        out = np.array(out)
-        n_cv_folds = out.shape[0] // n_unique_ticks
-        dim = 4 if return_times else 2
-        out = out.reshape(n_cv_folds, n_unique_ticks, dim)
-        
-        out = np.asarray(a=out).transpose((2, 1, 0))
 
-        # Sklearn returns negative MAE and MSE scores,
-        # so we restore nonnegativity
-        if self.scoring in ['neg_mean_absolute_error', 'neg_mean_squared_error']:
-            out *= -1
+        results = sklearn.model_selection._validation._aggregate_score_dicts(results)
+        train_scores = results["train_scores"].reshape(-1, n_unique_ticks).T
+        test_scores = results["test_scores"].reshape(-1, n_unique_ticks).T
+
+        if re.match('neg', self.scoring):
+            train_scores *= -1
+            test_scores *= -1
+
+        out = [train_scores, test_scores]
 
         if return_incumbent_score:
             if self.target_index is not None:

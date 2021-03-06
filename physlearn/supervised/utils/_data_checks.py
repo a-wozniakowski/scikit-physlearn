@@ -53,7 +53,8 @@ def _check_y(y: DataFrame_or_Series) -> DataFrame_or_Series:
     return y
 
 
-def _check_X_y(X: DataFrame_or_Series, y: DataFrame_or_Series) -> DataFrame_or_Series:
+def _check_X_y(X: DataFrame_or_Series,
+               y: DataFrame_or_Series) -> DataFrame_or_Series:
     """Checks if the design and target matrices use a pandas data representations.
 
     Parameters
@@ -92,7 +93,7 @@ def _check_X_y(X: DataFrame_or_Series, y: DataFrame_or_Series) -> DataFrame_or_S
         return data.iloc[:, :n_features], data.iloc[:, n_features:].squeeze()
 
 
-def _validate_data(X=None, y=None):
+def _validate_data(X=None, y=None) -> DataFrame_or_Series:
     """Bundles the pandas data checks together.
 
     Parameters
