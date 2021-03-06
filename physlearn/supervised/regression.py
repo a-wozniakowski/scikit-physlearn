@@ -39,8 +39,9 @@ from physlearn.supervised.interface import RegressorDictionaryInterface
 from physlearn.supervised.utils._data_checks import (_n_features, _n_targets,
                                                      _n_samples, _validate_data)
 from physlearn.supervised.utils._definition import (_MULTI_TARGET, _REGRESSOR_DICT,
-                                                    _SEARCH_METHOD, _SCORE_CHOICE)
-from physlearn.supervised.utils._estimator_checks import (_check_bayesoptcv_parameter_type,
+                                                    _SEARCH_METHOD, _SCORE_CHOICE,
+                                                    _SCORE_MULTIOUTPUT)
+from physlearn.supervised.utils._estimator_checks import (_check_bayesoptcv_param_type,
                                                           _check_estimator_choice,
                                                           _check_search_method,
                                                           _check_stacking_layer,
@@ -49,6 +50,7 @@ from physlearn.supervised.utils._search import _search_method
 
 DataFrame_or_Series = typing.Union[pd.DataFrame, pd.Series]
 pandas_or_numpy = typing.Union[pd.DataFrame, pd.Series, np.ndarray]
+str_list_or_tuple = typing.Union[str, list, tuple]
 
 
 @dataclass
@@ -556,7 +558,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
 
     @staticmethod
     def _fit(regressor, X: DataFrame_or_Series, y: DataFrame_or_Series,
-             sample_weight=None):
+             sample_weight=None, **fit_params):
         """Helper fit method.
 
         Parameters
@@ -572,6 +574,10 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
         sample_weight : float, ndarray, or None, optional (default=None)
             Individual weights for each example. If the weight is a float, then
             every example will have the same weight.
+
+        **fit_params : dict of string -> object
+            If base boosting, then these parameters are passed to the stagewise
+            ``_fit_stages`` method.
         """
 
         if sample_weight is not None:
@@ -581,6 +587,12 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
                 if 'unexpected keyword argument sample_weight' in str(exc):
                     raise TypeError('%s does not support sample weights.'
                                     % (regressor.__class__.__name__)) from exc
+        elif sample_weight is None and fit_params:
+            try:
+                regressor.fit(X=X, y=y, **fit_params)
+            except ValueError:
+                raise ('%s is not a valid fit parameter for this regressor.'
+                       % (fit_params.values()))
         else:
             regressor.fit(X=X, y=y)
 
@@ -673,34 +685,39 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
         assert any(scoring for method in _SCORE_CHOICE) and isinstance(scoring, str)
 
         if scoring in ['r2', 'ev']:
-            possible_multioutputs = ['raw_values', 'uniform_average',
-                                     'variance_weighted']
+            possible_multioutputs = _SCORE_MULTIOUTPUT + ['variance_weighted']
             assert any(multioutput for output in possible_multioutputs)
         else:
-            possible_multioutputs = ['raw_values', 'uniform_average']
+            possible_multioutputs = _SCORE_MULTIOUTPUT
             assert any(multioutput for output in possible_multioutputs)
 
         # Automates single-target slicing
         y_true = self._check_target_index(y=y_true)
 
         if scoring == 'mae':
-            score = sklearn.metrics.mean_absolute_error(y_true=y_true, y_pred=y_pred,
+            score = sklearn.metrics.mean_absolute_error(y_true=y_true,
+                                                        y_pred=y_pred,
                                                         multioutput=multioutput)
         elif scoring == 'mse':
-            score = sklearn.metrics.mean_squared_error(y_true=y_true, y_pred=y_pred,
+            score = sklearn.metrics.mean_squared_error(y_true=y_true,
+                                                       y_pred=y_pred,
                                                        multioutput=multioutput)
         elif scoring == 'rmse':
-            score = np.sqrt(sklearn.metrics.mean_squared_error(y_true=y_true, y_pred=y_pred,
+            score = np.sqrt(sklearn.metrics.mean_squared_error(y_true=y_true,
+                                                               y_pred=y_pred,
                                                                multioutput=multioutput))
         elif scoring == 'r2':
-            score = sklearn.metrics.r2_score(y_true=y_true, y_pred=y_pred,
+            score = sklearn.metrics.r2_score(y_true=y_true,
+                                             y_pred=y_pred,
                                              multioutput=multioutput)
         elif scoring == 'ev':
-            score = sklearn.metrics.explained_variance_score(y_true=y_true, y_pred=y_pred,
+            score = sklearn.metrics.explained_variance_score(y_true=y_true,
+                                                             y_pred=y_pred,
                                                              multioutput=multioutput)
         elif scoring == 'msle':
             try:
-                score = sklearn.metrics.mean_squared_log_error(y_true=y_true, y_pred=y_pred,
+                score = sklearn.metrics.mean_squared_log_error(y_true=y_true,
+                                                               y_pred=y_pred,
                                                                multioutput=multioutput)
             except:
                 # Sklearn will raise a ValueError if either
@@ -729,10 +746,12 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
 
         n_samples = _n_samples(y)
         if isinstance(cv, int):
-            fold_size =  np.full(shape=n_samples, fill_value=n_samples // cv,
+            fold_size =  np.full(shape=n_samples,
+                                 fill_value=n_samples // cv,
                                  dtype=np.int)
         else:
-            fold_size =  np.full(shape=n_samples, fill_value=n_samples // cv.n_splits,
+            fold_size =  np.full(shape=n_samples,
+                                 fill_value=n_samples // cv.n_splits,
                                  dtype=np.int)
         return n_samples - (np.max(fold_size) + 1)
 
@@ -800,21 +819,28 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
 
         if not hasattr(self, 'pipe'):
             self.get_pipeline(y=y,
-                              n_quantiles=self._estimate_fold_size(y=y, cv=cv))
+                              n_quantiles=self._estimate_fold_size(y=y,
+                                                                   cv=cv))
 
-        cv = sklearn.model_selection._split.check_cv(cv=cv, y=y, classifier=False)
+        cv = sklearn.model_selection._split.check_cv(cv=cv, y=y,
+                                                     classifier=False)
 
-        scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
-                                                                        scoring=self.scoring)
+        if isinstance(self.scoring, str):
+            scorers = sklearn.metrics._scorer.check_scoring(estimator=self.pipe,
+                                                            scoring=self.scoring)
+        else:
+            scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
+                                                                            scoring=self.scoring)
 
         parallel = joblib.Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                    pre_dispatch='2*n_jobs')
 
-        scores = parallel(
+        results = parallel(
             joblib.delayed(sklearn.model_selection._validation._fit_and_score)(
-                estimator=sklearn.base.clone(self.pipe), X=X, y=y, scorer=scorers,
-                train=train, test=test, verbose=self.verbose, parameters=None,
-                fit_params=fit_params, return_train_score=self.return_train_score,
+                estimator=sklearn.base.clone(self.pipe), X=X, y=y,
+                scorer=scorers, train=train, test=test, verbose=self.verbose,
+                parameters=None, fit_params=fit_params,
+                return_train_score=self.return_train_score,
                 return_parameters=False, return_n_test_samples=False,
                 return_times=True, return_estimator=return_regressor,
                 error_score=np.nan)
@@ -836,27 +862,28 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
             elif self.scoring == 'neg_mean_squared_error':
                 incumbent_test_score = [score['mse'].values[0] for score in incumbent_test_score]
 
-        zipped_scores = list(zip(*scores))
-        if self.return_train_score:
-            train_scores = zipped_scores.pop(0)
-            train_scores = sklearn.model_selection._validation._aggregate_score_dicts(train_scores)
-        if return_regressor:
-            fitted_regressors = zipped_scores.pop()
-        test_scores, fit_times, score_times = zipped_scores
-        test_scores = sklearn.model_selection._validation._aggregate_score_dicts(test_scores)
+
+        results = sklearn.model_selection._validation._aggregate_score_dicts(results)
 
         ret = {}
-        ret['fit_time'] = np.array(fit_times)
-        ret['score_time'] = np.array(score_times)
+        ret['fit_time'] = results["fit_time"]
+        ret['score_time'] = results["score_time"]
 
         if return_regressor:
-            ret['regressor'] = fitted_regressors
+            ret['regressor'] = results["estimator"]
 
-        for name in scorers:
-            ret['test_%s' % name] = np.array(test_scores[name])
+        test_scores_dict = sklearn.model_selection._validation._normalize_score_results(
+            results["test_scores"])
+
+        if self.return_train_score:
+            train_scores_dict = sklearn.model_selection._validation._normalize_score_results(
+                results["train_scores"])
+
+        for name in test_scores_dict:
+            ret['test_%s' % name] = test_scores_dict[name]
             if self.return_train_score:
                 key = 'train_%s' % name
-                ret[key] = np.array(train_scores[name])
+                ret[key] = train_scores_dict[name]
 
         if return_incumbent_score:
             ret['incumbent_test_score'] = incumbent_test_score
@@ -1071,7 +1098,7 @@ class Regressor(BaseRegressor):
         Determines whether to return the training scores from the k-fold
         cross-validation methods.
 
-    pipeline_transform : str, list, tuple, or None, optional (default=None)
+    pipeline_transform : str, list, tuple, or None, optional (default='quantilenormal')
         Choice of transform(s) used in the modified pipeline construction.
         If the specified choice is a string, then it must be a default option,
         where ``'standardscaler'``, ``'boxcox'``, ``'yeojohnson'``, ``'quantileuniform'``,
@@ -1214,7 +1241,7 @@ class Regressor(BaseRegressor):
     """
 
     verbose: int = field(default=1)
-    pipeline_transform: typing.Union[str, list, tuple] = field(default='quantilenormal')
+    pipeline_transform: str_list_or_tuple = field(default='quantilenormal')
     refit: bool = field(default=True)
     randomizedcv_n_iter: int = field(default=20)
     bayesoptcv_init_points: int = field(default=2)
@@ -1400,7 +1427,7 @@ class Regressor(BaseRegressor):
             setattr(self, '_return_incumbent', True)
 
     def baseboostcv(self, X: DataFrame_or_Series, y: DataFrame_or_Series,
-                    sample_weight=None) -> typing.Union[Regressor, ModifiedPipeline]:
+                    **fit_params) -> typing.Union[Regressor, ModifiedPipeline]:
         """Base boosting with inbuilt cross-validation.
 
         This method starts with inbuilt cross-validation, which scores both
@@ -1421,9 +1448,9 @@ class Regressor(BaseRegressor):
             The target matrix, where each row corresponds to an example and the
             column(s) correspond to the single-target(s).
 
-        sample_weight : float, ndarray, or None, optional (default=None)
-            Individual weights for each example. If the weight is a float, then
-            every example will have the same weight.
+        **fit_params : dict of string -> object
+            If base boosting, then these parameters are passed to the stagewise
+            ``_fit_stages`` method.
 
         Attributes
         ----------
@@ -1457,8 +1484,7 @@ class Regressor(BaseRegressor):
         if not hasattr(self, '_return_incumbent'):
             # This checks if the candidate was chosen
             # in model selection.
-            super()._fit(regressor=self.pipe, X=X, y=y,
-                         sample_weight=sample_weight)
+            super()._fit(regressor=self.pipe, X=X, y=y, **fit_params)
             return self.pipe
         else:
             setattr(self, 'return_incumbent_', True) 
@@ -1531,7 +1557,7 @@ class Regressor(BaseRegressor):
             The pandas object of computed scores.
         """
 
-        assert any(self.score_multioutput for output in ['raw_values', 'uniform_average'])
+        assert any(self.score_multioutput for output in _SCORE_MULTIOUTPUT)
 
         scores = {}
         for scoring in _SCORE_CHOICE:
@@ -1768,7 +1794,8 @@ class Regressor(BaseRegressor):
 
         if not hasattr(self, 'pipe'):
             self.get_pipeline(y=y,
-                              n_quantiles=super()._estimate_fold_size(y=y, cv=cv))
+                              n_quantiles=super()._estimate_fold_size(y=y,
+                                                                      cv=cv))
 
         self._method = _search_method(search_method=search_method,
                                       pipeline=self.pipe,
@@ -1847,7 +1874,7 @@ class Regressor(BaseRegressor):
 
         if search_method == 'bayesoptcv' and self.refit:
             self.pipe = sklearn.base.clone(sklearn.base.clone(self.pipe).set_params(
-                **_check_bayesoptcv_parameter_type(pbounds=self._method.max['params'])))
+                **_check_bayesoptcv_param_type(pbounds=self._method.max['params'])))
             self.pipe.fit(X=X, y=y)
         else:
             try:
@@ -2044,7 +2071,8 @@ class Regressor(BaseRegressor):
 
         if not hasattr(self, 'pipe'):
             self.get_pipeline(y=y,
-                              n_quantiles=super()._estimate_fold_size(y=y, cv=outer_cv))
+                              n_quantiles=super()._estimate_fold_size(y=y,
+                                                                      cv=outer_cv))
 
         outer_cv = sklearn.model_selection._split.check_cv(cv=outer_cv, y=y,
                                                            classifier=False)

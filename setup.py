@@ -9,8 +9,8 @@ from setuptools import setup, find_packages
 
 
 DISTNAME = 'scikit-physlearn'
-DESCRIPTION = 'A Python package for single-target and multi-target regression tasks.'
-with open('README.rst') as f:
+DESCRIPTION = 'A machine learning library for solving regression tasks.'
+with open('README.md', encoding='utf-8') as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = 'Alex Wozniakowski'
 MAINTAINER_EMAIL = 'wozn0001@e.ntu.edu.sg'
@@ -59,7 +59,7 @@ def setup_package():
                     maintainer_email=MAINTAINER_EMAIL,
                     description=DESCRIPTION,
                     long_description=LONG_DESCRIPTION,
-                    long_description_content_type='text/x-rst',
+                    long_description_content_type='text/markdown',
                     url=URL,
                     download_url=DOWNLOAD_URL,
                     project_urls=PROJECT_URLS,

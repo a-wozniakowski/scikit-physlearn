@@ -96,9 +96,9 @@ class TestBaseBoost(unittest.TestCase):
 
     def test_squared_error(self):
         X, y = load_boston(return_X_y=True)
-        loss = LOSS_FUNCTIONS['ls'](n_classes=1)
+        loss = LOSS_FUNCTIONS['ls']()
         score = loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
-        sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['ls'](n_classes=1)
+        sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['ls']()
         sklearn_score = sklearn_loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
         self.assertEqual(score, sklearn_score)
         score = loss(y=pd.Series(y), raw_predictions=X[:, 0]).round(decimals=2)
@@ -128,9 +128,9 @@ class TestBaseBoost(unittest.TestCase):
 
     def test_absolute_error(self):
         X, y = load_boston(return_X_y=True)
-        loss = LOSS_FUNCTIONS['lad'](n_classes=1)
+        loss = LOSS_FUNCTIONS['lad']()
         score = loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
-        sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['lad'](n_classes=1)
+        sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['lad']()
         sklearn_score = sklearn_loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
         self.assertEqual(score, sklearn_score)
         score = loss(y=pd.Series(y), raw_predictions=X[:, 0]).round(decimals=2)
@@ -160,10 +160,9 @@ class TestBaseBoost(unittest.TestCase):
 
     def test_huber_loss(self):
         X, y = load_boston(return_X_y=True)
-        loss = LOSS_FUNCTIONS['huber'](n_classes=1, alpha=0.9)
+        loss = LOSS_FUNCTIONS['huber'](alpha=0.9)
         score = loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
-        sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['huber'](n_classes=1,
-                                                                           alpha=0.9)
+        sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['huber'](alpha=0.9)
         sklearn_score = sklearn_loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
         self.assertEqual(score, sklearn_score)
         score = loss(y=pd.Series(y), raw_predictions=X[:, 0]).round(decimals=2)
@@ -193,9 +192,9 @@ class TestBaseBoost(unittest.TestCase):
 
     def test_quantile_loss(self):
         X, y = load_boston(return_X_y=True)
-        loss = LOSS_FUNCTIONS['quantile'](n_classes=1)
+        loss = LOSS_FUNCTIONS['quantile']()
         score = loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
-        sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['quantile'](n_classes=1)
+        sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['quantile']()
         sklearn_score = sklearn_loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
         self.assertEqual(score, sklearn_score)
         score = loss(y=pd.Series(y), raw_predictions=X[:, 0]).round(decimals=2)

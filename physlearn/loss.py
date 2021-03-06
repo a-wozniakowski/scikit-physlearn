@@ -111,7 +111,7 @@ class LeastSquaresError(sklearn.ensemble._gb_losses.LeastSquaresError):
         >>> from sklearn.datasets import load_linnerud
         >>> from physlearn import LeastSquaresError
         >>> X, y = load_linnerud(return_X_y=True)
-        >>> ls = LeastSquaresError(n_classes=1)
+        >>> ls = LeastSquaresError()
         >>> ls(y=y, raw_predictions=X)
         16048.6
         """
@@ -146,7 +146,7 @@ class LeastSquaresError(sklearn.ensemble._gb_losses.LeastSquaresError):
         >>> from sklearn.datasets import load_linnerud
         >>> from physlearn import LeastSquaresError
         >>> X, y = load_linnerud(return_X_y=True)
-        >>> ls = LeastSquaresError(n_classes=1)
+        >>> ls = LeastSquaresError()
         >>> ls.negative_gradient(y=pd.DataFrame(y), raw_predictions=X).iloc[:2]
                0      1     2
         0  186.0 -126.0 -10.0
@@ -201,7 +201,7 @@ class LeastAbsoluteError(sklearn.ensemble._gb_losses.LeastAbsoluteError):
         >>> from sklearn.datasets import load_linnerud
         >>> from physlearn import LeastAbsoluteError
         >>> X, y = load_linnerud(return_X_y=True)
-        >>> lad = LeastAbsoluteError(n_classes=1)
+        >>> lad = LeastAbsoluteError()
         >>> lad(y=y, raw_predictions=X)
         104.23333333333333
         """
@@ -236,7 +236,7 @@ class LeastAbsoluteError(sklearn.ensemble._gb_losses.LeastAbsoluteError):
         >>> from sklearn.datasets import load_linnerud
         >>> from physlearn import LeastAbsoluteError
         >>> X, y = load_linnerud(return_X_y=True)
-        >>> lad = LeastAbsoluteError(n_classes=1)
+        >>> lad = LeastAbsoluteError()
         >>> lad.negative_gradient(y=pd.DataFrame(y), raw_predictions=X).iloc[:2]
              0    1    2
         0  1.0 -1.0 -1.0
@@ -267,7 +267,8 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
       Annals of Statistics, 29(5):1189–1232 (2001).
       """
 
-    def _delta(self, difference: pandas_or_numpy, sample_weight=None) -> np.float64:
+    def _delta(self, difference: pandas_or_numpy,
+               sample_weight=None) -> np.float64:
         """Computes the delta threshold.
 
         This threshold determines whether to use the squared error or
@@ -326,7 +327,7 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
         >>> from sklearn.datasets import load_linnerud
         >>> from physlearn import HuberLossFunction
         >>> X, y = load_linnerud(return_X_y=True)
-        >>> huber = HuberLossFunction(n_classes=1)
+        >>> huber = HuberLossFunction()
         >>> huber(y=y, raw_predictions=X)
         7989.893
         """
@@ -379,7 +380,7 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
         >>> from sklearn.datasets import load_linnerud
         >>> from physlearn import HuberLossFunction
         >>> X, y = load_linnerud(return_X_y=True)
-        >>> huber = HuberLossFunction(n_classes=1)
+        >>> huber = HuberLossFunction()
         >>> huber.negative_gradient(y=pd.DataFrame(y), raw_prediction=X).iloc[:2]
                0      1     2
         0  186.0 -126.0 -10.0
@@ -444,7 +445,7 @@ class QuantileLossFunction(sklearn.ensemble._gb_losses.QuantileLossFunction):
         >>> from sklearn.datasets import load_linnerud
         >>> from physlearn import QuantileLossFunction
         >>> X, y = load_linnerud(return_X_y=True)
-        >>> quantile = QuantileLossFunction(n_classes=1)
+        >>> quantile = QuantileLossFunction()
         >>> quantile(y=y, raw_predictions=X)
         174.27
         """
@@ -487,7 +488,7 @@ class QuantileLossFunction(sklearn.ensemble._gb_losses.QuantileLossFunction):
         >>> from sklearn.datasets import load_linnerud
         >>> from physlearn import QuantileLossFunction
         >>> X, y = load_linnerud(return_X_y=True)
-        >>> quantile = QuantileLossFunction(n_classes=1)
+        >>> quantile = QuantileLossFunction()
         >>> quantile.negative_gradient(y=pd.DataFrame(y), raw_predictions=X).iloc[:2]
              0    1    2
         0  0.9 -0.1 -0.1

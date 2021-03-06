@@ -82,15 +82,16 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         must be specified:
 
         n_estimators :obj:`int`
-            The number of basis functions in the noise term of the additive expansion.
-            Note that this option may also be specified as ``n_regressors``; see the
-            example below.
+            The number of basis functions in the noise term of the additive
+            expansion. Note that this option may also be specified as
+            ``n_regressors``; see the example below.
 
         boosting_loss :obj:`str` 
-            The loss function utilized in the pseudo-residual computation, where 'ls'
-            denotes the squared error loss function, 'lad' denotes the absolute error
-            loss function, 'huber' denotes the Huber loss function, and 'quantile'
-            denotes the quantile loss function.
+            The loss function utilized in the pseudo-residual computation,
+            where 'ls' denotes the squared error loss function, 'lad'
+            denotes the absolute error loss function, 'huber' denotes
+            the Huber loss function, and 'quantile' denotes the quantile
+            loss function.
 
         line_search_options :obj:`dict` 
             init_guess :obj:`int`, :obj:`float`, or :obj:`ndarray`
@@ -118,10 +119,11 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
                 which determines the accept or reject criterion.
 
             loss :obj:`str`
-                The loss function utilized in the line search computation, where 'ls'
-                denotes the squared error loss function, 'lad' denotes the absolute error
-                loss function, 'huber' denotes the Huber loss function, and 'quantile'
-                denotes the quantile loss function.
+                The loss function utilized in the line search computation,
+                where 'ls' denotes the squared error loss function, 'lad'
+                denotes the absolute error loss function, 'huber' denotes
+                the Huber loss function, and 'quantile' denotes the quantile
+                loss function.
 
             regularization :obj:`int` or :obj:`float`
                 The regularization strength in the line search computation.
@@ -352,7 +354,7 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             in gradient boosting.
 
         **fit_params_last_step : dict of string -> object
-            Parameters passed to the estimator's ``fit`` method during the stage.
+            Parameters passed to the estimator's ``fit`` method during each stage.
 
         Attributes
         ----------
@@ -376,10 +378,9 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             # The boosting loss attribute determines, which loss function
             # is employed in the negative gradient computation.
             if self.boosting_loss == 'huber':
-                self.loss = LOSS_FUNCTIONS[self.boosting_loss](n_classes=1,
-                                                               alpha=0.9)
+                self.loss = LOSS_FUNCTIONS[self.boosting_loss](alpha=0.9)
             else:
-                self.loss = LOSS_FUNCTIONS[self.boosting_loss](n_classes=1)
+                self.loss = LOSS_FUNCTIONS[self.boosting_loss]()
         
         pseudo_residual = self.loss.negative_gradient(y=y,
                                                       raw_predictions=init_expansion)
@@ -403,10 +404,9 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             # This loss key determines, which loss function
             # is employed in the line search computation.
             if self.line_search_options['loss'] == 'huber':
-                line_search_loss = LOSS_FUNCTIONS[self.line_search_options['loss']](n_classes=1,
-                                                                                    alpha=0.9)
+                line_search_loss = LOSS_FUNCTIONS[self.line_search_options['loss']](alpha=0.9)
             else:
-                line_search_loss = LOSS_FUNCTIONS[self.line_search_options['loss']](n_classes=1)
+                line_search_loss = LOSS_FUNCTIONS[self.line_search_options['loss']]()
             
             def regularized_loss(alpha):
                 current_expansion_ref = current_expansion
@@ -452,7 +452,7 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             column(s) correspond to the single-target(s).
 
         **fit_params : dict of string -> object
-            Parameters passed to the ``fit`` method of each step or the stagewise
+            Parameters passed to the ``fit`` method of each step of the stagewise
             ``_fit_stage`` method.
 
         Returns
