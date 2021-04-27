@@ -6,23 +6,18 @@
 import os
 import sys
 
+from distutils.file_util import copy_file
 from setuptools import setup, find_packages
 
 
 DISTNAME = 'scikit-physlearn'
 DESCRIPTION = 'A machine learning library for regression.'
 
-get_directory = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(get_directory, 'README.md'), encoding='utf-8') as f:
-    LONG_DESCRIPTION = f.read()
-
 MAINTAINER = 'Alex Wozniakowski'
 MAINTAINER_EMAIL = 'wozn0001@e.ntu.edu.sg'
 URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
 DOWNLOAD_URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
 PROJECT_URLS = dict(Paper='https://arxiv.org/abs/2005.06194')
-
-VERSION = open(os.path.join(get_directory, 'physlearn/VERSION')).read().strip()
 
 SETUPTOOLS_COMMANDS = set(['develop', 'release', 'bdist_egg', 'bdist_rpm',
                            'bdist_wininst', 'install_egg_info', 'build_sphinx',
@@ -67,7 +62,16 @@ INSTALL_REQUIRES = ['matplotlib <= 3.2.0',
                     'python-levenshtein-wheels >= 0.13.1']
 
 
-def setup_package():
+if __name__ == '__main__':
+    CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
+    if os.path.isfile(os.path.join(CURRENT_DIR, 'VERSION.txt')):
+        copy_file(os.path.join(CURRENT_DIR, 'VERSION.txt'),
+                  os.path.join(CURRENT_DIR, 'physlearn', 'VERSION.txt'),
+                  verbose=0)
+    VERSION = open(os.path.join(CURRENT_DIR, 'physlearn', 'VERSION.txt'), encoding='utf-8').read().strip()
+    LONG_DESCRIPTION = open(os.path.join(CURRENT_DIR, 'README.md'), encoding='utf-8').read()
+
+    sys.path.insert(0, CURRENT_DIR)
 
     metadata = dict(name=DISTNAME,
                     maintainer=MAINTAINER,
@@ -87,6 +91,3 @@ def setup_package():
                     **extra_setuptools_args)
 
     setup(**metadata)
-
-if __name__ == '__main__':
-    setup_package()

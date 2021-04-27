@@ -1,2 +1,3 @@
 include LICENSE
-include *.rst *.txt
+include *.md *.txt
+recursive-include physlearn VERSION.txt *.py *.so
