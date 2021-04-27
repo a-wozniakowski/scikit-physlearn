@@ -8,6 +8,8 @@ import sphinx
 from packaging.version import parse
 from sphinx.errors import VersionRequirementError
 
+
+CURR_PATH = os.path.abspath(os.path.dirname(__file__))
 # -- Project information -----------------------------------------------------
 
 project = 'Scikit-physlearn'
@@ -41,9 +43,7 @@ autodoc_typehints = 'none'
 autosummary_generate = True
 
 # Version information.
-CURR_PATH = os.path.abspath(os.path.dirname(__file__))
-
-with open(os.path.join(CURR_PATH, 'VERSION.txt'), 'r') as f:
+with open(os.path.join(CURR_PATH, os.path.pardir, 'VERSION.txt'), 'r') as f:
     # The short X.Y version.
     version = f.read().strip()
 
