@@ -39,15 +39,10 @@ autodoc_typehints = 'none'
 
 autosummary_generate = True
 
+# Version information.
 import physlearn
-parsed_version = parse(physlearn.__version__)
-version = ".".join(parsed_version.base_version.split(".")[:2])
-# The full version, including alpha/beta/rc tags.
-# It removes post from release name.
-if parsed_version.is_postrelease:
-    release = parsed_version.base_version
-else:
-    release = physlearn.__version__
+version = physlearn.__version__
+release = physlearn.__version__
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
