@@ -118,11 +118,6 @@ _CHAIN_FLAG = [RegressorChain(base_estimator=DummyRegressor()).__class__,
                ClassifierChain(base_estimator=DummyClassifier()).__class__]
 
 
-# We need to identify XGBoost as the predict method utilizes the
-# parameter data for the conventional design matrix parameter X.
-_XGBOOST_FLAG = xgb.XGBRegressor().__class__
-
-
 # We need to identify CatBoost as the predict method utilizes the
 # parameter data for the conventional design matrix parameter X.
 _CATBOOST_FLAG = cat.CatBoostRegressor().__class__
