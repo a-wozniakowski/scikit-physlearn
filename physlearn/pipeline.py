@@ -35,7 +35,6 @@ from physlearn.supervised.utils._data_checks import _n_targets
 from physlearn.supervised.utils._definition import (_CATBOOST_FLAG, _CHAIN_FLAG,
                                                     _MULTI_TARGET,
                                                     _PIPELINE_TRANSFORM_CHOICE,
-                                                    _XGBOOST_FLAG,
                                                     _SCORE_CHOICE)
 from physlearn.supervised.utils._estimator_checks import _check_line_search_options
 
@@ -570,14 +569,14 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
         else:
             # Generate predictions without reroughing.
             if self.target_index is not None:
-                if self._final_estimator.__class__ in [_CATBOOST_FLAG, _XGBOOST_FLAG]:
+                if self._final_estimator.__class__ == _CATBOOST_FLAG:
                     y_pred = pd.DataFrame(self.steps[-1][-1].predict(data=Xt, **predict_params),
                                           index=X.iloc[:, self.target_index].index)
                 else:
                     y_pred = pd.DataFrame(self.steps[-1][-1].predict(X=Xt, **predict_params),
                                           index=X.iloc[:, self.target_index].index)
             else:
-                if self._final_estimator.__class__ in [_CATBOOST_FLAG, _XGBOOST_FLAG]:
+                if self._final_estimator.__class__ == _CATBOOST_FLAG:
                     y_pred = pd.DataFrame(self.steps[-1][-1].predict(data=Xt, **predict_params),
                                           index=X.index)
                 else:
