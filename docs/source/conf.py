@@ -2,6 +2,7 @@
 
 import datetime
 import guzzle_sphinx_theme
+import os
 import sphinx
 
 from packaging.version import parse
