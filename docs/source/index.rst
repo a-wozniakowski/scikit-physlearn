@@ -16,15 +16,14 @@ regressors into a flexible framework that:
 - Interprets regressors with `SHAP <https://shap.readthedocs.io/en/latest/>`_.
 
 Additionally, the library contains the official implementation of
-`base boosting <https://arxiv.org/abs/2005.06194>`_, which is an algorithmic
-paradigm for building additive expansions based upon the output of any
-base-level regressor. The implementation:
+`base boosting <https://arxiv.org/abs/2005.06194>`_, which incorporates prior
+knowledge into boosting by supplanting the standard statistical initialization
+with predictions from a user-specified model. The implementation:
 
-- Supplants the statistical initialization in gradient boosting
-  with the output of any base-level regressor.
-- Boosts arbitrary basis functions, i.e., it is not limited to boosting
-  decision trees.
-- Efficiently learns in the low data regime.
+- Enables interoperability between user-specified models and nonparametric
+  statistical methods or supervised machine learning algorithms, i.e., it
+  is not limited to boosting decision trees.
+- Is especially suited for the low data regime.
 
 The `library <https://github.com/a-wozniakowski/scikit-physlearn>`_ was
 started by Alex Wozniakowski during his graduate studies at Nanyang Technological
