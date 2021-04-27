@@ -22,10 +22,7 @@ URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
 DOWNLOAD_URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
 PROJECT_URLS = dict(Paper='https://arxiv.org/abs/2005.06194')
 
-import physlearn
-import physlearn._build_utils.min_dependencies as min_deps
-
-VERSION = physlearn.__version__
+VERSION = open(os.path.join(get_directory, 'VERSION')).read().strip()
 
 SETUPTOOLS_COMMANDS = set(['develop', 'release', 'bdist_egg', 'bdist_rpm',
                            'bdist_wininst', 'install_egg_info', 'build_sphinx',
@@ -35,8 +32,8 @@ SETUPTOOLS_COMMANDS = set(['develop', 'release', 'bdist_egg', 'bdist_rpm',
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     extra_setuptools_args = dict(zip_safe=False,
                                  include_package_data=True,
-                                 extras_require={key: min_deps.tag_to_packages[key]
-                                                 for key in ['docs', 'tests']})
+                                 extras_require=dict(docs=['sphinx >= 3.0.3',
+                                                           'sphinx-gallery >= 0.7.0']))
 else:
     extra_setuptools_args = dict()
 
@@ -55,6 +52,20 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Programming Language :: Python :: 3.8']
 PACKAGES = find_packages()
 
+INSTALL_REQUIRES = ['matplotlib <= 3.2.0',
+                    'numpy',
+                    'scipy',
+                    'scikit-learn >= 0.24.1',
+                    'pandas >= 1.0.0',
+                    'shap >= 0.36.0',
+                    'ipython >= 7.11.0',
+                    'bayesian-optimization >= 1.2.0',
+                    'catboost >= 0.23.2',
+                    'xgboost >= 1.4.1',
+                    'lightgbm >= 2.3.0',
+                    'mlxtend >= 0.17.0',
+                    'python-levenshtein-wheels >= 0.13.1']
+
 
 def setup_package():
 
@@ -72,7 +83,7 @@ def setup_package():
                     classifiers=CLASSIFIERS,
                     packages=PACKAGES,
                     package_data={'': ['*.json', '*.csv']},
-                    install_requires=min_deps.tag_to_packages['install'],
+                    install_requires=INSTALL_REQUIRES,
                     **extra_setuptools_args)
 
     setup(**metadata)
