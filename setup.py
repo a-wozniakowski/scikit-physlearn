@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 
 
 DISTNAME = 'scikit-physlearn'
-DESCRIPTION = 'A machine learning library for solving regression tasks.'
+DESCRIPTION = 'A machine learning library for regression.'
 
 get_directory = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(get_directory, 'README.md'), encoding='utf-8') as f:
@@ -22,7 +22,7 @@ URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
 DOWNLOAD_URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
 PROJECT_URLS = dict(Paper='https://arxiv.org/abs/2005.06194')
 
-VERSION = open(os.path.join(get_directory, 'VERSION')).read().strip()
+VERSION = open(os.path.join(get_directory, 'physlearn/VERSION')).read().strip()
 
 SETUPTOOLS_COMMANDS = set(['develop', 'release', 'bdist_egg', 'bdist_rpm',
                            'bdist_wininst', 'install_egg_info', 'build_sphinx',
