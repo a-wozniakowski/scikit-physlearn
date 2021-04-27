@@ -9,7 +9,6 @@ from packaging.version import parse
 from sphinx.errors import VersionRequirementError
 
 
-CURR_PATH = os.path.abspath(os.path.dirname(__file__))
 # -- Project information -----------------------------------------------------
 
 project = 'Scikit-physlearn'
@@ -43,12 +42,10 @@ autodoc_typehints = 'none'
 autosummary_generate = True
 
 # Version information.
-with open(os.path.join(CURR_PATH, os.path.pardir, 'VERSION.txt'), 'r') as f:
-    # The short X.Y version.
-    version = f.read().strip()
+import physlearn
 
-    # The full version, including alpha/beta/rc tags.
-    release = version
+version = physlearn.__version__
+release = physlearn.__version__
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
