@@ -40,9 +40,14 @@ autodoc_typehints = 'none'
 autosummary_generate = True
 
 # Version information.
-import physlearn
-version = physlearn.__version__
-release = physlearn.__version__
+CURR_PATH = os.path.abspath(os.path.dirname(__file__))
+
+with open(os.path.join(CURR_PATH, 'VERSION.txt'), 'r') as f:
+    # The short X.Y version.
+    version = f.read().strip()
+
+    # The full version, including alpha/beta/rc tags.
+    release = version
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
