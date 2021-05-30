@@ -90,7 +90,10 @@ def _check_X_y(X: DataFrame_or_Series,
     if target_type == 'continuous-multioutput':
         return data.iloc[:, :n_features], data.iloc[:, n_features:]
     else:
-        return data.iloc[:, :n_features], data.iloc[:, n_features:].squeeze()
+        if n_features == 1:
+            return data.iloc[:, :n_features].squeeze(), data.iloc[:, n_features:].squeeze()
+        else:
+            return data.iloc[:, :n_features], data.iloc[:, n_features:].squeeze()
 
 
 def _validate_data(X=None, y=None) -> DataFrame_or_Series:
