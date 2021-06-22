@@ -139,6 +139,77 @@ def paper_params(index=0) -> list:
 
 
 ###########################################################
+#LGBMRegessor params
+###########################################################
+
+lgbm_param_template = dict(objective='mean_absolute_error',
+                           boosting_type='goss',
+                           num_leaves=20,
+                           reg_alpha=0.01,
+                           reg_lambda=0.01)
+
+
+# Target 1
+lgbm_params_1 = copy.deepcopy(lgbm_param_template)
+lgbm_params_1.update(dict(n_estimators=60))
+
+# Target 2
+lgbm_params_2 = copy.deepcopy(lgbm_param_template)
+lgbm_params_2.update(dict(n_estimators=70, reg_lambda=0.1))
+
+# Target 3
+lgbm_params_3 = copy.deepcopy(lgbm_param_template)
+lgbm_params_3.update(dict(n_estimators=60))
+
+# Target 4
+lgbm_params_4 = copy.deepcopy(lgbm_param_template)
+lgbm_params_4.update(dict(n_estimators=50, reg_lambda=0.1))
+
+# Target 5
+lgbm_params_5 = copy.deepcopy(lgbm_param_template)
+lgbm_params_5.update(dict(n_estimators=50))
+
+
+additional_paper_dict = dict(target_1=lgbm_params_1,
+                             target_2=lgbm_params_2,
+                             target_3=lgbm_params_3,
+                             target_4=lgbm_params_4,
+                             target_5=lgbm_params_5)
+
+def additional_paper_params(index=0) -> dict:
+    """Retrieves a dict for LGBMRegressor.
+
+    Parameters
+    ----------
+    index : int
+        Specifies the single-target regression subtask,
+        using the Python indexing convention.
+
+    Returns
+    -------
+    params : dict
+
+    Examples
+    --------
+    >>> from physlearn.datasets import additional_paper_params
+    >>> additional_paper_params(index=0)
+    {'objective': 'mean_absolute_error',
+     'boosting_type': 'goss',
+     'num_leaves': 20,
+     'reg_alpha': 0.01,
+     'reg_lambda': 0.01,
+     'n_estimators': 60}
+    """
+    
+    # Changes to the paper's index convention.
+    index += 1
+    assert index >=1 and index <=5
+    return additional_paper_dict[f'target_{index}']
+
+
+
+
+###########################################################
 #MLPRegessor params
 ###########################################################
 
