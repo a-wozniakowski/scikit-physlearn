@@ -33,8 +33,8 @@ print('Building scoring DataFrame for each single-target subtask.')
 test_error = []
 for index in range(5):
     # We make an instance of Regressor with our choice of
-    # fully connected neural network for the single-target
-    # regression subtask: 1.
+    # fully connected neural network for each single-target
+    # regression subtask.
     reg = Regressor(regressor_choice=model, params=supplementary_params(index),
                     target_index=index)
 
