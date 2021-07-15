@@ -685,6 +685,10 @@ def make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
     n_jobs : int or None
         The number of jobs to run in parallel.
 
+    auto_target : bool, optional (default=True)
+        Determines whether to automatically handle the pipeline steps or let
+        the user specify the steps.
+
     target_index : int or None
         Specifies the single-target subtask in the multi-target task.
 
@@ -800,6 +804,7 @@ def make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
     memory = kwargs.pop('memory', None)
     verbose = kwargs.pop('verbose', None)
     n_jobs = kwargs.pop('n_jobs', None)
+    auto_target = kwargs.pop('auto_target', None)
     target_index = kwargs.pop('target_index', None)
     target_type = kwargs.pop('target_type', None)
     base_boosting_options = kwargs.pop('base_boosting_options', None)
@@ -842,16 +847,19 @@ def make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
         steps = []
 
     # Distinguishes between single-target and multi-target regression.
-    if target_type in _MULTI_TARGET and target_index is None:
-        if chain_order is not None:
-            estimator = sklearn.multioutput.RegressorChain(base_estimator=estimator,
-                                                           order=chain_order,
-                                                           cv=cv,
-                                                           random_state=random_state)
-            steps.append(('reg', estimator))
+    if auto_target:
+        if target_type in _MULTI_TARGET and target_index is None:
+            if chain_order is not None:
+                estimator = sklearn.multioutput.RegressorChain(base_estimator=estimator,
+                                                               order=chain_order,
+                                                               cv=cv,
+                                                               random_state=random_state)
+                steps.append(('reg', estimator))
+            else:
+                estimator = sklearn.multioutput.MultiOutputRegressor(estimator=estimator,
+                                                                     n_jobs=n_jobs)
+                steps.append(('reg', estimator))
         else:
-            estimator = sklearn.multioutput.MultiOutputRegressor(estimator=estimator,
-                                                                 n_jobs=n_jobs)
             steps.append(('reg', estimator))
     else:
         steps.append(('reg', estimator))

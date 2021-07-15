@@ -106,6 +106,10 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
         Determines whether to return the training scores from the k-fold
         cross-validation methods.
 
+    auto_target : bool, optional (default=True)
+        Determines whether to automatically handle the pipeline steps or let
+        the user specify the steps.
+
     pipeline_transform : str, list, tuple, or None, optional (default=None)
         Choice of transform(s) used in the modified pipeline construction.
         If the specified choice is a string, then it must be a default option,
@@ -245,6 +249,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
     score_multioutput: str = field(default='raw_values')
     scoring: str = field(default='neg_mean_absolute_error')
     return_train_score: bool = field(default=True)
+    auto_target: bool = field(default=True)
     pipeline_transform: typing.Union[str, list, tuple] = field(default=None)
     pipeline_memory: str = field(default=None)
     params: typing.Union[dict, list] = field(default=None)
@@ -494,6 +499,7 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
                       n_jobs=self.n_jobs,
                       cv=self.cv,
                       memory=self.pipeline_memory,
+                      auto_target = self.auto_target,
                       target_index=self.target_index,
                       target_type = sklearn.utils.multiclass.type_of_target(y),
                       n_quantiles=n_quantiles,
@@ -1736,19 +1742,24 @@ class Regressor(BaseRegressor):
             The preprocessed (hyper)parameters.
         """
 
-        if sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
-            if self.chain_order is not None:
-                search_params = _preprocess_hyperparams(raw_params=search_params,
-                                                        multi_target=True,
-                                                        chain=True)
+        if self.auto_target:
+            if sklearn.utils.multiclass.type_of_target(y) in _MULTI_TARGET:
+                if self.chain_order is not None:
+                    search_params = _preprocess_hyperparams(raw_params=search_params,
+                                                            multi_target=True,
+                                                            chain=True)
+                else:
+                    search_params = _preprocess_hyperparams(raw_params=search_params,
+                                                            multi_target=True,
+                                                            chain=False)
             else:
                 search_params = _preprocess_hyperparams(raw_params=search_params,
-                                                        multi_target=True,
+                                                        multi_target=False,
                                                         chain=False)
         else:
             search_params = _preprocess_hyperparams(raw_params=search_params,
-                                                    multi_target=False,
-                                                    chain=False)
+                                                        multi_target=False,
+                                                        chain=False)
 
         return search_params
 
@@ -2077,8 +2088,12 @@ class Regressor(BaseRegressor):
         outer_cv = sklearn.model_selection._split.check_cv(cv=outer_cv, y=y,
                                                            classifier=False)
 
-        scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
-                                                                        scoring=self.scoring)
+        if isinstance(self.scoring, str):
+            scorers = sklearn.metrics._scorer.check_scoring(estimator=self.pipe,
+                                                            scoring=self.scoring)
+        else:
+            scorers, _ = sklearn.metrics._scorer._check_multimetric_scoring(estimator=self.pipe,
+                                                                            scoring=self.scoring)
 
         parallel = joblib.Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                    pre_dispatch='2*n_jobs')
@@ -2093,7 +2108,7 @@ class Regressor(BaseRegressor):
                 search_method='gridsearchcv', cv=inner_cv)
             for train, test in outer_cv.split(X, y, groups))
 
-        outer_loop_scores = pd.Series([np.abs(pair[1]['score']) for pair in scores])
+        outer_loop_scores = pd.Series([np.abs(pair[1]) for pair in scores])
 
         if return_inner_loop_score:
             inner_loop_scores = pd.Series(np.concatenate([np.abs(pair[0]) for pair in scores]))
