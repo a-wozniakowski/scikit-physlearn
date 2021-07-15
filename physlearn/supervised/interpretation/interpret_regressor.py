@@ -71,6 +71,7 @@ class ShapInterpret(BaseRegressor):
             explainer = shap.LinearExplainer(model=self.pipe.named_steps['reg'],
                                              feature_perturbation='correlation_dependent',
                                              masker=X)
+
             shap_values = explainer.shap_values(X=X)
         elif self.explainer_type == 'kernel':
             explainer = shap.KernelExplainer(model=self.pipe.named_steps['reg'].predict,

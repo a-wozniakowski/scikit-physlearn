@@ -5,27 +5,21 @@ Base Boosting
 Introduction
 ============
 
-Gradient boosting is a general and effective algorithmic paradigm that
-builds an additive expansion in a greedy stagewise fashion. Prior to the
-first stage, gradient boosting initializes the additive expansion with
-the optimal constant model, usually determined by maximum likelihood
-estimation. The first stage generates residuals with the statistical
-initialization, then it uses a given learning algorithm to discover
-regularities in the residuals. The stage finishes by appending the learned
-basis function to the statistical initialization in an additive fashion.
-Subsequent stages follow suit, wherein each stage generates residuals with
-the additive expansion built in the previous stage and it finishes by
-appending the learned basis function to the additive expansion. As such,
-gradient boosting is an entirely data-driven method that derives a model
-of the domain exclusively from the statistical evidence present in the
-training examples itself.
+The standard formulation of gradient boosting begins forward stagewise
+additive modeling with a constant model, such as zero or the optimal
+constant model. Then, the loop body generates sequential improvements
+to the constant model. As such, the standard formulation of gradient
+boosting is an entirely data-driven method that derives a regressor
+exclusively from the statistical evidence present in the training
+examples itself.
 
-Base boosting is a modification of the algorithmic paradigm of gradient
-boosting, which supplants the standard statistical initialization with
-the output of any base-level regressor. As such, the output of a base-level
-regressir acts as an inductive transfer mechanism in base boosting. Its role
-is to incorporate prior domain knowledge into gradient boosting, as a means
-of compensates for a lack of training examples.
+In constrast, base boosting begins forward stagewise additive modeling
+with precomputed estimates from an existing, possibly nonconstant, model,
+which may contain prior knowledge or physical insight about the underlying
+data generating mechanism. Then, the loop body generates sequential
+improvements to the existing model. As such, this formulation of gradient
+boosting enables an existing model to precondition functional gradient
+descent, which is the underlying first-order optimization algorithm.
 
 Example
 -------
@@ -102,7 +96,7 @@ choices:
 .. code-block:: python
 
     from physlearn import Regressor
-    reg = Regressor(regressor_choice=basis_fn, stacking_layer=stack,
+    reg = Regressor(regressor_choice=basis_fn, stacking_options=dict(layers=stack),
                     target_index=4, scoring='neg_mean_absolute_error',
                     base_boosting_options=base_boosting_options)
 
