@@ -149,8 +149,8 @@ class GoogleData(GoogleDataFrame):
     References
     ----------
     - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-      "Boosting on the shoulders of giants in quantum device calibration",
-      arXiv preprint arXiv:2005.06194 (2020).
+      "A new formulation of gradient boosting",
+      Machine Learning: Science and Technology, 2 045022 (2021).
     """
 
     path : str = field(default=None)
@@ -246,8 +246,8 @@ def load_benchmark(return_split=False) -> sklearn_train_test_split_or_dict:
     References
     ----------
     - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-      "Boosting on the shoulders of giants in quantum device calibration",
-      arXiv preprint arXiv:2005.06194 (2020).
+      "A new formulation of gradient boosting",
+      Machine Learning: Science and Technology, 2 045022 (2021).
     """
 
     data = GoogleData(n_qubits=5).load_benchmark

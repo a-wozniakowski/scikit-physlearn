@@ -809,8 +809,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
         References
         ----------
         - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-          "Boosting on the shoulders of giants in quantum device calibration",
-          arXiv preprint arXiv:2005.06194 (2020).
+          "A new formulation of gradient boosting",
+          Machine Learning: Science and Technology, 2 045022 (2021).
         """
 
         X, y = self._validate_data(X=X, y=y)
@@ -950,8 +950,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
         References
         ----------
         - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-          "Boosting on the shoulders of giants in quantum device calibration",
-          arXiv preprint arXiv:2005.06194 (2020).
+          "A new formulation of gradient boosting",
+          Machine Learning: Science and Technology, 2 045022 (2021).
         """
 
         scores = self._modified_cross_validate(X=X, y=y,
@@ -1016,8 +1016,8 @@ class BaseRegressor(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin,
         References
         ----------
         - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-          "Boosting on the shoulders of giants in quantum device calibration",
-          arXiv preprint arXiv:2005.06194 (2020).
+          "A new formulation of gradient boosting",
+          Machine Learning: Science and Technology, 2 045022 (2021).
         """
 
         scores = self.cross_validate(X=X, y=y,
@@ -1420,8 +1420,8 @@ class Regressor(BaseRegressor):
         References
         ----------
         - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-          "Boosting on the shoulders of giants in quantum device calibration",
-          arXiv preprint arXiv:2005.06194 (2020).
+          "A new formulation of gradient boosting",
+          Machine Learning: Science and Technology, 2 045022 (2021).
         """
 
         cross_val_score = super().cross_val_score(X=X, y=y,
@@ -1471,8 +1471,8 @@ class Regressor(BaseRegressor):
         References
         ----------
         - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-          "Boosting on the shoulders of giants in quantum device calibration",
-          arXiv preprint arXiv:2005.06194 (2020).
+          "A new formulation of gradient boosting",
+          Machine Learning: Science and Technology, 2 045022 (2021).
         """
 
         X, y = super()._validate_data(X=X, y=y)
@@ -1513,8 +1513,8 @@ class Regressor(BaseRegressor):
         References
         ----------
         - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-          "Boosting on the shoulders of giants in quantum device calibration",
-          arXiv preprint arXiv:2005.06194 (2020).
+          "A new formulation of gradient boosting",
+          Machine Learning: Science and Technology, 2 045022 (2021).
         """
 
         X = self._validate_data(X=X)
@@ -1644,8 +1644,8 @@ class Regressor(BaseRegressor):
         References
         ----------
         - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-          "Boosting on the shoulders of giants in quantum device calibration",
-          arXiv preprint arXiv:2005.06194 (2020).
+          "A new formulation of gradient boosting",
+          Machine Learning: Science and Technology, 2 045022 (2021).
         """
 
         return super().cross_validate(X=X, y=y,
@@ -1705,8 +1705,8 @@ class Regressor(BaseRegressor):
         References
         ----------
         - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-          "Boosting on the shoulders of giants in quantum device calibration",
-          arXiv preprint arXiv:2005.06194 (2020).
+          "A new formulation of gradient boosting",
+          Machine Learning: Science and Technology, 2 045022 (2021).
         """
 
         return super().cross_val_score(X=X, y=y,

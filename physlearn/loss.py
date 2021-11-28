@@ -77,8 +77,8 @@ class LeastSquaresError(sklearn.ensemble._gb_losses.LeastSquaresError):
     References
     ----------
     - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-      "Boosting on the shoulders of giants in quantum device calibration",
-      arXiv preprint arXiv:2005.06194 (2020).
+      "A new formulation of gradient boosting",
+      Machine Learning: Science and Technology, 2 045022 (2021).
     
     - Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
       Annals of Statistics, 29(5):1189–1232 (2001).
@@ -167,8 +167,8 @@ class LeastAbsoluteError(sklearn.ensemble._gb_losses.LeastAbsoluteError):
     References
     ----------
     - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-      "Boosting on the shoulders of giants in quantum device calibration",
-      arXiv preprint arXiv:2005.06194 (2020).
+      "A new formulation of gradient boosting",
+      Machine Learning: Science and Technology, 2 045022 (2021).
     
     - Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
       Annals of Statistics, 29(5):1189–1232 (2001).
@@ -260,8 +260,8 @@ class HuberLossFunction(sklearn.ensemble._gb_losses.HuberLossFunction):
     References
     ----------
     - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-      "Boosting on the shoulders of giants in quantum device calibration",
-      arXiv preprint arXiv:2005.06194 (2020).
+      "A new formulation of gradient boosting",
+      Machine Learning: Science and Technology, 2 045022 (2021).
     
     - Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
       Annals of Statistics, 29(5):1189–1232 (2001).
@@ -411,8 +411,8 @@ class QuantileLossFunction(sklearn.ensemble._gb_losses.QuantileLossFunction):
     References
     ----------
     - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-      "Boosting on the shoulders of giants in quantum device calibration",
-      arXiv preprint arXiv:2005.06194 (2020).
+      "A new formulation of gradient boosting",
+      Machine Learning: Science and Technology, 2 045022 (2021).
     
     - Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
       Annals of Statistics, 29(5):1189–1232 (2001).

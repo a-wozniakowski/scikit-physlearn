@@ -166,8 +166,8 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
     References
     ----------
     - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-      "Boosting on the shoulders of giants in quantum device calibration",
-      arXiv preprint arXiv:2005.06194 (2020).
+      "A new formulation of gradient boosting",
+      Machine Learning: Science and Technology, 2 045022 (2021).
 
     - John Tukey. "Exploratory Data Analysis", Addison-Wesley (1977).
     
@@ -791,8 +791,8 @@ def make_pipeline(estimator, transform=None, **kwargs) -> ModifiedPipeline:
     References
     ----------
     - Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-      "Boosting on the shoulders of giants in quantum device calibration",
-      arXiv preprint arXiv:2005.06194 (2020).
+      "A new formulation of gradient boosting",
+      Machine Learning: Science and Technology, 2 045022 (2021).
 
     - Jerome Friedman. "Greedy function approximation: A gradient boosting machine,"
       Annals of Statistics, 29(5):1189–1232 (2001).
