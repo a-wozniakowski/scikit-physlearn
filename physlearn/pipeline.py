@@ -127,12 +127,6 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
             regularization :obj:`int` or :obj:`float`
                 The regularization strength in the line search computation.
 
-    Attributes
-    ----------
-    named_steps : :class:`sklearn.utils.Bunch`
-        Dictionary-like object, wherein the keys are the user provided
-        step names and the values are the steps parameters.
-
     See Also
     --------
     :func:`physlearn.pipeline.make_pipeline` : Convenience function for constructing a modified pipeline.

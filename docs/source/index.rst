@@ -2,7 +2,7 @@
 Scikit-physlearn Manual
 #######################
 
-**Scikit-physlearn** is a machine learning library designed to amalgamate 
+**Scikit-physlearn** amalgamates
 `Scikit-learn <https://scikit-learn.org/>`_,
 `LightGBM <https://lightgbm.readthedocs.io/en/latest/index.html>`_,
 `XGBoost <https://xgboost.readthedocs.io/en/latest/>`_,
@@ -16,16 +16,13 @@ regressors into a flexible framework that:
 - Interprets regressors with `SHAP <https://shap.readthedocs.io/en/latest/>`_.
 
 Additionally, the library contains the official implementation of
-`base boosting <https://arxiv.org/abs/2005.06194>`_, which incorporates prior
-knowledge into boosting by supplanting the standard statistical initialization
-with predictions from a user-specified model. The implementation:
+`the new formulation of gradient boosting <https://iopscience.iop.org/article/10.1088/2632-2153/ac1ee9>`_, which 
+is known as base boosting. The implementation:
 
-- Enables interoperability between user-specified models and nonparametric
-  statistical methods or supervised machine learning algorithms, i.e., it
-  is not limited to boosting decision trees.
-- Is especially suited for the low data regime.
+- Enables gradient boosting to improve upon prior regression predictions.
+- Also, it is especially suited for the low data regime.
 
-The `library <https://github.com/a-wozniakowski/scikit-physlearn>`_ was
+The `machine learning library <https://github.com/a-wozniakowski/scikit-physlearn>`_ was
 started by Alex Wozniakowski during his graduate studies at Nanyang Technological
 University.
 

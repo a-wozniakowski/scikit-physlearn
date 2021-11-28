@@ -24,8 +24,8 @@ Additionally, the library contains the official implementation of the
 [new formulation of gradient boosting](https://iopscience.iop.org/article/10.1088/2632-2153/ac1ee9),
 which is known as base boosting. The implementation:
 
-* Enables gradient boosting to iprove upon prior regression predictions.
-* Is especially suited for the low data regime.
+* Enables gradient boosting to improve upon prior regression predictions.
+* Also, it is especially suited for the low data regime.
 
 The machine learning library was started by Alex Wozniakowski during his graduate studies at Nanyang Technological
 University.
