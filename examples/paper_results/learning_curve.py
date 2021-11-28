@@ -21,14 +21,14 @@ from physlearn.supervised import plot_learning_curve
 X_train, _, y_train, _ = load_benchmark(return_split=True)
 
 # We choose the Sklearn StackingRegressor as the basis function b
-# in Eq. 2 of the main body. The first stacking layer consists of
+# in Eq. 11 of the main body. The first stacking layer consists of
 # the Sklearn MLPRegressor and the LightGBM LGBMRegressor. The
 # second stacking layer consists of the Sklearn MLPRegressor.
 basis_fn = 'stackingregressor'
 stack = dict(regressors=['mlpregressor', 'lgbmregressor'],
              final_regressor='mlpregressor')
 
-# The number of regressors corresponds to K in Eq. 2.
+# The number of regressors corresponds to K in Eq. 11.
 n_regressors = 1
 
 # The boosting loss is the squared error loss function, which is

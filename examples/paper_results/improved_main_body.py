@@ -21,7 +21,7 @@ from physlearn.datasets import load_benchmark, paper_params
 X_train, X_test, y_train, y_test = load_benchmark(return_split=True)
 
 # We choose the Sklearn StackingRegressor as the basis
-# function b in Eq. 2 for the single-target regression subtasks:
+# function b in Eq. 11 for the single-target regression subtasks:
 # 1, 2, 4, and 5. The first stacking layer consists of
 # the Sklearn MLPRegressor and the LightGBM LGBMRegressor. The
 # second stacking layer consists of the Sklearn MLPRegressor.
@@ -29,13 +29,13 @@ stacking_basis_fn = 'stackingregressor'
 stack = dict(regressors=['mlpregressor', 'lgbmregressor'],
              final_regressor='mlpregressor')
 
-# We choose the Sklearn Ridge as the basis function b in Eq. 2
+# We choose the Sklearn Ridge as the basis function b in Eq. 11
 # for the single-target regression subtask: 3. This choice of
 # basis function results in a modest improvement during
 # model selection.
 linear_basis_fn = 'ridge'
 
-# The number of regressors corresponds to K in Eq. 2.
+# The number of regressors corresponds to K in Eq. 11.
 n_regressors = 1
 
 # In the single-target regression subtask: 4, we will use

@@ -6,9 +6,9 @@ these (hyper)parameters.
 
 References
 ----------
-Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
-"Boosting on the shoulders of giants in quantum device calibration",
-arXiv preprint arXiv:2005.06194 (2020).
+- Alex Wozniakowski, Jayne Thompson, Mile Gu, and Felix C. Binder.
+  "A new formulation of gradient boosting",
+  Machine Learning: Science and Technology, 2 045022 (2021).
 """
 
 # Author: Alex Wozniakowski
@@ -207,6 +207,67 @@ def additional_paper_params(index=0) -> dict:
     return additional_paper_dict[f'target_{index}']
 
 
+###########################################################
+#XGBRegessor params
+###########################################################
+
+xgb_param_template = dict(objective='reg:squarederror')
+
+
+# Target 1
+xgb_params_1 = copy.deepcopy(xgb_param_template)
+xgb_params_1.update(dict(n_estimators=80, max_depth=8, booster='dart'))
+
+# Target 2
+xgb_params_2 = copy.deepcopy(xgb_param_template)
+xgb_params_2.update(dict(n_estimators=50, max_depth=4, booster='gbtree'))
+
+# Target 3
+xgb_params_3 = copy.deepcopy(xgb_param_template)
+xgb_params_3.update(dict(n_estimators=90, max_depth=6, booster='gbtree'))
+
+# Target 4
+xgb_params_4 = copy.deepcopy(xgb_param_template)
+xgb_params_4.update(dict(n_estimators=40, max_depth=4, booster='dart'))
+
+# Target 5
+xgb_params_5 = copy.deepcopy(xgb_param_template)
+xgb_params_5.update(dict(n_estimators=75, max_depth=16, booster='dart'))
+
+
+xgb_paper_dict = dict(target_1=xgb_params_1,
+                      target_2=xgb_params_2,
+                      target_3=xgb_params_3,
+                      target_4=xgb_params_4,
+                      target_5=xgb_params_5)
+
+def xgb_paper_params(index=0) -> dict:
+    """Retrieves a dict for XGBRegressor.
+
+    Parameters
+    ----------
+    index : int
+        Specifies the single-target regression subtask,
+        using the Python indexing convention.
+
+    Returns
+    -------
+    params : dict
+
+    Examples
+    --------
+    >>> from physlearn.datasets import xgb_paper_params
+    >>> xgb_paper_params(index=0)
+    {'objective': 'reg:squarederror',
+     'n_estimators': 80,
+     'max_depth': 8,
+     'booster': 'dart'}
+    """
+    
+    # Changes to the paper's index convention.
+    index += 1
+    assert index >=1 and index <=5
+    return xgb_paper_dict[f'target_{index}']
 
 
 ###########################################################

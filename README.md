@@ -5,9 +5,9 @@
 [![PyPI](https://badge.fury.io/py/scikit-physlearn.svg)](https://badge.fury.io/py/scikit-physlearn)
 
 [Documentation](https://scikit-physlearn.readthedocs.org) |
-[Base boosting](https://arxiv.org/abs/2005.06194)
+[Base boosting](https://iopscience.iop.org/article/10.1088/2632-2153/ac1ee9)
 
-**Scikit-physlearn** is a machine learning library designed to amalgamate 
+**Scikit-physlearn** amalgamates
 [Scikit-learn](https://scikit-learn.org/),
 [LightGBM](https://lightgbm.readthedocs.org),
 [XGBoost](https://xgboost.readthedocs.org),
@@ -20,17 +20,14 @@ regressors into a flexible framework that:
 * Solves single-target and multi-target regression tasks.
 * Interprets regressors with SHAP.
 
-Additionally, the library contains the official implementation of
-[base boosting](https://arxiv.org/abs/2005.06194>), which incorporates prior
-knowledge into boosting by supplanting the standard statistical initialization
-with predictions from a user-specified model. The implementation:
+Additionally, the library contains the official implementation of the 
+[new formulation of gradient boosting](https://iopscience.iop.org/article/10.1088/2632-2153/ac1ee9),
+which is known as base boosting. The implementation:
 
-* Enables interoperability between user-specified models and nonparametric
-  statistical methods or supervised machine learning algorithms, i.e., it
-  is not limited to boosting decision trees.
+* Enables gradient boosting to iprove upon prior regression predictions.
 * Is especially suited for the low data regime.
 
-The library was started by Alex Wozniakowski during his graduate studies at Nanyang Technological
+The machine learning library was started by Alex Wozniakowski during his graduate studies at Nanyang Technological
 University.
 
 ## Installation
@@ -46,10 +43,12 @@ To build from source, follow the [installation guide](https://scikit-physlearn.r
 If you use this library, please consider adding the corresponding citation:
 ```
 @article{wozniakowski_2020_boosting,
-  title={Boosting on the shoulders of giants in quantum device calibration},
+  title={A new formulation of gradient boosting},
   author={Wozniakowski, Alex and Thompson, Jayne and Gu, Mile and Binder, Felix C.},
-  journal={arXiv preprint arXiv:2005.06194},
-  year={2020}
+  journal={Machine Learning: Science and Technology},
+  volume={2},
+  number={4},
+  year={2021}
 }
 
 ```

@@ -17,7 +17,7 @@ MAINTAINER = 'Alex Wozniakowski'
 MAINTAINER_EMAIL = 'wozn0001@e.ntu.edu.sg'
 URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
 DOWNLOAD_URL = 'https://github.com/a-wozniakowski/scikit-physlearn'
-PROJECT_URLS = dict(Paper='https://arxiv.org/abs/2005.06194')
+PROJECT_URLS = dict(Paper='https://iopscience.iop.org/article/10.1088/2632-2153/ac1ee9')
 
 SETUPTOOLS_COMMANDS = set(['develop', 'release', 'bdist_egg', 'bdist_rpm',
                            'bdist_wininst', 'install_egg_info', 'build_sphinx',

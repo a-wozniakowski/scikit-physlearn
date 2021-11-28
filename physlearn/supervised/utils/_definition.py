@@ -17,7 +17,6 @@ from mlxtend.regressor import StackingRegressor, StackingCVRegressor
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.multioutput import ClassifierChain, RegressorChain
 
-from sklearn.experimental import enable_hist_gradient_boosting
 from sklearn.ensemble import (AdaBoostRegressor,
                               BaggingRegressor,
                               ExtraTreesRegressor,
