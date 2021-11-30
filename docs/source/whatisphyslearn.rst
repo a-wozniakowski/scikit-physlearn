@@ -36,7 +36,7 @@ If you use this library, please consider adding the corresponding citation:
 
 .. code-block:: latex
 
-    @article{wozniakowski_2020_boosting,
+    @article{wozniakowski_2021_boosting,
       title={A new formulation of gradient boosting},
       author={Wozniakowski, Alex and Thompson, Jayne and Gu, Mile and Binder, Felix C.},
       journal={Machine Learning: Science and Technology},
