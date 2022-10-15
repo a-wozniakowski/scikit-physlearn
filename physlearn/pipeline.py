@@ -511,7 +511,7 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         return coef * estimator.steps[-1][-1].predict(X=Xt, **predict_params)
 
-    @sklearn.utils.metaestimators.if_delegate_has_method(delegate='_final_estimator')
+    @sklearn.utils.metaestimators.available_if(sklearn.pipeline._final_estimator_has('predict'))
     def predict(self, X: DataFrame_or_Series, **predict_params) -> DataFrame_or_Series:
         """Applies transform(s) to the data, then predicts with the final estimator.
 
@@ -579,7 +579,7 @@ class ModifiedPipeline(sklearn.pipeline.Pipeline):
 
         return y_pred
 
-    @sklearn.utils.metaestimators.if_delegate_has_method(delegate='_final_estimator')
+    @sklearn.utils.metaestimators.available_if(sklearn.pipeline._final_estimator_has('score'))
     def score(self, X: DataFrame_or_Series, y: DataFrame_or_Series,
               multioutput='raw_values', **predict_params) -> pd.DataFrame:
         """Computes the supervised score.
