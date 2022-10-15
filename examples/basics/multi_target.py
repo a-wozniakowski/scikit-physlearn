@@ -25,7 +25,8 @@ X, y = bunch['data'], bunch['target']
 # X_train has shape (15, 3), y_train has shape (15, 3)
 # X_test has shape (5, 3), and y_test has shape (5, 3).
 # Namely, there are 3 features and 3 single-target regression subtasks.
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                    random_state=42)
 
 # Choose the underlying regressor to be the Sklearn
 # histogram-based gradient boosting regressor.
@@ -38,7 +39,8 @@ regressor_choice = 'HistGradientBoostingRegressor'
 pipeline_transform = 'quantilenormal'
 
 # Make an instance of the Regressor object.
-reg = Regressor(regressor_choice=regressor_choice, pipeline_transform=pipeline_transform)
+reg = Regressor(regressor_choice=regressor_choice,
+                pipeline_transform=pipeline_transform)
 
 # Generate test data predictions
 y_pred = reg.fit(X_train, y_train).predict(X_test)
