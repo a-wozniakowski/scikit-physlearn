@@ -10,7 +10,7 @@ import sklearn.ensemble
 
 import pandas as pd
 
-from sklearn.datasets import load_boston, load_linnerud
+from sklearn.datasets import fetch_california_housing, load_linnerud
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
 
@@ -95,7 +95,7 @@ class TestBaseBoost(unittest.TestCase):
         self.assertLess(score['mse'].values, 6.2)
 
     def test_squared_error(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         loss = LOSS_FUNCTIONS['ls']()
         score = loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
         sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['ls']()
@@ -127,7 +127,7 @@ class TestBaseBoost(unittest.TestCase):
             self.assertEqual(score, sklearn_score)
 
     def test_absolute_error(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         loss = LOSS_FUNCTIONS['lad']()
         score = loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
         sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['lad']()
@@ -159,7 +159,7 @@ class TestBaseBoost(unittest.TestCase):
             self.assertEqual(score, sklearn_score)
 
     def test_huber_loss(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         loss = LOSS_FUNCTIONS['huber'](alpha=0.9)
         score = loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
         sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['huber'](alpha=0.9)
@@ -191,7 +191,7 @@ class TestBaseBoost(unittest.TestCase):
             self.assertEqual(score, sklearn_score)
 
     def test_quantile_loss(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         loss = LOSS_FUNCTIONS['quantile']()
         score = loss(y=y, raw_predictions=X[:, 0]).round(decimals=2)
         sklearn_loss = sklearn.ensemble._gb_losses.LOSS_FUNCTIONS['quantile']()

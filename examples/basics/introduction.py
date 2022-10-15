@@ -11,21 +11,21 @@ single-target regression task.
 
 import pandas as pd
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split
 
 from physlearn import Regressor
 
 
 # Load the data from Sklearn
-X, y = load_boston(return_X_y=True)
+X, y = fetch_california_housing(return_X_y=True)
 X, y = pd.DataFrame(X), pd.Series(y)
 
 # Split the data, using the default test_size=0.25.
-# X_train has shape (379, 13), y_train has shape (379,)
-# X_test has shape (127, 13), and y_test has shape (127,).
-# Namely, there are 13 features and 1 single-target regression task.
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+# X_train has shape (15480, 8), y_train has shape (15480,)
+# X_test has shape (5160, 8), and y_test has shape (5160,).
+X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                    random_state=42)
 
 # Choose the underlying regressor to be the LightGBM LGBMRegressor.
 # The regressor choice is a special parameter and it is case-insensitive.
@@ -36,7 +36,8 @@ regressor_choice = 'lgbmregressor'
 pipeline_transform = 'standardscaler'
 
 # Make an instance of the Regressor object.
-reg = Regressor(regressor_choice=regressor_choice, pipeline_transform=pipeline_transform)
+reg = Regressor(regressor_choice=regressor_choice,
+                pipeline_transform=pipeline_transform)
 
 # Generate test data predictions
 y_pred = reg.fit(X_train, y_train).predict(X_test)

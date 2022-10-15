@@ -6,6 +6,7 @@ Unit tests for basic utilities.
 # License: MIT
 
 import unittest
+import scipy
 
 import pandas as pd
 
@@ -13,7 +14,7 @@ from scipy.stats import randint, uniform
 
 from sklearn import __version__ as sk_version
 from sklearn.base import clone
-from sklearn.datasets import load_boston, load_linnerud
+from sklearn.datasets import fetch_california_housing, load_linnerud
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import FeatureUnion
@@ -28,7 +29,7 @@ from physlearn.supervised.utils._estimator_checks import (_check_estimator_choic
 class TestBasic(unittest.TestCase):
 
     def test_regressor_gridsearchcv(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -45,7 +46,7 @@ class TestBasic(unittest.TestCase):
     # sklearn < 0.22 does not have a stacking regressor
     @unittest.skipIf(sk_version < '0.22.0', 'scikit-learn version is less than 0.22')
     def test_stacking_regressor_gridsearchcv(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -101,7 +102,7 @@ class TestBasic(unittest.TestCase):
         self.assertIn(reg.best_params_['reg__base_estimator__fit_intercept'], [True, False])
 
     def test_regressor_randomizedsearchcv(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -121,7 +122,7 @@ class TestBasic(unittest.TestCase):
     # sklearn < 0.22 does not have a stacking regressor
     @unittest.skipIf(sk_version < '0.22.0', 'scikit-learn version is less than 0.22')
     def test_stacking_regressor_randomizedsearchcv(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -183,8 +184,10 @@ class TestBasic(unittest.TestCase):
         self.assertGreaterEqual(reg.best_params_['reg__base_estimator__alpha'], 0.01)
         self.assertIn(reg.best_params_['reg__base_estimator__fit_intercept'], [True, False])
 
+    # scipy > 1.7 has issue https://github.com/fmfn/BayesianOptimization/issues/300
+    @unittest.skipIf(scipy.__version__ > '1.7', 'scipy version is greater than 1.7')
     def test_regressor_bayesoptcv(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -202,6 +205,8 @@ class TestBasic(unittest.TestCase):
 
     # sklearn < 0.23 does not have as_frame parameter
     @unittest.skipIf(sk_version < '0.23.0', 'scikit-learn version is less than 0.23')
+    # scipy > 1.7 has issue https://github.com/fmfn/BayesianOptimization/issues/300
+    @unittest.skipIf(scipy.__version__ > '1.7', 'scipy version is greater than 1.7')
     def test_multioutput_regressor_bayesoptcv(self):
         bunch = load_linnerud(as_frame=True)  # returns a Bunch instance
         X, y = bunch['data'], bunch['target']
@@ -221,6 +226,8 @@ class TestBasic(unittest.TestCase):
 
     # sklearn < 0.23 does not have as_frame parameter
     @unittest.skipIf(sk_version < '0.23.0', 'scikit-learn version is less than 0.23')
+    # scipy > 1.7 has issue https://github.com/fmfn/BayesianOptimization/issues/300
+    @unittest.skipIf(scipy.__version__ > '1.7', 'scipy version is greater than 1.7')
     def test_multioutput_regressorchain_bayesoptcv(self):
         bunch = load_linnerud(as_frame=True)  # returns a Bunch instance
         X, y = bunch['data'], bunch['target']
@@ -240,7 +247,7 @@ class TestBasic(unittest.TestCase):
         self.assertGreaterEqual(reg.best_params_['reg__base_estimator__epsilon'], 0.1)
 
     def test_regressor_fit_score(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -293,7 +300,7 @@ class TestBasic(unittest.TestCase):
     # sklearn < 0.22 does not have a stacking regressor
     @unittest.skipIf(sk_version < '0.22.0', 'scikit-learn version is less than 0.22')
     def test_stacking_regressor_fit_score(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -313,7 +320,7 @@ class TestBasic(unittest.TestCase):
         self.assertLess(score['mse'].values, 19.0)
 
     def test_pipeline_clone_fit_score(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
