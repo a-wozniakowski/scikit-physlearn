@@ -24,7 +24,6 @@ X, y = bunch['data'], bunch['target']
 # Split the data, using the default test_size=0.25.
 # X_train has shape (15, 3), y_train has shape (15, 3)
 # X_test has shape (5, 3), and y_test has shape (5, 3).
-# Namely, there are 3 features and 3 single-target regression subtasks.
 X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                     random_state=42)
 
