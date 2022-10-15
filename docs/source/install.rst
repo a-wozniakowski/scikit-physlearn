@@ -47,18 +47,18 @@ Moreover, all of the dependencies are automatically managed by the build:
 
 .. code-block:: bash
 
-    numpy>=1.13.3
-    scipy>=0.19.1
-    scikit-learn>=0.23.0
-    pandas>=1.0.0
-    shap>=0.36.0
-    ipython>=7.11.0
-    bayesian-optimization>=1.2.0
-    catboost>=0.23.2
-    xgboost>=1.2.0
-    lightgbm>=2.3.0
-    mlxtend>=0.17.0
-    joblib>=0.11
-    threadpoolctl>=2.0.0
-    cython>=0.28.5
-    python-levenshtein-wheels>=0.13.1
+    numpy
+    scipy
+    scikit-learn
+    pandas
+    shap
+    ipython
+    bayesian-optimization
+    catboost
+    xgboost
+    lightgbm
+    mlxtend
+    joblib
+    threadpoolctl
+    cython
+    python-Levenshtein
