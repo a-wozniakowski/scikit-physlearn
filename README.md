@@ -20,15 +20,19 @@ regressors into a flexible framework that:
 * Solves single-target and multi-target regression tasks.
 * Interprets regressors with SHAP.
 
-Additionally, the library contains the official implementation of the 
-[new formulation of gradient boosting](https://iopscience.iop.org/article/10.1088/2632-2153/ac1ee9),
-which is known as base boosting. The implementation:
+Additionally, the library contains the official implementation of 
+[base boosting](https://iopscience.iop.org/article/10.1088/2632-2153/ac1ee9),
+which is a reformulation of gradient boosting that
 
-* Enables gradient boosting to improve upon prior regression predictions.
-* Also, it is especially suited for the low data regime.
+* Regards predictions from any regression model as an inductive bias.
+* In contrast, gradient boosting regards the prediction from a constant
+  model as an inductive bias.
+* Consequently, base boosting generalizes Tukey’s methods of twicing,
+  thricing, and reroughing, as gradient boosting works with a variety
+  of fitting criterion.
 
-The machine learning library was started by Alex Wozniakowski during his graduate studies at Nanyang Technological
-University.
+The machine learning library was started by Alex Wozniakowski during his graduate
+studies at Nanyang Technological University.
 
 ## Installation
 Scikit-physlearn can be installed from [PyPI](https://pypi.org/project/scikit-physlearn/):
