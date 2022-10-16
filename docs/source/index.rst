@@ -16,11 +16,15 @@ regressors into a flexible framework that:
 - Interprets regressors with `SHAP <https://shap.readthedocs.io/en/latest/>`_.
 
 Additionally, the library contains the official implementation of
-`the new formulation of gradient boosting <https://iopscience.iop.org/article/10.1088/2632-2153/ac1ee9>`_, which 
-is known as base boosting. The implementation:
+`base boosting <https://iopscience.iop.org/article/10.1088/2632-2153/ac1ee9>`_, which 
+is a reformulation of gradient boosting that
 
-- Enables gradient boosting to improve upon prior regression predictions.
-- Also, it is especially suited for the low data regime.
+- Regards predictions from any regression model as an inductive bias.
+- In contrast, gradient boosting regards the prediction from a constant
+  model as an inductive bias.
+- Consequently, base boosting generalizes Tukey’s methods of twicing,
+  thricing, and reroughing, as gradient boosting works with a variety
+  of fitting criterion.
 
 The `machine learning library <https://github.com/a-wozniakowski/scikit-physlearn>`_ was
 started by Alex Wozniakowski during his graduate studies at Nanyang Technological
