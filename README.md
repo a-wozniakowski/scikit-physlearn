@@ -25,8 +25,10 @@ Additionally, the library contains the official implementation of
 which is a reformulation of gradient boosting that
 
 * Regards predictions from any regression model as an inductive bias.
+
 In contrast, gradient boosting regards the prediction from a constant
 model as an inductive bias.
+
 * Consequently, base boosting generalizes Tukey’s methods of twicing,
   thricing, and reroughing, as gradient boosting works with a variety
   of fitting criterion.
