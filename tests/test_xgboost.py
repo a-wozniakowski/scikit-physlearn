@@ -13,7 +13,7 @@ from scipy.stats import randint
 
 from sklearn import __version__ as sk_version
 from sklearn.base import clone
-from sklearn.datasets import load_boston, load_linnerud
+from sklearn.datasets import fetch_california_housing, load_linnerud
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import FeatureUnion
@@ -28,7 +28,7 @@ from physlearn.supervised import ShapInterpret
 class TestXGBoost(unittest.TestCase):
 
     def test_regressor_gridsearchcv(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -77,7 +77,7 @@ class TestXGBoost(unittest.TestCase):
         self.assertIn(reg.best_params_['reg__base_estimator__n_estimators'], [3, 5, 10])
 
     def test_regressor_randomizedsearchcv(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -132,7 +132,7 @@ class TestXGBoost(unittest.TestCase):
         self.assertGreaterEqual(reg.best_params_['reg__base_estimator__n_estimators'], 3)
 
     def test_regressor_fit_score(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -188,7 +188,7 @@ class TestXGBoost(unittest.TestCase):
         self.assertLess(score['mse'], 2080.0)
 
     def test_pipeline_clone_fit_score(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)

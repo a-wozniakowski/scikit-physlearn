@@ -47,19 +47,19 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Programming Language :: Python :: 3.8']
 PACKAGES = find_packages()
 
-INSTALL_REQUIRES = ['matplotlib <= 3.2.0',
+INSTALL_REQUIRES = ['matplotlib',
                     'numpy',
                     'scipy',
-                    'scikit-learn >= 0.24.1',
-                    'pandas >= 1.0.0',
-                    'shap >= 0.36.0',
-                    'ipython >= 7.11.0',
-                    'bayesian-optimization >= 1.2.0',
-                    'catboost >= 0.23.2',
-                    'xgboost >= 1.4.1',
-                    'lightgbm >= 2.3.0',
-                    'mlxtend >= 0.17.0',
-                    'python-levenshtein-wheels >= 0.13.1']
+                    'scikit-learn',
+                    'pandas',
+                    'shap',
+                    'ipython',
+                    'bayesian-optimization',
+                    'catboost',
+                    'xgboost',
+                    'lightgbm',
+                    'mlxtend',
+                    'python-Levenshtein']
 
 
 if __name__ == '__main__':

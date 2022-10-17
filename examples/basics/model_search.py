@@ -12,21 +12,21 @@ GridSearchCV object.
 
 import pandas as pd
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split
 
 from physlearn import Regressor
 
 
 # Load the data from Sklearn
-X, y = load_boston(return_X_y=True)
+X, y = fetch_california_housing(return_X_y=True)
 X, y = pd.DataFrame(X), pd.Series(y)
 
 # Split the data, using the default test_size=0.25.
-# X_train has shape (379, 13), y_train has shape (379,)
-# X_test has shape (127, 13), and y_test has shape (127,).
-# Namely, there are 13 features and 1 single-target regression task.
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+# X_train has shape (15480, 8), y_train has shape (15480,)
+# X_test has shape (5160, 8), and y_test has shape (5160,).
+X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                    random_state=42)
 
 # The underlying regressor will be the Sklearn Ridge,
 # which uses a special case of Tikhonov regularization. 
@@ -46,7 +46,8 @@ search_params = dict(reg__alpha=[0.1, 0.2, 0.5],
 # K-fold cross-validation is 5, number of jobs to run in parallel
 # is -1, and scoring choice is 'neg_mean_absolute_error', but
 # we explicitly right these choices for clarity. 
-reg = Regressor(cv=5, n_jobs=-1, scoring='neg_mean_absolute_error')
+reg = Regressor(cv=5, n_jobs=-1,
+                scoring='neg_mean_absolute_error')
 
 
 # Now we perform the exhausitive search over the search_params.

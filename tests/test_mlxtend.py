@@ -13,7 +13,7 @@ from scipy.stats import randint
 
 from sklearn import __version__ as sk_version
 from sklearn.base import clone
-from sklearn.datasets import load_boston, load_linnerud
+from sklearn.datasets import fetch_california_housing, load_linnerud
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import FeatureUnion
@@ -26,7 +26,7 @@ from physlearn.supervised import ShapInterpret
 class TestMlxtend(unittest.TestCase):
 
     def test_stacking_regressor_without_cv_gridsearchcv(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -48,7 +48,7 @@ class TestMlxtend(unittest.TestCase):
         self.assertIn(reg.best_params_['reg__meta_regressor__alpha'], [1.0])
 
     def test_stacking_regressor_with_cv_gridsearchcv(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -176,7 +176,7 @@ class TestMlxtend(unittest.TestCase):
                       [1.0])
 
     def test_stacking_regressor_without_cv_randomizedsearchcv(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -201,7 +201,7 @@ class TestMlxtend(unittest.TestCase):
         self.assertIn(reg.best_params_['reg__meta_regressor__alpha'], [1.0])
 
     def test_stacking_regressor_with_cv_randomizedsearchcv(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -348,7 +348,7 @@ class TestMlxtend(unittest.TestCase):
                       [1.0])
 
     def test_stacking_regressor_without_cv_fit_score(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -368,7 +368,7 @@ class TestMlxtend(unittest.TestCase):
         self.assertLess(score['mse'].values, 19.0)
 
     def test_stacking_regressor_with_cv_fit_score(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -474,7 +474,7 @@ class TestMlxtend(unittest.TestCase):
         self.assertLess(score['mse'], 110.0)
 
     def test_without_cv_pipeline_clone_fit_score(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
@@ -499,7 +499,7 @@ class TestMlxtend(unittest.TestCase):
         self.assertLess(score['mse'].values, 232.0)
 
     def test_with_cv_pipeline_clone_fit_score(self):
-        X, y = load_boston(return_X_y=True)
+        X, y = fetch_california_housing(return_X_y=True)
         X, y = pd.DataFrame(X), pd.Series(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             random_state=42)
